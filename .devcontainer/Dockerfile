@@ -22,8 +22,12 @@ RUN apt-get update && apt-get install -y \
     libasound2 \
     && rm -rf /var/lib/apt/lists/*
 
+# Pre-install Playwright globally (as root) - match project version
+RUN npm install -g playwright@1.56.1
+
 # Create workspace directory
 WORKDIR /workspace
 
-# Set up non-root user
+# Set up non-root user and install browsers for node user
 USER node
+RUN playwright install chromium

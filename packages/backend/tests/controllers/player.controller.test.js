@@ -9,9 +9,14 @@ describe('PlayerController', () => {
   let mockNext;
 
   beforeEach(() => {
-    // Mock upload service
+    // Mock upload service with prisma
     mockUploadService = {
       getImagesByOrganization: vi.fn(),
+      prisma: {
+        organization: {
+          findFirst: vi.fn(),
+        },
+      },
     };
 
     controller = new PlayerController(mockUploadService);
@@ -31,6 +36,7 @@ describe('PlayerController', () => {
 
   describe('getImages', () => {
     it('should return images with full URLs', async () => {
+      const mockOrgId = 'org-uuid-123';
       const mockImages = [
         {
           id: 1,
@@ -44,11 +50,12 @@ describe('PlayerController', () => {
         },
       ];
 
+      mockUploadService.prisma.organization.findFirst.mockResolvedValue({ id: mockOrgId });
       mockUploadService.getImagesByOrganization.mockResolvedValue(mockImages);
 
       await controller.getImages(mockRequest, mockResponse, mockNext);
 
-      expect(mockUploadService.getImagesByOrganization).toHaveBeenCalledWith(1);
+      expect(mockUploadService.getImagesByOrganization).toHaveBeenCalledWith(mockOrgId);
       expect(mockResponse.json).toHaveBeenCalledWith({
         images: [
           {
@@ -77,15 +84,20 @@ describe('PlayerController', () => {
       expect(mockUploadService.getImagesByOrganization).toHaveBeenCalledWith('5');
     });
 
-    it('should default to organization 1 if no org parameter provided', async () => {
+    it('should fetch first organization if no org parameter provided', async () => {
+      const mockOrgId = 'org-uuid-456';
+      mockUploadService.prisma.organization.findFirst.mockResolvedValue({ id: mockOrgId });
       mockUploadService.getImagesByOrganization.mockResolvedValue([]);
 
       await controller.getImages(mockRequest, mockResponse, mockNext);
 
-      expect(mockUploadService.getImagesByOrganization).toHaveBeenCalledWith(1);
+      expect(mockUploadService.prisma.organization.findFirst).toHaveBeenCalled();
+      expect(mockUploadService.getImagesByOrganization).toHaveBeenCalledWith(mockOrgId);
     });
 
     it('should return empty array when no images exist', async () => {
+      const mockOrgId = 'org-uuid-789';
+      mockUploadService.prisma.organization.findFirst.mockResolvedValue({ id: mockOrgId });
       mockUploadService.getImagesByOrganization.mockResolvedValue([]);
 
       await controller.getImages(mockRequest, mockResponse, mockNext);
@@ -96,8 +108,22 @@ describe('PlayerController', () => {
       });
     });
 
+    it('should return empty array when no organization exists', async () => {
+      mockUploadService.prisma.organization.findFirst.mockResolvedValue(null);
+
+      await controller.getImages(mockRequest, mockResponse, mockNext);
+
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        images: [],
+        count: 0,
+      });
+      expect(mockUploadService.getImagesByOrganization).not.toHaveBeenCalled();
+    });
+
     it('should call next with error on service failure', async () => {
+      const mockOrgId = 'org-uuid-error';
       const error = new Error('Database error');
+      mockUploadService.prisma.organization.findFirst.mockResolvedValue({ id: mockOrgId });
       mockUploadService.getImagesByOrganization.mockRejectedValue(error);
 
       await controller.getImages(mockRequest, mockResponse, mockNext);

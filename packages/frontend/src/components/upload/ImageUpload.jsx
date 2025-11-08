@@ -38,6 +38,11 @@ export default function ImageUpload({ onUploadSuccess }) {
       if (onUploadSuccess) {
         onUploadSuccess(result.image);
       }
+
+      // Reset the file input so the same file can be selected again
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     } catch (err) {
       setError(err.message);
     } finally {

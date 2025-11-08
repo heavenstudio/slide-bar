@@ -1,23 +1,17 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { UploadService } from '../../src/services/upload.service.js';
-
-// Mock Prisma client
-const mockPrisma = {
-  image: {
-    create: vi.fn(),
-    findMany: vi.fn(),
-    findUnique: vi.fn(),
-    delete: vi.fn(),
-  },
-};
+import { getPrismaClient, createTestOrganization } from '../helpers/database.js';
 
 describe('UploadService', () => {
   let uploadService;
-  const mockOrganizationId = 'org-123';
+  let testOrganization;
+  const prisma = getPrismaClient();
 
-  beforeEach(() => {
-    uploadService = new UploadService(mockPrisma);
-    vi.clearAllMocks();
+  beforeEach(async () => {
+    // Database is automatically truncated by setup.js
+    // Create a test organization for each test
+    testOrganization = await createTestOrganization();
+    uploadService = new UploadService(prisma);
   });
 
   describe('saveImageMetadata', () => {
@@ -30,36 +24,27 @@ describe('UploadService', () => {
         path: '/uploads/image-123.jpg',
       };
 
-      const expectedImage = {
-        id: 'img-1',
+      const result = await uploadService.saveImageMetadata(fileData, testOrganization.id);
+
+      // Verify the result has expected properties
+      expect(result).toMatchObject({
         filename: fileData.filename,
         originalName: fileData.originalname,
         mimeType: fileData.mimetype,
         size: fileData.size,
         path: fileData.path,
         url: `/uploads/${fileData.filename}`,
-        organizationId: mockOrganizationId,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-
-      mockPrisma.image.create.mockResolvedValue(expectedImage);
-
-      const result = await uploadService.saveImageMetadata(fileData, mockOrganizationId);
-
-      expect(mockPrisma.image.create).toHaveBeenCalledWith({
-        data: {
-          filename: fileData.filename,
-          originalName: fileData.originalname,
-          mimeType: fileData.mimetype,
-          size: fileData.size,
-          path: fileData.path,
-          url: `/uploads/${fileData.filename}`,
-          organizationId: mockOrganizationId,
-        },
+        organizationId: testOrganization.id,
       });
 
-      expect(result).toEqual(expectedImage);
+      // Verify it was actually saved to the database
+      const savedImage = await prisma.image.findUnique({
+        where: { id: result.id },
+      });
+
+      expect(savedImage).toBeTruthy();
+      expect(savedImage.filename).toBe(fileData.filename);
+      expect(savedImage.organizationId).toBe(testOrganization.id);
     });
 
     it('should throw error if organizationId is missing', async () => {
@@ -79,91 +64,148 @@ describe('UploadService', () => {
 
   describe('getImagesByOrganization', () => {
     it('should return all images for an organization', async () => {
-      const mockImages = [
-        {
-          id: 'img-1',
+      // Create some test images
+      const image1 = await prisma.image.create({
+        data: {
           filename: 'image-1.jpg',
           originalName: 'test1.jpg',
+          mimeType: 'image/jpeg',
+          size: 50000,
+          path: '/uploads/image-1.jpg',
           url: '/uploads/image-1.jpg',
-          createdAt: new Date(),
+          organizationId: testOrganization.id,
         },
-        {
-          id: 'img-2',
-          filename: 'image-2.png',
-          originalName: 'test2.png',
-          url: '/uploads/image-2.png',
-          createdAt: new Date(),
-        },
-      ];
-
-      mockPrisma.image.findMany.mockResolvedValue(mockImages);
-
-      const result = await uploadService.getImagesByOrganization(mockOrganizationId);
-
-      expect(mockPrisma.image.findMany).toHaveBeenCalledWith({
-        where: { organizationId: mockOrganizationId },
-        orderBy: { createdAt: 'desc' },
       });
 
-      expect(result).toEqual(mockImages);
+      // Small delay to ensure different timestamps for createdAt ordering
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      const image2 = await prisma.image.create({
+        data: {
+          filename: 'image-2.png',
+          originalName: 'test2.png',
+          mimeType: 'image/png',
+          size: 60000,
+          path: '/uploads/image-2.png',
+          url: '/uploads/image-2.png',
+          organizationId: testOrganization.id,
+        },
+      });
+
+      const result = await uploadService.getImagesByOrganization(testOrganization.id);
+
+      expect(result).toHaveLength(2);
+      // Images should be ordered by createdAt desc, so most recent first
+      expect(result[0].id).toBe(image2.id);
+      expect(result[1].id).toBe(image1.id);
     });
 
     it('should return empty array if no images found', async () => {
-      mockPrisma.image.findMany.mockResolvedValue([]);
-
-      const result = await uploadService.getImagesByOrganization(mockOrganizationId);
+      const result = await uploadService.getImagesByOrganization(testOrganization.id);
 
       expect(result).toEqual([]);
+    });
+
+    it('should only return images for the specified organization', async () => {
+      // Create another organization with its own image
+      const otherOrg = await createTestOrganization('Other Organization');
+      await prisma.image.create({
+        data: {
+          filename: 'other-org-image.jpg',
+          originalName: 'other.jpg',
+          mimeType: 'image/jpeg',
+          size: 40000,
+          path: '/uploads/other.jpg',
+          url: '/uploads/other.jpg',
+          organizationId: otherOrg.id,
+        },
+      });
+
+      // Create image for test organization
+      await prisma.image.create({
+        data: {
+          filename: 'test-org-image.jpg',
+          originalName: 'test.jpg',
+          mimeType: 'image/jpeg',
+          size: 50000,
+          path: '/uploads/test.jpg',
+          url: '/uploads/test.jpg',
+          organizationId: testOrganization.id,
+        },
+      });
+
+      const result = await uploadService.getImagesByOrganization(testOrganization.id);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].organizationId).toBe(testOrganization.id);
+      expect(result[0].filename).toBe('test-org-image.jpg');
     });
   });
 
   describe('deleteImage', () => {
     it('should delete an image if it belongs to the organization', async () => {
-      const imageId = 'img-1';
-      const mockImage = {
-        id: imageId,
-        organizationId: mockOrganizationId,
-        path: '/uploads/image-1.jpg',
-      };
-
-      mockPrisma.image.findUnique.mockResolvedValue(mockImage);
-      mockPrisma.image.delete.mockResolvedValue(mockImage);
-
-      const result = await uploadService.deleteImage(imageId, mockOrganizationId);
-
-      expect(mockPrisma.image.findUnique).toHaveBeenCalledWith({
-        where: { id: imageId },
+      // Create a test image
+      const testImage = await prisma.image.create({
+        data: {
+          filename: 'test-delete.jpg',
+          originalName: 'test.jpg',
+          mimeType: 'image/jpeg',
+          size: 50000,
+          path: '/uploads/test-delete.jpg',
+          url: '/uploads/test-delete.jpg',
+          organizationId: testOrganization.id,
+        },
       });
 
-      expect(mockPrisma.image.delete).toHaveBeenCalledWith({
-        where: { id: imageId },
+      const result = await uploadService.deleteImage(testImage.id, testOrganization.id);
+
+      expect(result).toBeTruthy();
+      expect(result.id).toBe(testImage.id);
+
+      // Verify it was actually deleted from the database
+      const deletedImage = await prisma.image.findUnique({
+        where: { id: testImage.id },
       });
 
-      expect(result).toEqual(mockImage);
+      expect(deletedImage).toBeNull();
     });
 
     it('should throw error if image not found', async () => {
-      const imageId = 'non-existent';
+      const nonExistentId = 'non-existent-id';
 
-      mockPrisma.image.findUnique.mockResolvedValue(null);
-
-      await expect(uploadService.deleteImage(imageId, mockOrganizationId)).rejects.toThrow(
-        'Image not found'
-      );
+      await expect(
+        uploadService.deleteImage(nonExistentId, testOrganization.id)
+      ).rejects.toThrow('Image not found');
     });
 
     it('should throw error if image belongs to different organization', async () => {
-      const imageId = 'img-1';
-      const mockImage = {
-        id: imageId,
-        organizationId: 'different-org',
-      };
+      // Create another organization
+      const otherOrg = await createTestOrganization('Other Organization');
 
-      mockPrisma.image.findUnique.mockResolvedValue(mockImage);
+      // Create an image for the other organization
+      const otherOrgImage = await prisma.image.create({
+        data: {
+          filename: 'other-org.jpg',
+          originalName: 'other.jpg',
+          mimeType: 'image/jpeg',
+          size: 50000,
+          path: '/uploads/other-org.jpg',
+          url: '/uploads/other-org.jpg',
+          organizationId: otherOrg.id,
+        },
+      });
 
-      await expect(uploadService.deleteImage(imageId, mockOrganizationId)).rejects.toThrow(
-        'Unauthorized to delete this image'
-      );
+      // Try to delete it using testOrganization's ID (should fail)
+      await expect(
+        uploadService.deleteImage(otherOrgImage.id, testOrganization.id)
+      ).rejects.toThrow('Unauthorized to delete this image');
+
+      // Verify the image still exists in the database
+      const stillExists = await prisma.image.findUnique({
+        where: { id: otherOrgImage.id },
+      });
+
+      expect(stillExists).toBeTruthy();
     });
   });
 });

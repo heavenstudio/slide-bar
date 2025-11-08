@@ -15,7 +15,17 @@ export class PlayerController {
     try {
       // For now, we'll get all images from the first organization
       // In the future, this could be filtered by organization ID from query params
-      const organizationId = req.query.org || 1; // Default to org 1 for demo
+      let organizationId = req.query.org;
+
+      // If no org specified, use the first organization in the database
+      if (!organizationId) {
+        const firstOrg = await this.uploadService.prisma.organization.findFirst();
+        if (!firstOrg) {
+          // No organizations exist yet
+          return res.json({ images: [], count: 0 });
+        }
+        organizationId = firstOrg.id;
+      }
 
       const images = await this.uploadService.getImagesByOrganization(organizationId);
 

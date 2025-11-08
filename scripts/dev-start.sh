@@ -42,9 +42,9 @@ cd "$PROJECT_ROOT/packages/frontend"
 nohup ./node_modules/.bin/vite --host --port 5173 > /tmp/vite-dev.log 2>&1 &
 echo $! > /tmp/vite-dev.pid
 
-# Start backend
+# Start backend with nodemon for hot reload
 cd "$PROJECT_ROOT/packages/backend"
-nohup node src/server.js > /tmp/backend-dev.log 2>&1 &
+nohup pnpm dev > /tmp/backend-dev.log 2>&1 &
 echo $! > /tmp/backend-dev.pid
 
 cd "$PROJECT_ROOT"

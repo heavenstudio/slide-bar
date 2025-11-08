@@ -19,7 +19,7 @@ else
   docker compose run -d --name slide-bar-e2e-test --rm app sleep infinity
   APP_CONTAINER="slide-bar-e2e-test"
   USE_COMPOSE=false
-  sleep 2
+  sleep 1
 fi
 
 # Clean test database
@@ -35,15 +35,30 @@ if [ "$USE_COMPOSE" = true ]; then
     echo "🚀 Starting test servers..."
     cd packages/frontend && VITE_PORT=5174 BACKEND_PORT=3001 nohup ./node_modules/.bin/vite --host --port 5174 > /tmp/vite-test.log 2>&1 & echo $! > /tmp/vite-test.pid
     cd /workspace/slide-bar/packages/backend && DATABASE_URL=postgresql://slidebar_user:slidebar_pass@db:5432/slidebar_test?schema=public PORT=3001 nohup node src/server.js > /tmp/backend-test.log 2>&1 & echo $! > /tmp/backend-test.pid
-    sleep 5
-    echo "✅ Test servers started"
-    echo "🔍 Checking if servers are responding..."
-    curl -f http://localhost:5174 > /dev/null 2>&1 || (echo "❌ Frontend not responding"; cat /tmp/vite-test.log; exit 1)
-    curl -f http://localhost:3001/api/auth/demo-login -X POST > /dev/null 2>&1 || (echo "❌ Backend not responding"; cat /tmp/backend-test.log; exit 1)
-    echo "✅ Servers are responding"
+
+    # Wait for servers to be ready with fast polling (max 10 seconds)
+    echo "🔍 Waiting for servers to be ready..."
+    for i in {1..20}; do
+      if curl -f http://localhost:5174 > /dev/null 2>&1 && curl -f http://localhost:3001/api/auth/demo-login -X POST > /dev/null 2>&1; then
+        echo "✅ Servers are ready (took ~${i}/2 seconds)"
+        break
+      fi
+      if [ $i -eq 20 ]; then
+        echo "❌ Servers failed to start in time"
+        echo "Frontend log:"; cat /tmp/vite-test.log
+        echo "Backend log:"; cat /tmp/backend-test.log
+        exit 1
+      fi
+      sleep 0.5
+    done
+
     cd /workspace/slide-bar
-    ./node_modules/.bin/playwright install chromium > /dev/null 2>&1
-    VITE_PORT=5174 BACKEND_PORT=3001 ./node_modules/.bin/playwright test
+    # Install browsers if not already present (cached after first run)
+    if [ ! -d "$HOME/.cache/ms-playwright/chromium"* ] 2>/dev/null; then
+      echo "📦 Installing Playwright browsers (first run)..."
+      ./node_modules/.bin/playwright install chromium 2>/dev/null || true
+    fi
+    DATABASE_URL=postgresql://slidebar_user:slidebar_pass@db:5432/slidebar_test?schema=public VITE_PORT=5174 BACKEND_PORT=3001 ./node_modules/.bin/playwright test
     EXIT_CODE=$?
     kill $(cat /tmp/vite-test.pid) 2>/dev/null || true
     kill $(cat /tmp/backend-test.pid) 2>/dev/null || true
@@ -58,15 +73,30 @@ else
     echo "🚀 Starting test servers..."
     cd packages/frontend && VITE_PORT=5174 BACKEND_PORT=3001 nohup ./node_modules/.bin/vite --host --port 5174 > /tmp/vite-test.log 2>&1 & echo $! > /tmp/vite-test.pid
     cd /workspace/slide-bar/packages/backend && DATABASE_URL=postgresql://slidebar_user:slidebar_pass@db:5432/slidebar_test?schema=public PORT=3001 nohup node src/server.js > /tmp/backend-test.log 2>&1 & echo $! > /tmp/backend-test.pid
-    sleep 5
-    echo "✅ Test servers started"
-    echo "🔍 Checking if servers are responding..."
-    curl -f http://localhost:5174 > /dev/null 2>&1 || (echo "❌ Frontend not responding"; cat /tmp/vite-test.log; exit 1)
-    curl -f http://localhost:3001/api/auth/demo-login -X POST > /dev/null 2>&1 || (echo "❌ Backend not responding"; cat /tmp/backend-test.log; exit 1)
-    echo "✅ Servers are responding"
+
+    # Wait for servers to be ready with fast polling (max 10 seconds)
+    echo "🔍 Waiting for servers to be ready..."
+    for i in {1..20}; do
+      if curl -f http://localhost:5174 > /dev/null 2>&1 && curl -f http://localhost:3001/api/auth/demo-login -X POST > /dev/null 2>&1; then
+        echo "✅ Servers are ready (took ~${i}/2 seconds)"
+        break
+      fi
+      if [ $i -eq 20 ]; then
+        echo "❌ Servers failed to start in time"
+        echo "Frontend log:"; cat /tmp/vite-test.log
+        echo "Backend log:"; cat /tmp/backend-test.log
+        exit 1
+      fi
+      sleep 0.5
+    done
+
     cd /workspace/slide-bar
-    ./node_modules/.bin/playwright install chromium > /dev/null 2>&1
-    VITE_PORT=5174 BACKEND_PORT=3001 ./node_modules/.bin/playwright test
+    # Install browsers if not already present (cached after first run)
+    if [ ! -d "$HOME/.cache/ms-playwright/chromium"* ] 2>/dev/null; then
+      echo "📦 Installing Playwright browsers (first run)..."
+      ./node_modules/.bin/playwright install chromium 2>/dev/null || true
+    fi
+    DATABASE_URL=postgresql://slidebar_user:slidebar_pass@db:5432/slidebar_test?schema=public VITE_PORT=5174 BACKEND_PORT=3001 ./node_modules/.bin/playwright test
     EXIT_CODE=$?
     kill $(cat /tmp/vite-test.pid) 2>/dev/null || true
     kill $(cat /tmp/backend-test.pid) 2>/dev/null || true
@@ -77,7 +107,12 @@ else
   docker rm -f $APP_CONTAINER 2>/dev/null || true
 fi
 
-# Show report if tests passed
+# Show report info
+echo ""
+echo "📊 Test report available at: playwright-report/"
+echo "💡 To view the report, run: pnpm playwright show-report"
+
+# Auto-open report only if tests passed
 if [ $EXIT_CODE -eq 0 ]; then
   "$SCRIPT_DIR/show-report.sh"
 fi

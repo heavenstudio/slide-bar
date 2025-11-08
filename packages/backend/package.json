@@ -6,8 +6,8 @@
   "scripts": {
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
-    "test": "vitest run",
-    "test:watch": "vitest",
+    "test": "dotenv -e .env.test -- vitest run",
+    "test:watch": "dotenv -e .env.test -- vitest",
     "test:server": "node test-server.js",
     "test:db:migrate": "dotenv -e .env.test -- prisma migrate deploy",
     "test:db:reset": "dotenv -e .env.test -- prisma migrate reset --force --skip-seed",

@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { truncateDatabase } from '../packages/backend/tests/helpers/database.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -15,37 +16,9 @@ const __dirname = path.dirname(__filename);
  */
 
 test.describe('Player Slideshow', () => {
-  /**
-   * Scenario: Player displays when images exist
-   *   Given I have uploaded images
-   *   When I navigate to /player
-   *   Then I should see the first image fullscreen
-   *   And I should see a slide counter
-   */
-  test('should display images in fullscreen slideshow', async ({ page }) => {
-    // First, upload an image via the dashboard
-    await page.goto('/');
-    await page.waitForSelector('h1:has-text("Slide Bar")');
-    await page.waitForTimeout(1000);
-
-    const testImagePath = path.join(__dirname, '../packages/backend/tests/fixtures/test-image.jpg');
-    const fileInput = page.locator('input[type="file"]');
-    await fileInput.setInputFiles(testImagePath);
-    await page.waitForTimeout(2000);
-
-    // Now navigate to player
-    await page.goto('/player');
-
-    // Wait for player to load
-    await page.waitForTimeout(2000);
-
-    // Should show an image
-    const image = page.locator('img');
-    await expect(image).toBeVisible();
-
-    // Should show slide counter
-    const counter = page.locator('text=/\\d+ \\/ \\d+/');
-    await expect(counter).toBeVisible();
+  // Truncate database before each test to ensure clean state
+  test.beforeEach(async () => {
+    await truncateDatabase();
   });
 
   /**
@@ -58,8 +31,8 @@ test.describe('Player Slideshow', () => {
     // Go directly to player without uploading anything
     await page.goto('/player');
 
-    // Wait for page to load
-    await page.waitForTimeout(2000);
+    // Wait for player to load
+    await page.waitForLoadState('networkidle');
 
     // Should show empty state message
     await expect(page.locator('text=Nenhuma imagem disponível')).toBeVisible();
@@ -86,31 +59,6 @@ test.describe('Player Slideshow', () => {
     // Either shows images or empty state, but no auth error
     const errorText = page.locator('text=Authentication');
     await expect(errorText).not.toBeVisible();
-  });
-
-  /**
-   * Scenario: Player shows keyboard controls
-   *   Given I am on the player page
-   *   When the page loads
-   *   Then I should see keyboard control instructions
-   */
-  test('should display keyboard controls hint', async ({ page }) => {
-    // First upload an image
-    await page.goto('/');
-    await page.waitForSelector('h1:has-text("Slide Bar")');
-    await page.waitForTimeout(1000);
-
-    const testImagePath = path.join(__dirname, '../packages/backend/tests/fixtures/test-image.jpg');
-    const fileInput = page.locator('input[type="file"]');
-    await fileInput.setInputFiles(testImagePath);
-    await page.waitForTimeout(2000);
-
-    // Navigate to player
-    await page.goto('/player');
-    await page.waitForTimeout(1000);
-
-    // Should show keyboard hints
-    await expect(page.locator('text=Espaço')).toBeVisible();
   });
 
   /**
@@ -145,23 +93,88 @@ test.describe('Player Slideshow', () => {
     // Upload multiple images
     await page.goto('/');
     await page.waitForSelector('h1:has-text("Slide Bar")');
-    await page.waitForTimeout(1000);
+    await page.waitForSelector('h2:has-text("Enviar Nova Imagem")');
 
     const testImagePath = path.join(__dirname, '../packages/backend/tests/fixtures/test-image.jpg');
     const fileInput = page.locator('input[type="file"]');
 
-    // Upload 2 images
+    // Upload first image and wait for it to appear
     await fileInput.setInputFiles(testImagePath);
-    await page.waitForTimeout(2000);
+    await page.waitForSelector('[data-testid="image-card"]', { timeout: 5000 });
+    const firstImageCount = await page.locator('[data-testid="image-card"]').count();
+    expect(firstImageCount).toBe(1);
+
+    // Upload second image and wait for it to appear
     await fileInput.setInputFiles(testImagePath);
-    await page.waitForTimeout(2000);
+    await page.waitForFunction(
+      (expectedCount) => {
+        return document.querySelectorAll('[data-testid="image-card"]').length === expectedCount;
+      },
+      2, // expecting 2 images
+      { timeout: 5000 }
+    );
 
     // Navigate to player
     await page.goto('/player');
-    await page.waitForTimeout(1000);
 
     // Should show counter with multiple images
     const counter = page.locator('text=/[12] \\/ 2/');
     await expect(counter).toBeVisible();
+  });
+
+  /**
+   * Scenario: Player displays when images exist
+   *   Given I have uploaded images
+   *   When I navigate to /player
+   *   Then I should see the first image fullscreen
+   *   And I should see a slide counter
+   */
+  test('should display images in fullscreen slideshow', async ({ page }) => {
+    // First, upload an image via the dashboard
+    await page.goto('/');
+    await page.waitForSelector('h1:has-text("Slide Bar")');
+    await page.waitForSelector('h2:has-text("Enviar Nova Imagem")');
+
+    const testImagePath = path.join(__dirname, '../packages/backend/tests/fixtures/test-image.jpg');
+    const fileInput = page.locator('input[type="file"]');
+    await fileInput.setInputFiles(testImagePath);
+    await page.waitForSelector('[data-testid="image-card"]', { timeout: 5000 });
+
+    // Now navigate to player
+    await page.goto('/player');
+    await page.waitForLoadState('networkidle');
+
+    // Should show an image
+    const image = page.locator('img');
+    await expect(image).toBeVisible();
+
+    // Should show slide counter
+    const counter = page.locator('text=/\\d+ \\/ \\d+/');
+    await expect(counter).toBeVisible();
+  });
+
+  /**
+   * Scenario: Player shows keyboard controls
+   *   Given I am on the player page
+   *   When the page loads
+   *   Then I should see keyboard control instructions
+   */
+  test('should display keyboard controls hint', async ({ page }) => {
+    // First upload an image
+    await page.goto('/');
+    await page.waitForSelector('h1:has-text("Slide Bar")');
+    await page.waitForSelector('h2:has-text("Enviar Nova Imagem")');
+
+    const testImagePath = path.join(__dirname, '../packages/backend/tests/fixtures/test-image.jpg');
+    const fileInput = page.locator('input[type="file"]');
+    await fileInput.setInputFiles(testImagePath);
+    await page.waitForSelector('[data-testid="image-card"]', { timeout: 5000 });
+
+    // Navigate to player
+    await page.goto('/player');
+    await page.waitForLoadState('networkidle');
+
+    // Should show keyboard hints
+    await expect(page.locator('text=Espaço')).toBeVisible();
   });
 });

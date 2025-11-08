@@ -45,3 +45,4 @@ packages/backend/prisma/migrations/
 
 # Uploads (local development)
 packages/backend/uploads/
+packages/backend/uploads-test/

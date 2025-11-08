@@ -12,9 +12,14 @@ describe('Player Routes', () => {
     app = express();
     app.use(express.json());
 
-    // Mock upload service
+    // Mock upload service with prisma
     mockUploadService = {
       getImagesByOrganization: vi.fn(),
+      prisma: {
+        organization: {
+          findFirst: vi.fn(),
+        },
+      },
     };
 
     // Mount router
@@ -23,6 +28,7 @@ describe('Player Routes', () => {
 
   describe('GET /api/player/images', () => {
     it('should return images without requiring authentication', async () => {
+      const mockOrgId = 'org-uuid-123';
       const mockImages = [
         {
           id: 1,
@@ -31,6 +37,7 @@ describe('Player Routes', () => {
         },
       ];
 
+      mockUploadService.prisma.organization.findFirst.mockResolvedValue({ id: mockOrgId });
       mockUploadService.getImagesByOrganization.mockResolvedValue(mockImages);
 
       const response = await request(app).get('/api/player/images').expect(200);
@@ -49,6 +56,8 @@ describe('Player Routes', () => {
     });
 
     it('should work without any authentication headers', async () => {
+      const mockOrgId = 'org-uuid-456';
+      mockUploadService.prisma.organization.findFirst.mockResolvedValue({ id: mockOrgId });
       mockUploadService.getImagesByOrganization.mockResolvedValue([]);
 
       // No Authorization header - should still work (public route)
