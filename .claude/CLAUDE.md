@@ -82,7 +82,7 @@ slide-bar/
 - ESLint v9 (flat config) - configured and passing
 - Prettier for formatting - configured
 - Test coverage reporting configured (`pnpm test:coverage`)
-- 22 unit tests + 7 E2E tests (all passing)
+- 37 unit tests + 13 E2E tests (all passing)
 - Lint commands: `pnpm lint`, `pnpm lint:fix`
 - Format commands: `pnpm format`, `pnpm format:check`
 
@@ -93,11 +93,18 @@ slide-bar/
 
 ## E2E Test Execution
 
+- **Performance**: ~7 seconds total (Playwright browsers pre-installed in Docker image)
 - Tests run entirely inside Docker container (no port conflicts with dev servers)
+- **Browser caching**: Playwright 1.56.1 installed for node user in Dockerfile
 - Test script checks if devcontainer app is running, else creates temporary container
 - Test servers use ports 3001 (backend) and 5174 (frontend) internally
-- Database is cleaned before each test run (slidebar_test database)
-- All 7 tests passing: dashboard/auto-login, empty state, upload, validation, deletion, grid display, refresh
+- **Database isolation**:
+  - Uses `slidebar_test` database (separate from dev)
+  - Global setup/teardown in `packages/backend/tests/` for database cleanup
+  - Helper functions in `packages/backend/tests/helpers/database.js`
+- All 13 tests passing:
+  - 7 image upload tests (dashboard, upload, delete, grid, validation)
+  - 6 player tests (public access, empty state, fullscreen, controls, dashboard link)
 
 ## Security Features
 

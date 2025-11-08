@@ -88,7 +88,7 @@ pnpm stop
 ### Testes
 - Vitest (testes unitários)
 - Playwright (testes E2E)
-- 22 testes unitários + 7 testes E2E
+- 37 testes unitários + 13 testes E2E
 
 ---
 
@@ -142,9 +142,10 @@ pnpm test:e2e:show-report
 ```
 
 **Estatísticas de Testes:**
-- ✅ 22 testes unitários (100% passando)
-- ✅ 7 testes E2E (100% passando)
+- ✅ 37 testes unitários (100% passando)
+- ✅ 13 testes E2E (100% passando)
 - ✅ Cobertura Frontend + Backend
+- ⚡ E2E boot time: ~7 segundos (browsers pré-instalados no Docker)
 
 ---
 
@@ -232,13 +233,25 @@ pnpm install
 
 ## 🎯 Funcionalidades Atuais
 
+**Gerenciamento de Imagens:**
 - ✅ Upload de imagens (JPEG, PNG)
 - ✅ Dashboard de gerenciamento de imagens
 - ✅ Exibição em grade de imagens
 - ✅ Exclusão de imagens
 - ✅ Validação de arquivos (tipo, tamanho)
+
+**Player/Slideshow:**
+- ✅ Visualização fullscreen em /player (público, sem auth)
+- ✅ Rotação automática a cada 5 segundos
+- ✅ Indicador de progresso
+- ✅ Controles de teclado (espaço para pausar, setas para navegar)
+- ✅ Auto-refresh a cada 5 minutos
+- ✅ Estado vazio quando não há imagens
+
+**Infraestrutura:**
 - ✅ Autenticação JWT
 - ✅ Suporte multi-organização
+- ✅ Demo login para desenvolvimento
 
 ---
 
@@ -255,6 +268,8 @@ pnpm install
 - [ ] Playlists de conteúdo
 
 **Exibição (Player):**
+- [x] Player básico fullscreen com rotação automática
+- [x] Controles de teclado (espaço, setas)
 - [ ] Aplicação player para TV/Chromecast
 - [ ] Modo offline (cache de conteúdo)
 - [ ] Transições animadas entre slides
