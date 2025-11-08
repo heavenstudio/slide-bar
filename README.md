@@ -85,18 +85,15 @@ pnpm stop
 
 ### Backend
 
-- Node.js + Express
-- Prisma ORM
-- PostgreSQL
-- Autenticação JWT
-- Multer (upload de arquivos)
-- Vitest (testes)
+- **Supabase** (PostgreSQL + Auth + Storage + Realtime)
+- Supabase JavaScript Client
+- ~Node.js + Express (legacy, sendo removido)~
 
 ### Testes
 
 - Vitest (testes unitários)
 - Playwright (testes E2E)
-- 37 testes unitários + 13 testes E2E
+- 50 testes unitários + 13 testes E2E
 
 ---
 
@@ -272,9 +269,11 @@ pnpm install
 
 **Infraestrutura:**
 
-- ✅ Autenticação JWT
+- ✅ Supabase Auth (demo login: demo@example.com / demo-password-123)
+- ✅ Supabase Storage (armazenamento de imagens)
+- ✅ Supabase PostgreSQL (banco de dados)
 - ✅ Suporte multi-organização
-- ✅ Demo login para desenvolvimento
+- 🔄 Migração Express → Supabase em andamento (ver `spec/migrate-to-supabase.md`)
 
 ---
 
@@ -372,43 +371,75 @@ pnpm install
 
 ---
 
-## 🚀 Deploy (Render.com)
+## 🚀 Deploy (Supabase + Vercel)
 
-O projeto está configurado para deploy automático no Render.com com PR previews.
+O projeto usa **Supabase** para backend (database, auth, storage) e **Vercel** para frontend.
 
-### Deploy via Blueprint (Recomendado)
+### Pré-requisitos
 
-1. Acesse [render.com](https://render.com) e faça login
-2. Conecte sua conta GitHub
-3. Clique em **"New" → "Blueprint"**
-4. Selecione o repositório `slide-bar`
-5. Render detecta `render.yaml` automaticamente
-6. Clique **"Apply"**
+1. Conta no [Supabase](https://supabase.com) (gratuita)
+2. Conta no [Vercel](https://vercel.com) (gratuita)
+3. Supabase CLI instalado: `brew install supabase/tap/supabase`
 
-Isso criará automaticamente:
+### Passo 1: Setup Supabase
 
-- PostgreSQL database (free tier, 1GB)
-- Backend API service
-- Frontend static site
-- Persistent disk para uploads (1GB)
+1. Crie um novo projeto no [Supabase Dashboard](https://app.supabase.com)
+2. Obtenha as credenciais do projeto:
+   - Project URL (ex: `https://xxx.supabase.co`)
+   - Anon/Public Key (ex: `eyJhbGc...`)
+3. Execute as migrations localmente e envie para o cloud:
 
-### Habilitar PR Previews
+```bash
+# Logar no Supabase
+supabase login
 
-Para cada serviço (`slidebar-api` e `slidebar-web`):
+# Link com seu projeto (você será solicitado a escolher o projeto)
+supabase link
 
-1. Vá em **Settings** → **"Pull Request Previews"**
-2. Ative **"Create previews automatically"**
-3. Salvar
+# Push das migrations para o cloud
+supabase db push
+```
 
-Agora cada PR terá um preview environment automático! 🎉
+### Passo 2: Deploy no Vercel
 
-### Notas do Free Tier
+1. Instale a CLI do Vercel: `npm i -g vercel`
+2. Faça deploy do frontend:
 
-⚠️ **Serviços dormem após 15 minutos de inatividade**
+```bash
+# Deploy do frontend
+cd packages/frontend
+vercel
+```
 
-- Primeira requisição demora ~30-60s para acordar
-- Perfeito para demos e staging
-- Para produção com usuários reais, upgrade para Starter ($7/mês por serviço)
+3. Configure as variáveis de ambiente no Vercel Dashboard:
+
+```bash
+VITE_USE_SUPABASE=true
+VITE_SUPABASE_URL=https://xxx.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJhbGc...
+```
+
+4. Redesploy após configurar as variáveis:
+
+```bash
+vercel --prod
+```
+
+### Deploy Automatizado (GitHub Integration)
+
+1. Conecte seu repositório ao Vercel via GitHub
+2. Configure as variáveis de ambiente no Vercel Dashboard
+3. Cada push para `main` fará deploy automático
+4. Cada PR criará um preview deployment automático
+
+### Free Tier
+
+Ambos os serviços possuem planos gratuitos generosos:
+
+- **Supabase Free**: 500MB database, 1GB storage, 50K MAU
+- **Vercel Hobby**: Unlimited deployments, 100GB bandwidth/mês
+
+Perfeito para MVPs e projetos pequenos! 🎉
 
 ---
 
