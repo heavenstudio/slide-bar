@@ -4,6 +4,7 @@ import { config } from './config/index.js';
 import { prisma } from './config/database.js';
 import { createUploadRouter } from './routes/upload.routes.js';
 import { createAuthRouter } from './routes/auth.routes.js';
+import { createPlayerRouter } from './routes/player.routes.js';
 import { UploadService } from './services/upload.service.js';
 import { authenticate } from './middleware/auth.js';
 
@@ -28,6 +29,7 @@ const uploadService = new UploadService(prisma);
 // Routes
 app.use('/api/auth', createAuthRouter(prisma));
 app.use('/api/upload', createUploadRouter(uploadService, authenticate));
+app.use('/api/player', createPlayerRouter(uploadService)); // Public route - no auth
 
 // Error handling middleware
 app.use((err, req, res, _next) => {
