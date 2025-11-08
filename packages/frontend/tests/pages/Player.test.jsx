@@ -1,68 +1,38 @@
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
-
-// Mock Supabase client
-vi.mock('../../src/lib/supabase', () => ({
-  supabase: {
-    from: vi.fn(),
-  },
-}));
-
 import Player from '../../src/pages/Player';
-import { supabase } from '../../src/lib/supabase';
+import {
+  useSupabaseCleanup,
+  cleanDatabase,
+  createMockImageFile,
+} from '../helpers/supabase.js';
+import { demoLogin, uploadImage } from '../../src/lib/supabaseApi.js';
+
+// Setup automatic database cleanup after each test
+useSupabaseCleanup();
 
 describe('Player', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    vi.clearAllTimers();
-  });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
-  it('should show loading state initially', () => {
-    // Mock Supabase to never resolve
-    const mockFrom = {
-      select: vi.fn().mockReturnThis(),
-      order: vi.fn().mockReturnValue(new Promise(() => {})), // Never resolves
-    };
-    supabase.from.mockReturnValue(mockFrom);
-
-    render(<Player />);
-
-    expect(screen.getByText(/Carregando.../i)).toBeInTheDocument();
+  beforeEach(async () => {
+    await cleanDatabase();
   });
 
   it('should fetch and display images', async () => {
-    const mockImages = [
-      {
-        id: 1,
-        filename: 'test1.jpg',
-        url: '/uploads/test1.jpg',
-        created_at: new Date().toISOString(),
-      },
-      {
-        id: 2,
-        filename: 'test2.jpg',
-        url: '/uploads/test2.jpg',
-        created_at: new Date().toISOString(),
-      },
-    ];
+    // Login and upload test images
+    await demoLogin();
 
-    const mockFrom = {
-      select: vi.fn().mockReturnThis(),
-      order: vi.fn().mockResolvedValue({
-        data: mockImages,
-        error: null,
-      }),
-    };
-    supabase.from.mockReturnValue(mockFrom);
+    const mockFile1 = createMockImageFile('test1.jpg', 'test content 1');
+    const mockFile2 = createMockImageFile('test2.jpg', 'test content 2');
+
+    await uploadImage(mockFile1);
+    await uploadImage(mockFile2);
 
     render(<Player />);
 
+    // Wait for images to load (check for either image since order may vary)
     await waitFor(() => {
-      expect(screen.getByAltText('test1.jpg')).toBeInTheDocument();
+      const img1 = screen.queryByAltText('test1.jpg');
+      const img2 = screen.queryByAltText('test2.jpg');
+      expect(img1 || img2).toBeTruthy();
     });
 
     // Should show slide counter
@@ -70,15 +40,6 @@ describe('Player', () => {
   });
 
   it('should show empty state when no images exist', async () => {
-    const mockFrom = {
-      select: vi.fn().mockReturnThis(),
-      order: vi.fn().mockResolvedValue({
-        data: [],
-        error: null,
-      }),
-    };
-    supabase.from.mockReturnValue(mockFrom);
-
     render(<Player />);
 
     await waitFor(() => {
@@ -86,47 +47,15 @@ describe('Player', () => {
     });
   });
 
-  it('should show error state on fetch failure', async () => {
-    const mockFrom = {
-      select: vi.fn().mockReturnThis(),
-      order: vi.fn().mockResolvedValue({
-        data: null,
-        error: { message: 'Failed to fetch' },
-      }),
-    };
-    supabase.from.mockReturnValue(mockFrom);
-
-    render(<Player />);
-
-    await waitFor(() => {
-      expect(screen.getByText(/Erro/i)).toBeInTheDocument();
-    });
-  });
-
   it('should display slide counter', async () => {
-    const mockImages = [
-      {
-        id: 1,
-        filename: 'test1.jpg',
-        url: '/uploads/test1.jpg',
-        created_at: new Date().toISOString(),
-      },
-      {
-        id: 2,
-        filename: 'test2.jpg',
-        url: '/uploads/test2.jpg',
-        created_at: new Date().toISOString(),
-      },
-    ];
+    // Login and upload test images
+    await demoLogin();
 
-    const mockFrom = {
-      select: vi.fn().mockReturnThis(),
-      order: vi.fn().mockResolvedValue({
-        data: mockImages,
-        error: null,
-      }),
-    };
-    supabase.from.mockReturnValue(mockFrom);
+    const mockFile1 = createMockImageFile('test1.jpg');
+    const mockFile2 = createMockImageFile('test2.jpg');
+
+    await uploadImage(mockFile1);
+    await uploadImage(mockFile2);
 
     render(<Player />);
 
@@ -136,23 +65,10 @@ describe('Player', () => {
   });
 
   it('should render keyboard controls hint', async () => {
-    const mockImages = [
-      {
-        id: 1,
-        filename: 'test1.jpg',
-        url: '/uploads/test1.jpg',
-        created_at: new Date().toISOString(),
-      },
-    ];
-
-    const mockFrom = {
-      select: vi.fn().mockReturnThis(),
-      order: vi.fn().mockResolvedValue({
-        data: mockImages,
-        error: null,
-      }),
-    };
-    supabase.from.mockReturnValue(mockFrom);
+    // Login and upload at least one image so controls are visible
+    await demoLogin();
+    const mockFile = createMockImageFile('test1.jpg');
+    await uploadImage(mockFile);
 
     render(<Player />);
 

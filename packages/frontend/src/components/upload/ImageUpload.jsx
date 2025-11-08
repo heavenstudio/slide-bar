@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { uploadImage } from '../../lib/api';
+import { uploadImage } from '../../lib/supabaseApi';
 
 /**
  * Image Upload Component

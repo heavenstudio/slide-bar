@@ -1,16 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
 
-// Mock the API module
-vi.mock('../../src/lib/api', () => ({
+// Mock the Supabase API module
+vi.mock('../../src/lib/supabaseApi', () => ({
   uploadImage: vi.fn(),
 }));
 
 import ImageUpload from '../../src/components/upload/ImageUpload';
-import { uploadImage } from '../../src/lib/api';
+import { uploadImage } from '../../src/lib/supabaseApi';
 
 describe('ImageUpload', () => {
   beforeEach(() => {
+    cleanup(); // Clean up DOM from previous tests
     vi.clearAllMocks();
   });
 
@@ -38,7 +39,7 @@ describe('ImageUpload', () => {
     uploadImage.mockImplementation(
       () =>
         new Promise((resolve) =>
-          setTimeout(() => resolve({ image: { id: '1', url: '/test.jpg' } }), 100)
+          setTimeout(() => resolve({ id: '1', url: '/test.jpg' }), 100)
         )
     );
 

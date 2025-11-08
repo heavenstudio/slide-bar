@@ -86,14 +86,19 @@ export const getImages = async () => {
  */
 export const uploadImage = async (file) => {
   // Generate unique filename
+  // Support both File and Blob objects (Blob used in tests to work around jsdom limitations)
+  const fileName = file.name || 'image.jpg';
   const fileId = crypto.randomUUID();
-  const fileExt = file.name.split('.').pop();
-  const filePath = `${fileId}/${file.name}`;
+  const fileExt = fileName.split('.').pop();
+  const filePath = `${fileId}/${fileName}`;
 
   // Upload to Supabase Storage
+  // Explicitly pass contentType to work around jsdom File API limitations in tests
   const { data: storageData, error: storageError } = await supabase.storage
     .from('images')
-    .upload(filePath, file);
+    .upload(filePath, file, {
+      contentType: file.type || 'image/jpeg',
+    });
 
   if (storageError) {
     throw new Error(storageError.message);
@@ -127,10 +132,10 @@ export const uploadImage = async (file) => {
   const { data: imageData, error: dbError } = await supabase
     .from('images')
     .insert({
-      filename: file.name,
-      original_name: file.name,
-      mime_type: file.type,
-      size: file.size,
+      filename: fileName,
+      original_name: fileName,
+      mime_type: file.type || 'image/jpeg',
+      size: file.size || 0,
       path: storageData.path,
       url: publicUrl,
       organization_id: userData.organization_id,
