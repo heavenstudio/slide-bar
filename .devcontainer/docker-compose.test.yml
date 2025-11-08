@@ -1,0 +1,4 @@
+services:
+  app:
+    # Override ports - E2E tests run inside container, don't expose to host
+    ports: []

@@ -1,0 +1,5 @@
+# Support both macOS and Linux platforms for Docker development
+# This ensures esbuild and other native binaries work in both environments
+side-effects-cache=true
+# The format for this depends on pnpm version - try installing both explicitly
+

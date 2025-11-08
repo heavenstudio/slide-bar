@@ -1,0 +1,47 @@
+{
+  "name": "slide-bar",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Digital signage platform for restaurants and bars",
+  "scripts": {
+    "start": "./scripts/dev-start.sh",
+    "stop": "./scripts/dev-stop.sh",
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "test:watch": "pnpm -r test:watch",
+    "test:coverage": "pnpm -r test -- --coverage",
+    "test:e2e": "./scripts/test-e2e.sh",
+    "test:e2e:ui": "./scripts/test-e2e-ui.sh",
+    "test:e2e:show-report": "./scripts/show-report.sh",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "keywords": [
+    "digital-signage",
+    "saas",
+    "restaurant"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "devDependencies": {
+    "@esbuild/linux-arm64": "^0.21.5",
+    "@eslint/js": "^9.39.1",
+    "@playwright/test": "^1.56.1",
+    "@rollup/rollup-darwin-arm64": "^4.53.0",
+    "@rollup/rollup-linux-arm64-gnu": "^4.53.0",
+    "@vitest/coverage-v8": "^1.0.0",
+    "dotenv-cli": "^11.0.0",
+    "eslint": "^9.39.1",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "globals": "^16.5.0",
+    "prettier": "^3.6.2"
+  }
+}

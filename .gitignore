@@ -1,0 +1,47 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+.pnpm-store/
+
+# Testing
+coverage/
+*.lcov
+test-results/
+playwright-report/
+
+# Production
+dist/
+build/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Editor
+.idea/
+*.swp
+*.swo
+*~
+
+# DevContainer - keep these for team setup
+# .devcontainer/
+# .vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Prisma
+packages/backend/prisma/migrations/
+
+# Uploads (local development)
+packages/backend/uploads/
