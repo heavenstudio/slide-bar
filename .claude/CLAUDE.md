@@ -1,10 +1,16 @@
 # Slide Bar - Project Context
 
+## ⚠️ Active Migration: Supabase
+
+**Status**: 🟡 Migrating from Express/Prisma to Supabase
+**Plan**: See `spec/migrate-to-supabase.md` for detailed migration plan
+**Approach**: Incremental TDD migration, all tests passing at every step
+
 ## Architecture
 
 - **Monorepo**: pnpm workspaces (packages/frontend, packages/backend)
 - **Frontend**: React 18 + Vite + Tailwind CSS
-- **Backend**: Node.js + Express + Prisma + PostgreSQL
+- **Backend**: Node.js + Express + Prisma + PostgreSQL *(migrating to Supabase)*
 - **Testing**: Vitest (unit) + Playwright (E2E)
 
 ## Folder Structure
