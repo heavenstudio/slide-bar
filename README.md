@@ -242,6 +242,86 @@ pnpm install
 
 ---
 
+## 🗺️ Roadmap
+
+### 📍 Fase 1 - MVP SaaS (Próximos 6-12 meses)
+
+**Gestão de Conteúdo:**
+- [ ] Biblioteca de templates prontos (menus, promoções, eventos)
+- [ ] Agendamento de conteúdo por horário/dia da semana
+- [ ] Suporte a vídeos curtos (MP4, WebM)
+- [ ] Editor de slides com transições
+- [ ] Múltiplas telas por organização
+- [ ] Playlists de conteúdo
+
+**Exibição (Player):**
+- [ ] Aplicação player para TV/Chromecast
+- [ ] Modo offline (cache de conteúdo)
+- [ ] Transições animadas entre slides
+- [ ] Controle remoto de tempo de exibição
+
+**Interface e UX:**
+- [ ] Interface mobile-first (gestão pelo celular)
+- [ ] Onboarding guiado para novos usuários
+- [ ] Preview em tempo real do conteúdo
+
+**Analytics Básico:**
+- [ ] Contador de impressões por slide
+- [ ] Tempo médio de exibição
+- [ ] Relatórios semanais automáticos
+
+**Planos e Pagamento:**
+- [ ] Sistema de assinaturas (Stripe/Mercado Pago)
+- [ ] 2-3 planos de preço escalonados
+- [ ] Período de trial gratuito
+
+### 📍 Fase 2 - Crescimento (12-24 meses)
+
+**Multi-localização:**
+- [ ] Gestão centralizada de múltiplas unidades
+- [ ] Dashboard consolidado por rede/franquia
+- [ ] Personalização de conteúdo por localização
+
+**Integrações:**
+- [ ] API pública para integrações
+- [ ] Webhook para eventos
+- [ ] Integração com sistemas de PDV (iFood, Rappi)
+- [ ] Sincronização automática de cardápios
+
+**Analytics Avançado:**
+- [ ] Correlação de conteúdo com horários de pico
+- [ ] A/B testing de slides
+- [ ] Heatmap de engajamento por horário
+- [ ] Exportação de relatórios (PDF, Excel)
+
+**White Label:**
+- [ ] Marca customizada por cliente enterprise
+- [ ] URLs personalizadas
+- [ ] Temas customizáveis
+
+### 📍 Fase 3 - Marketplace (24+ meses)
+
+**Sistema de Anúncios:**
+- [ ] Marketplace de anúncios para marcas/fornecedores
+- [ ] Segmentação geográfica de anúncios
+- [ ] Revenue share com estabelecimentos
+- [ ] Dashboard para anunciantes
+- [ ] CPM tracking e billing
+
+**Inteligência e Automação:**
+- [ ] Sugestões de conteúdo via IA
+- [ ] Biblioteca de imagens integrada (Unsplash/Pexels)
+- [ ] Geração automática de slides com IA
+- [ ] Calendário automático (datas comemorativas)
+
+**Enterprise Features:**
+- [ ] SLA customizado
+- [ ] Suporte 24/7
+- [ ] Gestor de conta dedicado
+- [ ] Treinamento presencial
+
+---
+
 ## 📝 Licença
 
 UNLICENSED - Proprietário
