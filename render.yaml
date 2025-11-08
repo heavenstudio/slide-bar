@@ -71,6 +71,5 @@ services:
       - path: /*
         name: X-Content-Type-Options
         value: nosniff
-
 # Note: VITE_API_URL is baked into the build, so changes require a rebuild
 # For PR previews, Render will automatically adjust the backend URL

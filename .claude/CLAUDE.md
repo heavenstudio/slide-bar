@@ -136,3 +136,30 @@ slide-bar/
 - Auth middleware required for all upload routes
 - File type validation (JPEG, PNG only)
 - File size limits enforced
+
+## File Organization Rules
+
+### CRITICAL: Avoid Root Folder Clutter
+
+**DO NOT create files in the root folder unless absolutely necessary**
+
+- ❌ **NEVER** create uppercase markdown files (DEPLOYMENT.md, CONTRIBUTING.md, etc.)
+- ❌ **NEVER** create documentation files in root unless explicitly requested
+- ✅ Add documentation to README.md or relevant existing files
+- ✅ Use appropriate subdirectories:
+  - `docs/` - Business/market documentation
+  - `scripts/` - Automation scripts
+  - `.github/` - CI/CD workflows
+  - `.claude/` - AI assistant context
+
+### Root Folder - Allowed Files Only
+
+Essential configuration files only:
+
+- `package.json`, `pnpm-workspace.yaml`, `pnpm-lock.yaml`
+- `.gitignore`, `.prettierrc`, `eslint.config.js`
+- `playwright.config.mjs`
+- `README.md` (single source of truth for docs)
+- `render.yaml` (deployment config)
+
+**Everything else belongs in subdirectories**

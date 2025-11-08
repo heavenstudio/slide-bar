@@ -372,6 +372,46 @@ pnpm install
 
 ---
 
+## 🚀 Deploy (Render.com)
+
+O projeto está configurado para deploy automático no Render.com com PR previews.
+
+### Deploy via Blueprint (Recomendado)
+
+1. Acesse [render.com](https://render.com) e faça login
+2. Conecte sua conta GitHub
+3. Clique em **"New" → "Blueprint"**
+4. Selecione o repositório `slide-bar`
+5. Render detecta `render.yaml` automaticamente
+6. Clique **"Apply"**
+
+Isso criará automaticamente:
+
+- PostgreSQL database (free tier, 1GB)
+- Backend API service
+- Frontend static site
+- Persistent disk para uploads (1GB)
+
+### Habilitar PR Previews
+
+Para cada serviço (`slidebar-api` e `slidebar-web`):
+
+1. Vá em **Settings** → **"Pull Request Previews"**
+2. Ative **"Create previews automatically"**
+3. Salvar
+
+Agora cada PR terá um preview environment automático! 🎉
+
+### Notas do Free Tier
+
+⚠️ **Serviços dormem após 15 minutos de inatividade**
+
+- Primeira requisição demora ~30-60s para acordar
+- Perfeito para demos e staging
+- Para produção com usuários reais, upgrade para Starter ($7/mês por serviço)
+
+---
+
 ## 📝 Licença
 
 UNLICENSED - Proprietário
