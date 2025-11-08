@@ -112,17 +112,20 @@ slide-bar/
 ## PR Workflow
 
 **Automated Checks** (GitHub Actions):
+
 - ESLint validation
 - Prettier formatting check
 - Unit tests (all packages)
 
 **Before Creating PR:**
+
 1. Fix lint errors: `pnpm lint` (0 errors required)
 2. Format code: `pnpm format`
 3. Run tests: `pnpm test` (all passing)
 4. Optional: Run E2E tests: `pnpm test:e2e`
 
 **CI Workflow** (`.github/workflows/pr-checks.yml`):
+
 - Runs on all PRs to main/master
 - Jobs: lint-and-format, test-unit
 - Must pass before merge
