@@ -1,7 +1,6 @@
 import { test, expect } from '@playwright/test';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { truncateDatabase } from '../packages/backend/tests/helpers/database.js';
 import { TIMEOUTS } from './config.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -17,10 +16,6 @@ const __dirname = path.dirname(__filename);
  */
 
 test.describe('Player Slideshow', () => {
-  // Truncate database before each test to ensure clean state
-  test.beforeEach(async () => {
-    await truncateDatabase();
-  });
 
   /**
    * Scenario: Player shows empty state when no images exist
@@ -96,7 +91,7 @@ test.describe('Player Slideshow', () => {
     await page.waitForSelector('h1:has-text("Slide Bar")');
     await page.waitForSelector('h2:has-text("Enviar Nova Imagem")');
 
-    const testImagePath = path.join(__dirname, '../packages/backend/tests/fixtures/test-image.jpg');
+    const testImagePath = path.join(__dirname, './fixtures/test-image.jpg');
     const fileInput = page.locator('input[type="file"]');
 
     // Upload first image and wait for it to appear
@@ -136,7 +131,7 @@ test.describe('Player Slideshow', () => {
     await page.waitForSelector('h1:has-text("Slide Bar")');
     await page.waitForSelector('h2:has-text("Enviar Nova Imagem")');
 
-    const testImagePath = path.join(__dirname, '../packages/backend/tests/fixtures/test-image.jpg');
+    const testImagePath = path.join(__dirname, './fixtures/test-image.jpg');
     const fileInput = page.locator('input[type="file"]');
     await fileInput.setInputFiles(testImagePath);
     await page.waitForSelector('[data-testid="image-card"]', { timeout: TIMEOUTS.SELECTOR });
@@ -166,7 +161,7 @@ test.describe('Player Slideshow', () => {
     await page.waitForSelector('h1:has-text("Slide Bar")');
     await page.waitForSelector('h2:has-text("Enviar Nova Imagem")');
 
-    const testImagePath = path.join(__dirname, '../packages/backend/tests/fixtures/test-image.jpg');
+    const testImagePath = path.join(__dirname, './fixtures/test-image.jpg');
     const fileInput = page.locator('input[type="file"]');
     await fileInput.setInputFiles(testImagePath);
     await page.waitForSelector('[data-testid="image-card"]', { timeout: TIMEOUTS.SELECTOR });

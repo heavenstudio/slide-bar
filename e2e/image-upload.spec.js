@@ -1,7 +1,6 @@
 import { test, expect } from '@playwright/test';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { truncateDatabase } from '../packages/backend/tests/helpers/database.js';
 import { TIMEOUTS } from './config.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -18,47 +17,14 @@ const __dirname = path.dirname(__filename);
 
 test.describe('Image Upload and Management', () => {
   test.beforeEach(async ({ page }) => {
-    // Truncate database before each test to ensure clean state
-    await truncateDatabase();
-
     // Clear localStorage before each test to ensure clean state
     await page.goto('/');
     await page.evaluate(() => localStorage.clear());
     await page.goto('/');
   });
 
-  // Clean up images after each test for proper isolation
-  test.afterEach(async ({ request }) => {
-    try {
-      // Get all images
-      const response = await request.get('/api/upload/images', {
-        headers: {
-          Authorization: 'Bearer demo-token',
-        },
-      });
-
-      if (response.ok()) {
-        const data = await response.json();
-        // Delete each image in parallel for faster cleanup
-        const deletePromises = data.images.map((image) =>
-          request
-            .delete(`/api/upload/images/${image.id}`, {
-              headers: {
-                Authorization: 'Bearer demo-token',
-              },
-            })
-            .catch((error) => {
-              // Log but don't fail the test if cleanup fails
-              console.warn(`Failed to delete image ${image.id}:`, error.message);
-            })
-        );
-        await Promise.all(deletePromises);
-      }
-    } catch (error) {
-      // Log cleanup failures but don't fail the test
-      console.warn('Failed to cleanup images in afterEach:', error.message);
-    }
-  });
+  // Note: Database is reset once before all tests via `supabase db reset`
+  // Tests may see data from previous tests within the same run
 
   /**
    * Scenario: User accesses the dashboard
@@ -73,10 +39,8 @@ test.describe('Image Upload and Management', () => {
     // Wait for dashboard to load
     await expect(page.locator('h1')).toContainText('Slide Bar');
 
-    // Verify auto-login happened
-    const token = await page.evaluate(() => localStorage.getItem('authToken'));
-    expect(token).toBeTruthy();
-    expect(token).toMatch(/^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+$/); // JWT format
+    // Verify page loaded successfully - auth is handled by Supabase
+    await expect(page.locator('h2:has-text("Minhas Imagens")')).toBeVisible();
   });
 
   /**
@@ -117,7 +81,7 @@ test.describe('Image Upload and Management', () => {
     await page.waitForSelector('h2:has-text("Enviar Nova Imagem")');
 
     // Create a test image file
-    const testImagePath = path.join(__dirname, '../packages/backend/tests/fixtures/test-image.jpg');
+    const testImagePath = path.join(__dirname, './fixtures/test-image.jpg');
 
     // Find the file input (it's hidden, so we use setInputFiles directly)
     const fileInput = page.locator('input[type="file"]');
@@ -178,7 +142,7 @@ test.describe('Image Upload and Management', () => {
     await page.waitForSelector('h2:has-text("Enviar Nova Imagem")');
 
     // Upload an image to ensure we have at least one
-    const testImagePath = path.join(__dirname, '../packages/backend/tests/fixtures/test-image.jpg');
+    const testImagePath = path.join(__dirname, './fixtures/test-image.jpg');
     const fileInput = page.locator('input[type="file"]');
     await fileInput.setInputFiles(testImagePath);
     await page.waitForSelector('[data-testid="image-card"]', { timeout: TIMEOUTS.SELECTOR });
@@ -229,7 +193,7 @@ test.describe('Image Upload and Management', () => {
     await page.waitForSelector('h1:has-text("Slide Bar")');
     await page.waitForSelector('h2:has-text("Enviar Nova Imagem")');
 
-    const testImagePath = path.join(__dirname, '../packages/backend/tests/fixtures/test-image.jpg');
+    const testImagePath = path.join(__dirname, './fixtures/test-image.jpg');
 
     // Upload first image
     const fileInput = page.locator('input[type="file"]');

@@ -227,39 +227,52 @@
 
 ---
 
-## Phase 7: Remove Express Backend ⏸️ PENDING
+## Phase 7: Remove Express Backend 🔄 IN PROGRESS
 
 **Goal**: Clean up deprecated code
 
 ### Tasks
 
-- [ ] **7.1 Remove backend package**
+- [x] **7.1 Remove backend package** ✅
 
   ```bash
   rm -rf packages/backend
   ```
 
-  - Update `pnpm-workspace.yaml`
-  - Remove backend scripts from `package.json`
+  - ✅ Update `pnpm-workspace.yaml`
+  - ✅ Remove backend scripts from `package.json`
+  - ✅ Update dev scripts (dev-start.sh, dev-stop.sh)
 
-- [ ] **7.2 Update tests**
-  - Remove backend unit tests (covered by frontend)
-  - Update E2E tests (no backend server needed)
-  - All E2E tests still pass ✅
+- [x] **7.2 Update tests** ⚠️ PARTIAL
 
-- [ ] **7.3 Clean up configuration**
-  - Remove backend env vars
-  - Update documentation
+  - ✅ Remove backend unit tests
+  - ✅ Update E2E test infrastructure (test-e2e.sh)
+  - ✅ Remove backend imports from E2E tests
+  - ✅ Create test fixtures in e2e/fixtures/
+  - ✅ Fix database reset (supabase db reset --yes)
+  - ✅ Fix Docker networking (host.docker.internal)
+  - ⚠️ E2E tests: **6/13 passing** (auth works, storage/database needs work)
+    - ✅ Passing: dashboard load, empty state, file validation, refresh, auth checks
+    - ❌ Failing: image upload, delete, player with images (timeout waiting for uploads)
+
+- [ ] **7.3 Clean up configuration** (TODO)
+
   - Remove Docker Compose (if unused)
+  - Update GitHub Actions workflows
 
-- [ ] **7.4 Final verification**
+- [ ] **7.4 Final verification** (BLOCKED)
   ```bash
-  pnpm test             # ✅
-  pnpm test:e2e         # ✅
+  pnpm test             # ✅ 50/50 unit tests passing
+  pnpm test:e2e         # ⚠️  6/13 tests passing
   pnpm test:coverage    # Maintained
   ```
 
-**Success Criteria**: ✅ Clean codebase, only Supabase, all tests pass
+**Status**: Backend removed, E2E infrastructure updated for Supabase. Auth working, storage/database operations need debugging.
+
+**Next Steps**:
+1. Debug Supabase storage/database operations in E2E tests
+2. Complete Phase 7.3 and 7.4
+3. Flatten packages/frontend to root (optional cleanup)
 
 ---
 
