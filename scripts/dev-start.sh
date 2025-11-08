@@ -26,11 +26,9 @@ else
 fi
 
 # Start frontend
-cd "$PROJECT_ROOT/packages/frontend"
+cd "$PROJECT_ROOT"
 nohup ./node_modules/.bin/vite --host --port 5173 > /tmp/vite-dev.log 2>&1 &
 echo $! > /tmp/vite-dev.pid
-
-cd "$PROJECT_ROOT"
 
 # Wait for frontend to start
 sleep 3

@@ -7,6 +7,7 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: './tests/setup.js',
+    exclude: ['node_modules', 'tests/*.spec.js'],
     // Run tests sequentially to avoid database conflicts in integration tests
     pool: 'forks',
     poolOptions: {

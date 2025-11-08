@@ -47,25 +47,6 @@ jobs:
     name: Unit Tests
     runs-on: ubuntu-latest
 
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          # Test-only credentials - safe to use in CI environment
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: slidebar_test
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-
-    env:
-      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/slidebar_test
-
     steps:
       - uses: actions/checkout@v4
 
@@ -94,39 +75,26 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Generate Prisma Client
-        run: cd packages/backend && pnpm prisma:generate
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
 
-      - name: Run database migrations
-        run: cd packages/backend && pnpm prisma migrate deploy
+      - name: Start Supabase local instance
+        run: supabase start
 
       - name: Run unit tests
         run: pnpm test
+        env:
+          VITE_SUPABASE_URL: http://127.0.0.1:55321
+          VITE_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0
+          SUPABASE_SERVICE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU
 
   test-e2e:
     name: E2E Tests
     runs-on: ubuntu-latest
     # Wait for lint and unit tests to pass before running E2E tests (fail-fast)
     needs: [lint-and-format, test-unit]
-
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          # Test-only credentials - safe to use in CI environment
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: slidebar_test
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-
-    env:
-      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/slidebar_test
 
     steps:
       - uses: actions/checkout@v4
@@ -189,42 +157,34 @@ jobs:
         if: steps.playwright-cache.outputs.cache-hit == 'true' && steps.playwright-deps-cache.outputs.cache-hit != 'true'
         run: npx playwright install-deps chromium
 
-      - name: Generate Prisma Client
-        run: cd packages/backend && pnpm prisma:generate
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
 
-      - name: Run database migrations
-        run: cd packages/backend && pnpm prisma migrate deploy
-
-      - name: Start backend server
-        run: |
-          cd packages/backend
-          PORT=3001 nohup node src/server.js > /tmp/backend-test.log 2>&1 &
-          echo $! > /tmp/backend-test.pid
-        env:
-          PORT: 3001
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/slidebar_test
+      - name: Start Supabase local instance
+        run: supabase start
 
       - name: Start frontend server
         run: |
-          cd packages/frontend
-          VITE_PORT=5174 BACKEND_PORT=3001 nohup npx vite --port 5174 --host > /tmp/vite-test.log 2>&1 &
+          VITE_PORT=5174 nohup npx vite --port 5174 --host > /tmp/vite-test.log 2>&1 &
           echo $! > /tmp/vite-test.pid
+        env:
+          VITE_SUPABASE_URL: http://127.0.0.1:55321
+          VITE_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0
 
-      - name: Wait for servers to be ready
+      - name: Wait for frontend server to be ready
         run: |
-          echo "Waiting for servers to start..."
+          echo "Waiting for frontend server to start..."
           for i in {1..30}; do
-            if curl -f http://localhost:5174 > /dev/null 2>&1 && \
-               curl -f http://localhost:3001/api/auth/demo-login -X POST > /dev/null 2>&1; then
-              echo "✅ Servers are ready"
+            if curl -f http://localhost:5174 > /dev/null 2>&1; then
+              echo "✅ Frontend server is ready"
               exit 0
             fi
             echo "Attempt $i/30..."
             sleep 2
           done
-          echo "❌ Servers failed to start"
-          echo "Backend logs:"
-          cat /tmp/backend-test.log
+          echo "❌ Frontend server failed to start"
           echo "Frontend logs:"
           cat /tmp/vite-test.log
           exit 1
@@ -232,12 +192,13 @@ jobs:
       - name: Run E2E tests
         run: VITE_PORT=5174 npx playwright test
         env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/slidebar_test
+          VITE_SUPABASE_URL: http://127.0.0.1:55321
+          VITE_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0
+          SUPABASE_SERVICE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU
 
-      - name: Stop servers
+      - name: Stop frontend server
         if: always()
         run: |
-          [ -f /tmp/backend-test.pid ] && kill $(cat /tmp/backend-test.pid) 2>/dev/null || true
           [ -f /tmp/vite-test.pid ] && kill $(cat /tmp/vite-test.pid) 2>/dev/null || true
 
       - name: Upload test results

@@ -5,12 +5,14 @@
   "type": "module",
   "description": "Digital signage platform for restaurants and bars",
   "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
     "start": "./scripts/dev-start.sh",
     "stop": "./scripts/dev-stop.sh",
-    "build": "pnpm -r build",
-    "test": "pnpm -r test",
-    "test:watch": "pnpm -r test:watch",
-    "test:coverage": "pnpm -r test -- --coverage",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "test:e2e": "./scripts/test-e2e.sh",
     "test:e2e:ui": "./scripts/test-e2e-ui.sh",
     "test:e2e:show-report": "./scripts/show-report.sh",
@@ -30,18 +32,33 @@
     "node": ">=18.0.0",
     "pnpm": ">=8.0.0"
   },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.80.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.20.1"
+  },
   "devDependencies": {
     "@esbuild/linux-arm64": "^0.21.5",
     "@eslint/js": "^9.39.1",
     "@playwright/test": "^1.56.1",
     "@rollup/rollup-darwin-arm64": "^4.53.0",
     "@rollup/rollup-linux-arm64-gnu": "^4.53.0",
-    "@supabase/supabase-js": "^2.80.0",
+    "@testing-library/jest-dom": "^6.1.5",
+    "@testing-library/react": "^14.1.2",
+    "@testing-library/user-event": "^14.5.1",
+    "@vitejs/plugin-react": "^4.7.0",
     "@vitest/coverage-v8": "^1.0.0",
+    "autoprefixer": "^10.4.16",
     "eslint": "^9.39.1",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.0.1",
     "globals": "^16.5.0",
-    "prettier": "^3.6.2"
+    "jsdom": "^23.0.1",
+    "postcss": "^8.4.32",
+    "prettier": "^3.6.2",
+    "tailwindcss": "^3.3.6",
+    "vite": "^5.4.21",
+    "vitest": "^1.0.4"
   }
 }

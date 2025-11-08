@@ -5,7 +5,7 @@
 - **Frontend-only**: React 18 + Vite + Tailwind CSS
 - **Backend**: Supabase (PostgreSQL + Auth + Storage + Realtime)
 - **Testing**: Vitest (integration) + Playwright (E2E)
-- **Migration Status**: ✅ Phase 7 complete (Express removed, all tests passing)
+- **Migration Status**: ✅ Phase 8 complete (Project structure flattened, monorepo removed, all tests consolidated)
 
 ## Folder Structure
 
@@ -14,14 +14,21 @@ slide-bar/
 ├── .claude/              # AI assistant context
 ├── .devcontainer/        # Docker development environment
 ├── docs/                 # Business/market documentation
-├── e2e/                  # Playwright E2E tests
-├── packages/
-│   └── frontend/         # React + Vite + Tailwind
-│       ├── src/
-│       │   ├── components/  # React components
-│       │   ├── pages/    # Page components
-│       │   └── lib/      # Supabase API client, utilities
-│       └── tests/        # Integration tests (real Supabase)
+├── src/                  # React + Vite + Tailwind
+│   ├── components/       # React components
+│   ├── pages/            # Page components
+│   └── lib/              # Supabase API client, utilities
+├── tests/                # All tests (unit + E2E + fixtures)
+│   ├── components/       # Component tests
+│   ├── pages/            # Page tests
+│   ├── helpers/          # Test helpers (Supabase cleanup, etc.)
+│   ├── fixtures/         # Test fixtures (images, Playwright config)
+│   ├── *.test.js(x)      # Unit/integration tests (Vitest)
+│   ├── *.spec.js         # E2E tests (Playwright)
+│   ├── config.js         # E2E test configuration
+│   ├── fixtures.js       # Playwright fixtures
+│   ├── global-setup.js   # E2E global setup
+│   └── global-teardown.js # E2E global teardown
 ├── scripts/              # Dev/test automation scripts
 └── supabase/             # Supabase config, migrations, functions
     ├── config.toml       # Local Supabase configuration
@@ -121,14 +128,25 @@ slide-bar/
    - **Problem**: Sequential execution caused DOM elements to persist across test files
    - **Solution**: Add `cleanup()` call in `beforeEach` hooks
 
-## E2E Test Execution
+## Test Organization
 
-- **Performance**: ~5.5 seconds total (13 tests)
+### Unit/Integration Tests (Vitest)
+- **Location**: `tests/*.test.js(x)`, `tests/components/`, `tests/pages/`
+- **Count**: 18 tests (4 test files)
+- **Performance**: ~1.5 seconds
+- **Database**: Uses TEST Supabase instance (port 55321)
+- **Helpers**: `tests/helpers/supabase.js` for database cleanup
+- **Configuration**: `vitest.config.js` excludes `tests/*.spec.js` (Playwright tests)
+
+### E2E Tests (Playwright)
+- **Location**: `tests/*.spec.js`
+- **Count**: 13 tests (2 test files)
+- **Performance**: ~6 seconds
+- **Database**: Uses TEST Supabase instance (port 55321), shared with unit tests
+- **Fixtures**: `tests/fixtures.js` for Playwright test helpers
+- **Configuration**: `playwright.config.mjs` points to `./tests` directory with `testMatch: '**/*.spec.js'`
+- **Global Setup/Teardown**: `tests/global-setup.js`, `tests/global-teardown.js`
 - Tests run entirely inside Docker container (no port conflicts with dev servers)
-- **Browser caching**: Playwright 1.56.1 installed for node user in Dockerfile
-- Test script checks if devcontainer app is running, else creates temporary container
-- Test server uses port 5174 (frontend) internally
-- **Database**: Uses local Supabase instance, `supabase db reset` before tests
 - All 13 tests passing:
   - 7 image upload tests (dashboard, upload, delete, grid, validation)
   - 6 player tests (public access, empty state, fullscreen, controls, dashboard link)
