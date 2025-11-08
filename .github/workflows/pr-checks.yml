@@ -94,17 +94,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Cache Prisma Client
-        uses: actions/cache@v4
-        id: prisma-cache
-        with:
-          path: |
-            packages/backend/node_modules/.prisma
-            packages/backend/node_modules/@prisma/client
-          key: ${{ runner.os }}-prisma-${{ hashFiles('packages/backend/prisma/schema.prisma') }}
-
       - name: Generate Prisma Client
-        if: steps.prisma-cache.outputs.cache-hit != 'true'
         run: cd packages/backend && pnpm prisma:generate
 
       - name: Run database migrations
@@ -199,17 +189,7 @@ jobs:
         if: steps.playwright-cache.outputs.cache-hit == 'true' && steps.playwright-deps-cache.outputs.cache-hit != 'true'
         run: npx playwright install-deps chromium
 
-      - name: Cache Prisma Client
-        uses: actions/cache@v4
-        id: prisma-cache-e2e
-        with:
-          path: |
-            packages/backend/node_modules/.prisma
-            packages/backend/node_modules/@prisma/client
-          key: ${{ runner.os }}-prisma-${{ hashFiles('packages/backend/prisma/schema.prisma') }}
-
       - name: Generate Prisma Client
-        if: steps.prisma-cache-e2e.outputs.cache-hit != 'true'
         run: cd packages/backend && pnpm prisma:generate
 
       - name: Run database migrations
