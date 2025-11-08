@@ -41,7 +41,7 @@ pnpm-debug.log*
 Thumbs.db
 
 # Prisma
-packages/backend/prisma/migrations/
+# migrations/ should be committed to track database schema changes
 
 # Uploads (local development)
 packages/backend/uploads/
