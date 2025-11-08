@@ -42,11 +42,10 @@ services:
     healthCheckPath: /api/auth/demo-login
 
   # Frontend Static Site
-  - type: static
+  - type: web
     name: slidebar-web
-    runtime: node
+    runtime: static
     plan: free
-    region: oregon
     buildCommand: cd packages/frontend && pnpm install --frozen-lockfile && pnpm build
     staticPublishPath: ./packages/frontend/dist
     envVars:
