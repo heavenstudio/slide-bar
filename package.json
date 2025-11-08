@@ -34,6 +34,7 @@
     "@esbuild/linux-arm64": "^0.21.5",
     "@eslint/js": "^9.39.1",
     "@playwright/test": "^1.56.1",
+    "@prisma/client": "^6.2.0",
     "@rollup/rollup-darwin-arm64": "^4.53.0",
     "@rollup/rollup-linux-arm64-gnu": "^4.53.0",
     "@vitest/coverage-v8": "^1.0.0",

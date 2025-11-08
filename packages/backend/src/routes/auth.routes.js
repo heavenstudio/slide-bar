@@ -17,32 +17,26 @@ export function createAuthRouter(prisma) {
    */
   router.post('/demo-login', async (req, res, next) => {
     try {
-      // Find or create demo organization
-      let organization = await prisma.organization.findFirst({
+      // Use upsert to atomically find or create demo organization
+      // This prevents race conditions when multiple requests arrive simultaneously
+      const organization = await prisma.organization.upsert({
         where: { name: 'Demo Organization' },
+        update: {}, // No updates needed if it exists
+        create: { name: 'Demo Organization' },
       });
 
-      if (!organization) {
-        organization = await prisma.organization.create({
-          data: { name: 'Demo Organization' },
-        });
-      }
-
-      // Find or create demo user
-      let user = await prisma.user.findFirst({
+      // Use upsert to atomically find or create demo user
+      // This prevents unique constraint violations from concurrent requests
+      const user = await prisma.user.upsert({
         where: { email: 'demo@slidebar.com' },
+        update: {}, // No updates needed if it exists
+        create: {
+          email: 'demo@slidebar.com',
+          password: 'hashed-password-placeholder', // Not used in MVP
+          name: 'Demo User',
+          organizationId: organization.id,
+        },
       });
-
-      if (!user) {
-        user = await prisma.user.create({
-          data: {
-            email: 'demo@slidebar.com',
-            password: 'hashed-password-placeholder', // Not used in MVP
-            name: 'Demo User',
-            organizationId: organization.id,
-          },
-        });
-      }
 
       // Generate JWT token
       const token = generateToken(user.id, organization.id);

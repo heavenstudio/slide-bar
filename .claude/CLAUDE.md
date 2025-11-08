@@ -69,6 +69,7 @@ slide-bar/
 ## Code Quality & Testing Practices
 
 ### Test-Driven Development (TDD)
+
 - **Write tests first**: Create tests before implementation, verify they fail initially
 - **Red-Green-Refactor**: Failing test → Make it pass → Improve code quality
 - **High unit test coverage**: Focus on edge cases, functions, classes, and modules
@@ -79,25 +80,55 @@ slide-bar/
 - **Coverage analysis**: Run `pnpm test:coverage` after features to identify gaps
 
 ### Quality Tools
+
 - ESLint v9 (flat config) - configured and passing
 - Prettier for formatting - configured
 - Test coverage reporting configured (`pnpm test:coverage`)
-- 22 unit tests + 7 E2E tests (all passing)
+- 37 unit tests + 13 E2E tests (all passing)
 - Lint commands: `pnpm lint`, `pnpm lint:fix`
 - Format commands: `pnpm format`, `pnpm format:check`
 
 ### When Tests Fail
+
 1. **First**: Check implementation code for bugs (don't relax test assertions)
 2. **Avoid**: Making tests accept broader outputs (e.g., changing specific format checks to generic string checks)
 3. **Debug**: Understand why the test is failing before making changes
 
 ## E2E Test Execution
 
+- **Performance**: ~7 seconds total (Playwright browsers pre-installed in Docker image)
 - Tests run entirely inside Docker container (no port conflicts with dev servers)
+- **Browser caching**: Playwright 1.56.1 installed for node user in Dockerfile
 - Test script checks if devcontainer app is running, else creates temporary container
 - Test servers use ports 3001 (backend) and 5174 (frontend) internally
-- Database is cleaned before each test run (slidebar_test database)
-- All 7 tests passing: dashboard/auto-login, empty state, upload, validation, deletion, grid display, refresh
+- **Database isolation**:
+  - Uses `slidebar_test` database (separate from dev)
+  - Global setup/teardown in `packages/backend/tests/` for database cleanup
+  - Helper functions in `packages/backend/tests/helpers/database.js`
+- All 13 tests passing:
+  - 7 image upload tests (dashboard, upload, delete, grid, validation)
+  - 6 player tests (public access, empty state, fullscreen, controls, dashboard link)
+
+## PR Workflow
+
+**Automated Checks** (GitHub Actions):
+
+- ESLint validation
+- Prettier formatting check
+- Unit tests (all packages)
+
+**Before Creating PR:**
+
+1. Fix lint errors: `pnpm lint` (0 errors required)
+2. Format code: `pnpm format`
+3. Run tests: `pnpm test` (all passing)
+4. Optional: Run E2E tests: `pnpm test:e2e`
+
+**CI Workflow** (`.github/workflows/pr-checks.yml`):
+
+- Runs on all PRs to main/master
+- Jobs: lint-and-format, test-unit
+- Must pass before merge
 
 ## Security Features
 
@@ -105,3 +136,30 @@ slide-bar/
 - Auth middleware required for all upload routes
 - File type validation (JPEG, PNG only)
 - File size limits enforced
+
+## File Organization Rules
+
+### CRITICAL: Avoid Root Folder Clutter
+
+**DO NOT create files in the root folder unless absolutely necessary**
+
+- ❌ **NEVER** create uppercase markdown files (DEPLOYMENT.md, CONTRIBUTING.md, etc.)
+- ❌ **NEVER** create documentation files in root unless explicitly requested
+- ✅ Add documentation to README.md or relevant existing files
+- ✅ Use appropriate subdirectories:
+  - `docs/` - Business/market documentation
+  - `scripts/` - Automation scripts
+  - `.github/` - CI/CD workflows
+  - `.claude/` - AI assistant context
+
+### Root Folder - Allowed Files Only
+
+Essential configuration files only:
+
+- `package.json`, `pnpm-workspace.yaml`, `pnpm-lock.yaml`
+- `.gitignore`, `.prettierrc`, `eslint.config.js`
+- `playwright.config.mjs`
+- `README.md` (single source of truth for docs)
+- `render.yaml` (deployment config)
+
+**Everything else belongs in subdirectories**

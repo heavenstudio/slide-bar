@@ -17,15 +17,18 @@ export default defineConfig({
   globalTeardown: path.join(__dirname, 'e2e', 'global-teardown.js'),
 
   reporter: [
-    ['html'],
-    ['list']
+    ['html', { open: 'never' }], // Generate report but don't auto-serve (blocking)
+    ['list'],
   ],
 
   use: {
-    baseURL: process.env.VITE_PORT ? `http://localhost:${process.env.VITE_PORT}` : 'http://localhost:5174',
-    trace: 'on',
-    screenshot: 'on',
-    video: 'on',
+    baseURL: process.env.VITE_PORT
+      ? `http://localhost:${process.env.VITE_PORT}`
+      : 'http://localhost:5174',
+    // Only record on failures to save ~40-50% test time
+    trace: 'retain-on-failure',
+    screenshot: 'only-on-failure',
+    video: 'retain-on-failure',
   },
 
   projects: [

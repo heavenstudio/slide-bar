@@ -1,0 +1,249 @@
+name: PR Checks
+
+on:
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  lint-and-format:
+    name: Lint & Format
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 10
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run ESLint
+        run: pnpm lint
+
+      - name: Check Prettier formatting
+        run: pnpm format:check
+
+  test-unit:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          # Test-only credentials - safe to use in CI environment
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: slidebar_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/slidebar_test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 10
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma Client
+        run: cd packages/backend && pnpm prisma:generate
+
+      - name: Run database migrations
+        run: cd packages/backend && pnpm prisma migrate deploy
+
+      - name: Run unit tests
+        run: pnpm test
+
+  test-e2e:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    # Wait for lint and unit tests to pass before running E2E tests (fail-fast)
+    needs: [lint-and-format, test-unit]
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          # Test-only credentials - safe to use in CI environment
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: slidebar_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/slidebar_test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 10
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Get Playwright version
+        id: playwright-version
+        run: echo "version=$(jq -r '.devDependencies["@playwright/test"]' package.json | sed 's/^\^//')" >> $GITHUB_OUTPUT
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: |
+            ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ steps.playwright-version.outputs.version }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-
+
+      - name: Cache Playwright system dependencies
+        uses: actions/cache@v4
+        id: playwright-deps-cache
+        with:
+          path: |
+            /var/cache/apt
+            /var/lib/apt/lists
+          key: ${{ runner.os }}-playwright-deps-${{ steps.playwright-version.outputs.version }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-deps-
+
+      - name: Install Playwright browsers and dependencies
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps chromium
+
+      - name: Install Playwright system dependencies only
+        if: steps.playwright-cache.outputs.cache-hit == 'true' && steps.playwright-deps-cache.outputs.cache-hit != 'true'
+        run: npx playwright install-deps chromium
+
+      - name: Generate Prisma Client
+        run: cd packages/backend && pnpm prisma:generate
+
+      - name: Run database migrations
+        run: cd packages/backend && pnpm prisma migrate deploy
+
+      - name: Start backend server
+        run: |
+          cd packages/backend
+          PORT=3001 nohup node src/server.js > /tmp/backend-test.log 2>&1 &
+          echo $! > /tmp/backend-test.pid
+        env:
+          PORT: 3001
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/slidebar_test
+
+      - name: Start frontend server
+        run: |
+          cd packages/frontend
+          VITE_PORT=5174 BACKEND_PORT=3001 nohup npx vite --port 5174 --host > /tmp/vite-test.log 2>&1 &
+          echo $! > /tmp/vite-test.pid
+
+      - name: Wait for servers to be ready
+        run: |
+          echo "Waiting for servers to start..."
+          for i in {1..30}; do
+            if curl -f http://localhost:5174 > /dev/null 2>&1 && \
+               curl -f http://localhost:3001/api/auth/demo-login -X POST > /dev/null 2>&1; then
+              echo "✅ Servers are ready"
+              exit 0
+            fi
+            echo "Attempt $i/30..."
+            sleep 2
+          done
+          echo "❌ Servers failed to start"
+          echo "Backend logs:"
+          cat /tmp/backend-test.log
+          echo "Frontend logs:"
+          cat /tmp/vite-test.log
+          exit 1
+
+      - name: Run E2E tests
+        run: VITE_PORT=5174 npx playwright test
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/slidebar_test
+
+      - name: Stop servers
+        if: always()
+        run: |
+          [ -f /tmp/backend-test.pid ] && kill $(cat /tmp/backend-test.pid) 2>/dev/null || true
+          [ -f /tmp/vite-test.pid ] && kill $(cat /tmp/vite-test.pid) 2>/dev/null || true
+
+      - name: Upload test results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
