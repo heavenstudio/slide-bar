@@ -30,15 +30,11 @@ services:
       - key: PORT
         value: 10000
       - key: UPLOAD_DIR
-        value: /var/data/uploads
+        value: /tmp/uploads
       - key: MAX_FILE_SIZE
         value: 5242880
       - key: DEMO_ORG_NAME
         value: Demo Organization
-    disk:
-      name: uploads
-      mountPath: /var/data/uploads
-      sizeGB: 1
     healthCheckPath: /api/auth/demo-login
 
   # Frontend Static Site
