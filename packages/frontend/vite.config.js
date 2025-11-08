@@ -10,6 +10,11 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: vitePort,
+    host: true, // Listen on all network interfaces and accept any hostname
+    strictPort: false,
+    hmr: {
+      clientPort: vitePort,
+    },
     proxy: {
       '/api': {
         target: backendTarget,

@@ -14,13 +14,13 @@ describe('ImageGrid', () => {
       {
         id: '1',
         url: '/uploads/image1.jpg',
-        originalName: 'test1.jpg',
+        original_name: 'test1.jpg',
         size: 50000,
       },
       {
         id: '2',
         url: '/uploads/image2.png',
-        originalName: 'test2.png',
+        original_name: 'test2.png',
         size: 75000,
       },
     ];
@@ -36,7 +36,7 @@ describe('ImageGrid', () => {
       {
         id: '1',
         url: '/uploads/image1.jpg',
-        originalName: 'test.jpg',
+        original_name: 'test.jpg',
         size: 1024, // 1 KB
       },
     ];

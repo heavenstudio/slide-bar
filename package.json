@@ -36,6 +36,7 @@
     "@playwright/test": "^1.56.1",
     "@rollup/rollup-darwin-arm64": "^4.53.0",
     "@rollup/rollup-linux-arm64-gnu": "^4.53.0",
+    "@supabase/supabase-js": "^2.80.0",
     "@vitest/coverage-v8": "^1.0.0",
     "eslint": "^9.39.1",
     "eslint-plugin-react": "^7.37.5",

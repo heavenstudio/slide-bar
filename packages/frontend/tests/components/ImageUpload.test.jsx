@@ -1,8 +1,19 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+
+// Mock the API module
+vi.mock('../../src/lib/api', () => ({
+  uploadImage: vi.fn(),
+}));
+
 import ImageUpload from '../../src/components/upload/ImageUpload';
+import { uploadImage } from '../../src/lib/api';
 
 describe('ImageUpload', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it('should render upload area', () => {
     render(<ImageUpload />);
 
@@ -23,19 +34,13 @@ describe('ImageUpload', () => {
   });
 
   it('should show uploading state', async () => {
-    // Mock the API before rendering
-    const mockUploadImage = vi
-      .fn()
-      .mockImplementation(
-        () =>
-          new Promise((resolve) =>
-            setTimeout(() => resolve({ image: { id: '1', url: '/test.jpg' } }), 100)
-          )
-      );
-
-    vi.doMock('../../src/lib/api', () => ({
-      uploadImage: mockUploadImage,
-    }));
+    // Mock uploadImage to return a promise
+    uploadImage.mockImplementation(
+      () =>
+        new Promise((resolve) =>
+          setTimeout(() => resolve({ image: { id: '1', url: '/test.jpg' } }), 100)
+        )
+    );
 
     render(<ImageUpload />);
 

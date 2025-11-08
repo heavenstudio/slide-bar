@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { TIMEOUTS } from './config.js';
@@ -160,8 +160,12 @@ test.describe('Image Upload and Management', () => {
       await dialog.accept();
     });
 
-    // Click delete button on the first image
-    await page.locator('[data-testid="delete-button"]').first().click();
+    // Hover over the first image card to make delete button visible
+    const firstCard = page.locator('[data-testid="image-card"]').first();
+    await firstCard.hover();
+
+    // Click delete button on the first image (force click in case it's still not fully visible)
+    await page.locator('[data-testid="delete-button"]').first().click({ force: true });
 
     // Wait for the image to be removed from DOM
     await page.waitForFunction(

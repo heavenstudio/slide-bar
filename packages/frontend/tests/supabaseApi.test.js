@@ -16,6 +16,7 @@ vi.mock('../src/lib/supabase.js', () => ({
       signInWithPassword: vi.fn(),
       getSession: vi.fn(),
       signOut: vi.fn(),
+      getUser: vi.fn(),
     },
     from: vi.fn(),
     storage: {
@@ -115,7 +116,7 @@ describe('Supabase API - Images', () => {
       expect(mockFrom.order).toHaveBeenCalledWith('created_at', {
         ascending: false,
       });
-      expect(result).toEqual(mockImages);
+      expect(result).toEqual({ images: mockImages });
     });
 
     it('should return empty array when no images exist', async () => {
@@ -131,7 +132,7 @@ describe('Supabase API - Images', () => {
 
       const result = await getImages();
 
-      expect(result).toEqual([]);
+      expect(result).toEqual({ images: [] });
     });
 
     it('should throw error when fetch fails', async () => {
@@ -154,6 +155,16 @@ describe('Supabase API - Images', () => {
       const mockFile = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
       const mockFileId = 'file-uuid-123';
       const mockPublicUrl = 'https://example.com/storage/test.jpg';
+      const mockUserId = 'user-uuid-123';
+      const mockOrgId = 'org-uuid-123';
+
+      // Mock auth.getUser
+      supabase.auth.getUser.mockResolvedValue({
+        data: {
+          user: { id: mockUserId },
+        },
+        error: null,
+      });
 
       // Mock storage upload
       const mockStorageBucket = {
@@ -168,8 +179,18 @@ describe('Supabase API - Images', () => {
 
       supabase.storage.from.mockReturnValue(mockStorageBucket);
 
-      // Mock database insert
-      const mockFrom = {
+      // Mock users table query
+      const mockUsersQuery = {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({
+          data: { organization_id: mockOrgId },
+          error: null,
+        }),
+      };
+
+      // Mock images table insert
+      const mockImagesQuery = {
         insert: vi.fn().mockReturnThis(),
         select: vi.fn().mockReturnThis(),
         single: vi.fn().mockResolvedValue({
@@ -185,14 +206,19 @@ describe('Supabase API - Images', () => {
         }),
       };
 
-      supabase.from.mockReturnValue(mockFrom);
+      // supabase.from is called twice: once for 'users', once for 'images'
+      supabase.from
+        .mockReturnValueOnce(mockUsersQuery)  // First call: users table
+        .mockReturnValueOnce(mockImagesQuery); // Second call: images table
 
       const result = await uploadImage(mockFile);
 
       expect(supabase.storage.from).toHaveBeenCalledWith('images');
       expect(mockStorageBucket.upload).toHaveBeenCalled();
+      expect(supabase.auth.getUser).toHaveBeenCalled();
+      expect(supabase.from).toHaveBeenCalledWith('users');
       expect(supabase.from).toHaveBeenCalledWith('images');
-      expect(mockFrom.insert).toHaveBeenCalled();
+      expect(mockImagesQuery.insert).toHaveBeenCalled();
       expect(result).toHaveProperty('id');
       expect(result).toHaveProperty('url', mockPublicUrl);
     });
@@ -216,6 +242,16 @@ describe('Supabase API - Images', () => {
       const mockFile = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
       const mockFileId = 'file-uuid-123';
       const mockPublicUrl = 'https://example.com/storage/test.jpg';
+      const mockUserId = 'user-uuid-123';
+      const mockOrgId = 'org-uuid-123';
+
+      // Mock auth.getUser
+      supabase.auth.getUser.mockResolvedValue({
+        data: {
+          user: { id: mockUserId },
+        },
+        error: null,
+      });
 
       // Mock successful storage upload
       const mockStorageBucket = {
@@ -230,8 +266,18 @@ describe('Supabase API - Images', () => {
 
       supabase.storage.from.mockReturnValue(mockStorageBucket);
 
+      // Mock users table query
+      const mockUsersQuery = {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({
+          data: { organization_id: mockOrgId },
+          error: null,
+        }),
+      };
+
       // Mock failed database insert
-      const mockFrom = {
+      const mockImagesQuery = {
         insert: vi.fn().mockReturnThis(),
         select: vi.fn().mockReturnThis(),
         single: vi.fn().mockResolvedValue({
@@ -240,7 +286,10 @@ describe('Supabase API - Images', () => {
         }),
       };
 
-      supabase.from.mockReturnValue(mockFrom);
+      // supabase.from is called twice: once for 'users', once for 'images'
+      supabase.from
+        .mockReturnValueOnce(mockUsersQuery)  // First call: users table
+        .mockReturnValueOnce(mockImagesQuery); // Second call: images table (fails)
 
       await expect(uploadImage(mockFile)).rejects.toThrow('Database insert error');
     });

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { TIMEOUTS } from './config.js';
@@ -16,6 +16,31 @@ const __dirname = path.dirname(__filename);
  */
 
 test.describe('Player Slideshow', () => {
+  /**
+   * Helper function to delete all images from dashboard
+   */
+  async function deleteAllImages(page) {
+    // Navigate to dashboard to trigger auth
+    await page.goto('/');
+    await page.waitForSelector('h1:has-text("Slide Bar")');
+
+    // Delete all images to start with clean state
+    const imageCards = page.locator('[data-testid="image-card"]');
+    const count = await imageCards.count();
+
+    for (let i = 0; i < count; i++) {
+      // Always delete the first card (index shifts after each deletion)
+      const deleteButton = imageCards.first().locator('button:has-text("Excluir")');
+      await deleteButton.click();
+
+      // Wait for confirmation and confirm
+      const confirmButton = page.locator('button:has-text("Sim, excluir")');
+      await confirmButton.click();
+
+      // Wait for the image to be removed
+      await page.waitForTimeout(500);
+    }
+  }
 
   /**
    * Scenario: Player shows empty state when no images exist
@@ -24,6 +49,7 @@ test.describe('Player Slideshow', () => {
    *   Then I should see "Nenhuma imagem disponível"
    */
   test('should show empty state when no images uploaded', async ({ page }) => {
+
     // Go directly to player without uploading anything
     await page.goto('/player');
 
@@ -86,6 +112,7 @@ test.describe('Player Slideshow', () => {
    *   Then I should see a progress bar
    */
   test('should show progress indicator with multiple images', async ({ page }) => {
+
     // Upload multiple images
     await page.goto('/');
     await page.waitForSelector('h1:has-text("Slide Bar")');

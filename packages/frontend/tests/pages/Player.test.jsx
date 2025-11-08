@@ -1,13 +1,19 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
-import Player from '../../src/pages/Player';
 
-// Mock fetch
-global.fetch = vi.fn();
+// Mock Supabase client
+vi.mock('../../src/lib/supabase', () => ({
+  supabase: {
+    from: vi.fn(),
+  },
+}));
+
+import Player from '../../src/pages/Player';
+import { supabase } from '../../src/lib/supabase';
 
 describe('Player', () => {
   beforeEach(() => {
-    global.fetch.mockClear();
+    vi.clearAllMocks();
     vi.clearAllTimers();
   });
 
@@ -16,7 +22,12 @@ describe('Player', () => {
   });
 
   it('should show loading state initially', () => {
-    global.fetch.mockImplementation(() => new Promise(() => {})); // Never resolves
+    // Mock Supabase to never resolve
+    const mockFrom = {
+      select: vi.fn().mockReturnThis(),
+      order: vi.fn().mockReturnValue(new Promise(() => {})), // Never resolves
+    };
+    supabase.from.mockReturnValue(mockFrom);
 
     render(<Player />);
 
@@ -29,20 +40,24 @@ describe('Player', () => {
         id: 1,
         filename: 'test1.jpg',
         url: '/uploads/test1.jpg',
-        createdAt: new Date(),
+        created_at: new Date().toISOString(),
       },
       {
         id: 2,
         filename: 'test2.jpg',
         url: '/uploads/test2.jpg',
-        createdAt: new Date(),
+        created_at: new Date().toISOString(),
       },
     ];
 
-    global.fetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ images: mockImages }),
-    });
+    const mockFrom = {
+      select: vi.fn().mockReturnThis(),
+      order: vi.fn().mockResolvedValue({
+        data: mockImages,
+        error: null,
+      }),
+    };
+    supabase.from.mockReturnValue(mockFrom);
 
     render(<Player />);
 
@@ -55,10 +70,14 @@ describe('Player', () => {
   });
 
   it('should show empty state when no images exist', async () => {
-    global.fetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ images: [] }),
-    });
+    const mockFrom = {
+      select: vi.fn().mockReturnThis(),
+      order: vi.fn().mockResolvedValue({
+        data: [],
+        error: null,
+      }),
+    };
+    supabase.from.mockReturnValue(mockFrom);
 
     render(<Player />);
 
@@ -68,10 +87,14 @@ describe('Player', () => {
   });
 
   it('should show error state on fetch failure', async () => {
-    global.fetch.mockResolvedValueOnce({
-      ok: false,
-      json: async () => ({ error: 'Failed to fetch' }),
-    });
+    const mockFrom = {
+      select: vi.fn().mockReturnThis(),
+      order: vi.fn().mockResolvedValue({
+        data: null,
+        error: { message: 'Failed to fetch' },
+      }),
+    };
+    supabase.from.mockReturnValue(mockFrom);
 
     render(<Player />);
 
@@ -86,20 +109,24 @@ describe('Player', () => {
         id: 1,
         filename: 'test1.jpg',
         url: '/uploads/test1.jpg',
-        createdAt: new Date(),
+        created_at: new Date().toISOString(),
       },
       {
         id: 2,
         filename: 'test2.jpg',
         url: '/uploads/test2.jpg',
-        createdAt: new Date(),
+        created_at: new Date().toISOString(),
       },
     ];
 
-    global.fetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ images: mockImages }),
-    });
+    const mockFrom = {
+      select: vi.fn().mockReturnThis(),
+      order: vi.fn().mockResolvedValue({
+        data: mockImages,
+        error: null,
+      }),
+    };
+    supabase.from.mockReturnValue(mockFrom);
 
     render(<Player />);
 
@@ -114,36 +141,23 @@ describe('Player', () => {
         id: 1,
         filename: 'test1.jpg',
         url: '/uploads/test1.jpg',
-        createdAt: new Date(),
+        created_at: new Date().toISOString(),
       },
     ];
 
-    global.fetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ images: mockImages }),
-    });
+    const mockFrom = {
+      select: vi.fn().mockReturnThis(),
+      order: vi.fn().mockResolvedValue({
+        data: mockImages,
+        error: null,
+      }),
+    };
+    supabase.from.mockReturnValue(mockFrom);
 
     render(<Player />);
 
     await waitFor(() => {
       expect(screen.getByText(/Espaço: Pausar\/Continuar/i)).toBeInTheDocument();
     });
-  });
-
-  it('should call API without authentication', async () => {
-    global.fetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ images: [] }),
-    });
-
-    render(<Player />);
-
-    await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith('/api/player/images');
-    });
-
-    // Verify no Authorization header was sent
-    const fetchCall = global.fetch.mock.calls[0];
-    expect(fetchCall[1]).toBeUndefined(); // No options object with headers
   });
 });

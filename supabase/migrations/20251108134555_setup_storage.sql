@@ -25,7 +25,7 @@ CREATE POLICY "Authenticated users can upload images"
 ON storage.objects FOR INSERT
 WITH CHECK (
   bucket_id = 'images'
-  AND auth.role() = 'authenticated'
+  AND auth.uid() IS NOT NULL
 );
 
 -- Policy: Authenticated users can update their own images
@@ -33,7 +33,7 @@ CREATE POLICY "Users can update their own images"
 ON storage.objects FOR UPDATE
 USING (
   bucket_id = 'images'
-  AND auth.role() = 'authenticated'
+  AND auth.uid() IS NOT NULL
 );
 
 -- Policy: Authenticated users can delete images
@@ -41,7 +41,7 @@ CREATE POLICY "Authenticated users can delete images"
 ON storage.objects FOR DELETE
 USING (
   bucket_id = 'images'
-  AND auth.role() = 'authenticated'
+  AND auth.uid() IS NOT NULL
 );
 
 -- Enable RLS on public.images table
@@ -55,9 +55,9 @@ USING (true);
 -- Policy: Authenticated users can insert images
 CREATE POLICY "Authenticated users can insert images"
 ON images FOR INSERT
-WITH CHECK (auth.role() = 'authenticated');
+WITH CHECK (auth.uid() IS NOT NULL);
 
 -- Policy: Authenticated users can delete images
 CREATE POLICY "Authenticated users can delete images"
 ON images FOR DELETE
-USING (auth.role() = 'authenticated');
+USING (auth.uid() IS NOT NULL);

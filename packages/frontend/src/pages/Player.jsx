@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
+import { supabase } from '../lib/supabase';
 
 /**
  * Player Page
  * Public-facing fullscreen slideshow player for displaying images on TV/monitors
- * No authentication required
+ * No authentication required - uses public RLS policy
  */
 export default function Player() {
   const [images, setImages] = useState([]);
@@ -13,19 +14,22 @@ export default function Player() {
   const [isPaused, setIsPaused] = useState(false);
   const [slideDuration] = useState(5000); // 5 seconds per slide
 
-  // Fetch images from public endpoint
+  // Fetch images from Supabase (public access via RLS policy)
   const loadImages = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
-      const response = await fetch('/api/player/images');
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch images');
+      const { data, error: fetchError } = await supabase
+        .from('images')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (fetchError) {
+        throw new Error(fetchError.message);
       }
 
-      const data = await response.json();
-      setImages(data.images || []);
+      setImages(data || []);
     } catch (err) {
       setError(err.message);
     } finally {

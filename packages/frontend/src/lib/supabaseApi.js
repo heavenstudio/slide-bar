@@ -64,7 +64,7 @@ export const signOut = async () => {
 
 /**
  * Get all images from Supabase
- * @returns {Promise<Array>} List of images
+ * @returns {Promise<Object>} Object with images array
  */
 export const getImages = async () => {
   const { data, error } = await supabase
@@ -76,7 +76,7 @@ export const getImages = async () => {
     throw new Error(error.message);
   }
 
-  return data || [];
+  return { images: data || [] };
 };
 
 /**
@@ -104,6 +104,25 @@ export const uploadImage = async (file) => {
     data: { publicUrl },
   } = supabase.storage.from('images').getPublicUrl(filePath);
 
+  // Get current user's organization_id
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error('User not authenticated');
+  }
+
+  const { data: userData, error: userError } = await supabase
+    .from('users')
+    .select('organization_id')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  if (userError) {
+    throw new Error(`Failed to get user organization: ${userError.message}`);
+  }
+
   // Create database record
   const { data: imageData, error: dbError } = await supabase
     .from('images')
@@ -114,6 +133,7 @@ export const uploadImage = async (file) => {
       size: file.size,
       path: storageData.path,
       url: publicUrl,
+      organization_id: userData.organization_id,
     })
     .select()
     .single();

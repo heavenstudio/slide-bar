@@ -33,10 +33,10 @@ export default function ImageUpload({ onUploadSuccess }) {
 
       validateFile(file);
 
-      const result = await uploadImage(file);
+      const imageData = await uploadImage(file);
 
       if (onUploadSuccess) {
-        onUploadSuccess(result.image);
+        onUploadSuccess(imageData);
       }
 
       // Reset the file input so the same file can be selected again

@@ -22,9 +22,8 @@ export default defineConfig({
   ],
 
   use: {
-    baseURL: process.env.VITE_PORT
-      ? `http://localhost:${process.env.VITE_PORT}`
-      : 'http://localhost:5174',
+    baseURL: process.env.PLAYWRIGHT_BASE_URL
+      || (process.env.VITE_PORT ? `http://localhost:${process.env.VITE_PORT}` : 'http://localhost:5174'),
     // Only record on failures to save ~40-50% test time
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',

@@ -4,124 +4,104 @@
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 PROJECT_ROOT="$( cd "$SCRIPT_DIR/.." && pwd )"
 
-# Ensure Supabase is running
-echo "🔍 Checking Supabase status..."
-if ! supabase status > /dev/null 2>&1; then
-  echo "🚀 Starting Supabase..."
+# Start TEST Supabase instance (separate from dev)
+echo "🔍 Checking TEST Supabase status..."
+cd "$PROJECT_ROOT/supabase"
+
+# Check if test instance is already running
+if docker ps | grep -q "supabase_db_slide-bar-test"; then
+  echo "✅ TEST Supabase is already running"
+else
+  echo "🚀 Starting TEST Supabase instance (port 55321)..."
+
+  # Backup current config and switch to test config
+  cp config.toml config.toml.dev
+  cp config.test.toml config.toml
+
+  # Start Supabase with test config
   supabase start
-else
-  echo "✅ Supabase is already running"
+
+  # Restore dev config
+  mv config.toml.dev config.toml
 fi
 
-# Get Supabase connection details
-SUPABASE_URL=$(supabase status | grep "API URL" | awk '{print $3}')
-SUPABASE_ANON_KEY=$(supabase status | grep "anon key" | awk '{print $3}')
+echo "🧹 Cleaning TEST data..."
+# Clean test data via SQL using Docker exec on TEST instance
+docker exec supabase_db_slide-bar-test psql -U postgres -d postgres -c "
+  DELETE FROM storage.objects WHERE bucket_id = 'images';
+  DELETE FROM public.images;
+" 2>&1 | grep -v "DELETE" || echo "⚠️  Database cleanup may have failed"
 
-# Replace 127.0.0.1 with host.docker.internal for Docker containers
-SUPABASE_URL_DOCKER=$(echo "$SUPABASE_URL" | sed 's/127.0.0.1/host.docker.internal/g')
+# Ensure demo user exists in TEST instance
+echo "🔐 Creating demo user in TEST instance..."
+docker exec supabase_kong_slide-bar-test curl -s -X POST \
+  http://supabase_auth_slide-bar-test:9999/admin/users \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "demo@example.com",
+    "password": "demodemo",
+    "email_confirm": true
+  }' > /dev/null 2>&1 || echo "✅ Demo user may already exist"
 
-echo "🧹 Cleaning Supabase test data..."
-# Reset database to clean state
-supabase db reset --yes 2>&1 | grep -E "(Applying migration|Finished)" || echo "⚠️  Database reset may have failed"
+# Run E2E tests with Docker Compose
+echo "🧪 Running E2E tests with unified Docker Compose..."
+cd "$PROJECT_ROOT"
 
-# Check if devcontainer app is already running
-cd "$PROJECT_ROOT/.devcontainer"
-if docker compose ps app | grep -q "Up"; then
-  APP_CONTAINER="app"
-  USE_COMPOSE=true
-  echo "✅ Using existing devcontainer app"
+# Stop any existing E2E test containers
+docker compose -f docker-compose.e2e.yml down 2>/dev/null || true
+
+# Run tests - start containers and capture Playwright logs
+docker compose -f docker-compose.e2e.yml up --build -d
+
+# Wait for tests to complete by watching Playwright container
+echo "⏳ Waiting for tests to complete..."
+PLAYWRIGHT_CONTAINER=$(docker compose -f docker-compose.e2e.yml ps -q playwright 2>/dev/null)
+
+if [ -n "$PLAYWRIGHT_CONTAINER" ]; then
+  # Stream logs while tests run
+  docker logs -f "$PLAYWRIGHT_CONTAINER" 2>&1 &
+  LOGS_PID=$!
+
+  # Wait for container to finish
+  docker wait "$PLAYWRIGHT_CONTAINER" > /dev/null 2>&1
+  EXIT_CODE=$(docker inspect "$PLAYWRIGHT_CONTAINER" --format='{{.State.ExitCode}}')
+
+  # Stop log streaming
+  kill $LOGS_PID 2>/dev/null || true
+  wait $LOGS_PID 2>/dev/null || true
+
+  # Give Playwright a moment to finish writing report files
+  echo ""
+  echo "📊 Copying test report from container..."
+  sleep 2
+
+  if docker cp "$PLAYWRIGHT_CONTAINER:/workspace/slide-bar/playwright-report" "$PROJECT_ROOT/" 2>/dev/null; then
+    echo "✅ Report copied successfully"
+  else
+    echo "⚠️  Warning: Could not copy report from container"
+  fi
 else
-  # Start a temporary container for E2E tests (no port conflicts)
-  echo "🚀 Starting temporary E2E container..."
-  docker compose run -d --name slide-bar-e2e-test --rm app sleep infinity
-  APP_CONTAINER="slide-bar-e2e-test"
-  USE_COMPOSE=false
-  sleep 1
+  echo "❌ Playwright container not found"
+  EXIT_CODE=1
 fi
 
-# Run tests in the container
-echo "🧪 Running E2E tests..."
-if [ "$USE_COMPOSE" = true ]; then
-  docker compose exec -T $APP_CONTAINER bash -c "
-    set -e
-    cd /workspace/slide-bar
-    echo '🚀 Starting test server...'
-    cd packages/frontend && VITE_PORT=5174 VITE_USE_SUPABASE=true VITE_SUPABASE_URL=$SUPABASE_URL_DOCKER VITE_SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY nohup ./node_modules/.bin/vite --host --port 5174 > /tmp/vite-test.log 2>&1 & echo \$! > /tmp/vite-test.pid
-
-    # Wait for frontend to be ready with fast polling (max 10 seconds)
-    echo '🔍 Waiting for frontend to be ready...'
-    for i in {1..20}; do
-      if curl -f http://localhost:5174 > /dev/null 2>&1; then
-        echo \"✅ Frontend ready (took ~\${i}/2 seconds)\"
-        break
-      fi
-      if [ \$i -eq 20 ]; then
-        echo '❌ Frontend failed to start in time'
-        echo 'Frontend log:'; cat /tmp/vite-test.log
-        exit 1
-      fi
-      sleep 0.5
-    done
-
-    cd /workspace/slide-bar
-    # Install browsers if not already present (cached after first run)
-    if [ ! -d \"\$HOME/.cache/ms-playwright/chromium\"* ] 2>/dev/null; then
-      echo '📦 Installing Playwright browsers (first run)...'
-      ./node_modules/.bin/playwright install chromium 2>/dev/null || true
-    fi
-    VITE_PORT=5174 ./node_modules/.bin/playwright test
-    EXIT_CODE=\$?
-    kill \$(cat /tmp/vite-test.pid) 2>/dev/null || true
-    rm -f /tmp/vite-test.pid
-    exit \$EXIT_CODE
-  "
-  EXIT_CODE=$?
-else
-  docker exec -t $APP_CONTAINER bash -c "
-    set -e
-    cd /workspace/slide-bar
-    echo '🚀 Starting test server...'
-    cd packages/frontend && VITE_PORT=5174 VITE_USE_SUPABASE=true VITE_SUPABASE_URL=$SUPABASE_URL_DOCKER VITE_SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY nohup ./node_modules/.bin/vite --host --port 5174 > /tmp/vite-test.log 2>&1 & echo \$! > /tmp/vite-test.pid
-
-    # Wait for frontend to be ready with fast polling (max 10 seconds)
-    echo '🔍 Waiting for frontend to be ready...'
-    for i in {1..20}; do
-      if curl -f http://localhost:5174 > /dev/null 2>&1; then
-        echo \"✅ Frontend ready (took ~\${i}/2 seconds)\"
-        break
-      fi
-      if [ \$i -eq 20 ]; then
-        echo '❌ Frontend failed to start in time'
-        echo 'Frontend log:'; cat /tmp/vite-test.log
-        exit 1
-      fi
-      sleep 0.5
-    done
-
-    cd /workspace/slide-bar
-    # Install browsers if not already present (cached after first run)
-    if [ ! -d \"\$HOME/.cache/ms-playwright/chromium\"* ] 2>/dev/null; then
-      echo '📦 Installing Playwright browsers (first run)...'
-      ./node_modules/.bin/playwright install chromium 2>/dev/null || true
-    fi
-    VITE_PORT=5174 ./node_modules/.bin/playwright test
-    EXIT_CODE=\$?
-    kill \$(cat /tmp/vite-test.pid) 2>/dev/null || true
-    rm -f /tmp/vite-test.pid
-    exit \$EXIT_CODE
-  "
-  EXIT_CODE=$?
-  docker rm -f $APP_CONTAINER 2>/dev/null || true
-fi
+# Cleanup
+docker compose -f docker-compose.e2e.yml down
 
 # Show report info
 echo ""
-echo "📊 Test report available at: playwright-report/"
-echo "💡 To view the report, run: pnpm playwright show-report"
+if [ -d "$PROJECT_ROOT/playwright-report" ]; then
+  echo "📊 Test report available at: playwright-report/"
+  echo "💡 To view the report, run: pnpm playwright show-report"
 
-# Auto-open report only if tests passed
-if [ $EXIT_CODE -eq 0 ]; then
-  "$SCRIPT_DIR/show-report.sh"
+  # Auto-open report only if tests passed
+  if [ $EXIT_CODE -eq 0 ]; then
+    "$SCRIPT_DIR/show-report.sh"
+  fi
+else
+  echo "⚠️  Test report not found. The volume mount may not have synced properly."
+  echo "    You can still view test results in the console output above."
 fi
 
 exit $EXIT_CODE

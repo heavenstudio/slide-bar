@@ -10,6 +10,7 @@ import { getImages, demoLogin } from '../lib/api';
 export default function Dashboard() {
   const [images, setImages] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAuthenticating, setIsAuthenticating] = useState(true);
   const [error, setError] = useState(null);
 
   const loadImages = async () => {
@@ -34,16 +35,21 @@ export default function Dashboard() {
     const initializeDashboard = async () => {
       try {
         setIsLoading(true);
+        setIsAuthenticating(true);
         setError(null);
 
         // First, login
         await demoLogin();
+
+        // Mark authentication as complete
+        setIsAuthenticating(false);
 
         // Then, load images
         await loadImages();
       } catch (err) {
         setError('Erro ao inicializar: ' + err.message);
         setIsLoading(false);
+        setIsAuthenticating(false);
       }
     };
 
@@ -96,11 +102,13 @@ export default function Dashboard() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Upload Section */}
-        <section className="mb-12">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Enviar Nova Imagem</h2>
-          <ImageUpload onUploadSuccess={handleUploadSuccess} />
-        </section>
+        {/* Upload Section - Only show after authentication completes */}
+        {!isAuthenticating && (
+          <section className="mb-12">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Enviar Nova Imagem</h2>
+            <ImageUpload onUploadSuccess={handleUploadSuccess} />
+          </section>
+        )}
 
         {/* Images Section */}
         <section>

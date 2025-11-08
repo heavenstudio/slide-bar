@@ -50,7 +50,7 @@ export default function ImageGrid({ images, onImageDeleted }) {
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-      {images.map((image) => (
+      {images.filter(image => image && image.url).map((image) => (
         <div
           key={image.id}
           data-testid="image-card"
@@ -59,15 +59,15 @@ export default function ImageGrid({ images, onImageDeleted }) {
           <div className="aspect-square bg-gray-100">
             <img
               src={image.url}
-              alt={image.originalName}
+              alt={image.original_name}
               className="w-full h-full object-cover"
               loading="lazy"
             />
           </div>
 
           <div className="p-2 bg-white">
-            <p className="text-xs text-gray-600 truncate" title={image.originalName}>
-              {image.originalName}
+            <p className="text-xs text-gray-600 truncate" title={image.original_name}>
+              {image.original_name}
             </p>
             <p className="text-xs text-gray-400">{formatFileSize(image.size)}</p>
           </div>
