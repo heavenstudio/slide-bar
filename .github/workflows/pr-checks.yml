@@ -99,8 +99,8 @@ jobs:
         id: prisma-cache
         with:
           path: |
-            node_modules/.prisma
-            node_modules/@prisma/client
+            packages/backend/node_modules/.prisma
+            packages/backend/node_modules/@prisma/client
           key: ${{ runner.os }}-prisma-${{ hashFiles('packages/backend/prisma/schema.prisma') }}
 
       - name: Generate Prisma Client
@@ -168,7 +168,7 @@ jobs:
 
       - name: Get Playwright version
         id: playwright-version
-        run: echo "version=$(jq -r '.devDependencies["@playwright/test"]' package.json)" >> $GITHUB_OUTPUT
+        run: echo "version=$(jq -r '.devDependencies["@playwright/test"]' package.json | sed 's/^\^//')" >> $GITHUB_OUTPUT
 
       - name: Cache Playwright browsers
         uses: actions/cache@v4
@@ -204,8 +204,8 @@ jobs:
         id: prisma-cache-e2e
         with:
           path: |
-            node_modules/.prisma
-            node_modules/@prisma/client
+            packages/backend/node_modules/.prisma
+            packages/backend/node_modules/@prisma/client
           key: ${{ runner.os }}-prisma-${{ hashFiles('packages/backend/prisma/schema.prisma') }}
 
       - name: Generate Prisma Client
