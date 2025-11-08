@@ -88,7 +88,9 @@ slide-bar/
 
 ### Test Architecture
 
-- **18 integration tests** calling real Supabase (local instance at `http://127.0.0.1:54321`)
+- **18 integration tests** calling real Supabase TEST instance (`http://127.0.0.1:55321`)
+- **Isolated from dev**: Unit tests use TEST Supabase (port 55321), dev uses main Supabase (port 54321)
+- **Shared with E2E**: Both unit and E2E tests use the same TEST instance (started by E2E script)
 - **Test helpers** in `packages/frontend/tests/helpers/supabase.js`:
   - `createServiceClient()` - Service role client bypassing RLS for cleanup
   - `cleanDatabase()` - Delete all test data using service role
@@ -97,20 +99,25 @@ slide-bar/
 
 ### Critical Challenges Solved
 
-1. **jsdom MIME Type Limitations**
+1. **Test Data Isolation**
+   - **Problem**: Unit tests were deleting dev data from port 54321
+   - **Solution**: Point unit tests to TEST Supabase (port 55321) via vitest.config.js
+   - **Result**: Dev data on port 54321 is never touched by tests
+
+2. **jsdom MIME Type Limitations**
    - **Problem**: jsdom's File API doesn't preserve MIME types (converts to `text/plain`)
    - **Solution**: Custom file-like object with `arrayBuffer()` + explicit `contentType` in Supabase upload
    - **Location**: `tests/helpers/supabase.js:createMockImageFile()`, `src/lib/supabaseApi.js:uploadImage()`
 
-2. **Sequential Test Execution Required**
+3. **Sequential Test Execution Required**
    - **Problem**: Parallel tests cause race conditions with shared database state
    - **Solution**: Configure Vitest with `pool: 'forks', singleFork: true` in `vitest.config.js`
 
-3. **Console Warning Noise**
+4. **Console Warning Noise**
    - **Problem**: "Multiple GoTrueClient instances" warnings clutter test output
    - **Solution**: Filter `console.warn` in `tests/setup.js` to suppress expected warnings
 
-4. **DOM Cleanup Between Test Files**
+5. **DOM Cleanup Between Test Files**
    - **Problem**: Sequential execution caused DOM elements to persist across test files
    - **Solution**: Add `cleanup()` call in `beforeEach` hooks
 

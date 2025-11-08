@@ -6,8 +6,9 @@
 import { createClient } from '@supabase/supabase-js';
 import { afterEach } from 'vitest';
 
-// Supabase configuration for tests
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'http://127.0.0.1:54321';
+// Supabase TEST configuration (port 55321 - isolated from dev on 54321)
+// Uses the same test instance as E2E tests
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'http://127.0.0.1:55321';
 const SUPABASE_SERVICE_KEY =
   import.meta.env.SUPABASE_SERVICE_KEY ||
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU';
