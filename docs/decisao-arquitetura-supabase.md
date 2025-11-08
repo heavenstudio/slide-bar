@@ -6,6 +6,7 @@
 ## Contexto
 
 O projeto Slide Bar foi inicialmente arquitetado com:
+
 - **Frontend**: React + Vite (hospedado como site estático)
 - **Backend**: Node.js + Express
 - **Database**: PostgreSQL via Prisma ORM
@@ -21,10 +22,12 @@ Esta arquitetura funcionava bem para desenvolvimento local, mas apresenta desafi
 Realizamos uma pesquisa abrangente das opções de hospedagem gratuita para aplicações Node.js + PostgreSQL:
 
 #### **Heroku**
+
 - ❌ **Free tier eliminado em 2022**
 - Custo mínimo: ~$7-10/mês
 
 #### **Render.com**
+
 - ⚠️ **Free tier existe MAS:**
   - Não suporta `plan: free` via blueprints (apenas setup manual)
   - Web services dormem após 15 min de inatividade
@@ -33,21 +36,25 @@ Realizamos uma pesquisa abrangente das opções de hospedagem gratuita para apli
 - **Custo pago**: $19/mês (backend $9 + database $10)
 
 #### **Railway**
+
 - ⚠️ **Apenas $5 de crédito único**
 - Depois do crédito, requer plano Hobby ($5/mês base)
 - Modelo pay-as-you-go pode ultrapassar os $5 incluídos
 
 #### **Fly.io**
+
 - ❌ **Free tier eliminado em outubro 2024**
 - Pay-per-second desde o início
 - Estimativa: $2-5/mês para uso mínimo
 
 #### **Koyeb**
+
 - ⚠️ **Free tier muito limitado:**
   - Database apenas 5 horas/mês de tempo ativo
   - Auto-sleep agressivo
 
 #### **Google Cloud Platform (GCP)**
+
 - ⚠️ **$300 de crédito por 3 meses apenas**
 - Always Free tier não inclui Cloud SQL (PostgreSQL)
 - Custo após trial
@@ -61,6 +68,7 @@ Realizamos uma pesquisa abrangente das opções de hospedagem gratuita para apli
 ### Opção 1: Vercel + Neon (Híbrido)
 
 **Arquitetura:**
+
 ```
 Frontend: Vercel (static site)
 Backend: Vercel Serverless Functions (Node.js)
@@ -69,12 +77,14 @@ Storage: Precisa solução separada (problema!)
 ```
 
 **Prós:**
+
 - ✅ 100% gratuito dentro dos limites
 - ✅ Vercel tem excelente DX
 - ✅ Neon oferece 0.5GB storage + 191 compute hours/mês
 - ✅ Fácil de começar
 
 **Contras:**
+
 - ❌ **Problema de storage não resolvido** - uploads continuam efêmeros
 - ⚠️ Requer migração para serverless functions
 - ⚠️ Duas plataformas para gerenciar
@@ -87,6 +97,7 @@ Storage: Precisa solução separada (problema!)
 ### Opção 2: Vercel + Neon + Supabase Storage (Híbrido Complexo)
 
 **Arquitetura:**
+
 ```
 Frontend: Vercel (static site)
 Backend: Vercel Serverless Functions
@@ -95,11 +106,13 @@ Storage: Supabase Storage
 ```
 
 **Prós:**
+
 - ✅ 100% gratuito
 - ✅ Storage persistente resolvido
 - ✅ CDN global para imagens
 
 **Contras:**
+
 - ⚠️ **Três plataformas diferentes** para gerenciar
 - ⚠️ Complexidade de setup aumentada
 - ⚠️ Múltiplos pontos de falha
@@ -112,6 +125,7 @@ Storage: Supabase Storage
 ### Opção 3: Render (Setup Manual)
 
 **Arquitetura:**
+
 ```
 Frontend: Render Static Site (free)
 Backend: Render Web Service (free, manual)
@@ -120,11 +134,13 @@ Storage: Sistema de arquivos (efêmero)
 ```
 
 **Prós:**
+
 - ✅ Gratuito (dentro dos limites)
 - ✅ Arquitetura tradicional (Express mantido)
 - ✅ Setup familiar
 
 **Contras:**
+
 - ❌ **Database deletado após 90 dias**
 - ❌ **Storage efêmero** (uploads perdidos no restart)
 - ⚠️ Services dormem após 15 min
@@ -138,6 +154,7 @@ Storage: Sistema de arquivos (efêmero)
 ### Opção 4: Railway Hobby Plan
 
 **Arquitetura:**
+
 ```
 Frontend: Railway
 Backend: Railway (auto-sleep)
@@ -145,11 +162,13 @@ Database: Railway PostgreSQL
 ```
 
 **Prós:**
+
 - ✅ Arquitetura tradicional mantida
 - ✅ Auto-sleep economiza custos
 - ✅ Boa DX
 
 **Contras:**
+
 - ❌ **Não é gratuito** - mínimo $5/mês
 - ⚠️ Pode ultrapassar $5 com uso moderado
 - ⚠️ Storage efêmero continua sendo problema
@@ -162,6 +181,7 @@ Database: Railway PostgreSQL
 ### Opção 5: Full Supabase (Escolha Final) 🏆
 
 **Arquitetura:**
+
 ```
 Frontend: Vercel Static Site (ou Supabase hosting)
 Backend: Supabase Edge Functions + Direct Client Calls
@@ -172,6 +192,7 @@ Realtime: Supabase Realtime (bonus!)
 ```
 
 **Prós:**
+
 - ✅ **100% gratuito** - 500MB DB + 1GB storage
 - ✅ **Storage persistente** com CDN global
 - ✅ **Autenticação production-ready** (JWT, sessions, OAuth)
@@ -184,6 +205,7 @@ Realtime: Supabase Realtime (bonus!)
 - ✅ **Menos código** - client direto do frontend
 
 **Contras:**
+
 - ⚠️ Edge Functions usam Deno (não Node.js) - mas sintaxe similar
 - ⚠️ Vendor lock-in moderado (mas mitigado por ser open source)
 - ⚠️ Curva de aprendizado para RLS e patterns Supabase
@@ -200,15 +222,18 @@ Escolhemos **Full Supabase** pelos seguintes motivos:
 #### 1. **Resolve TODOS os problemas críticos**
 
 **Storage Persistente:**
+
 - Atual: Uploads em `/tmp` são perdidos no restart
 - Supabase: 1GB de storage persistente com CDN global
 - Transformações de imagem on-the-fly incluídas
 
 **Autenticação:**
+
 - Atual: JWT customizada básica, insegura
 - Supabase: Sistema de auth production-ready com sessions, refresh tokens, OAuth
 
 **Realtime:**
+
 - Atual: Polling a cada 5 minutos no player
 - Supabase: Updates instantâneos via WebSockets
 
@@ -223,6 +248,7 @@ O Slide Bar é uma aplicação **perfeita** para Supabase:
 - ✅ Multitenancy via organizações (perfeito para RLS)
 
 **Não precisamos de:**
+
 - ❌ Backend complexo com lógica de negócio pesada
 - ❌ Processamento assíncrono de jobs
 - ❌ Integrações com múltiplos serviços externos
@@ -246,6 +272,7 @@ pnpm test  # usa Supabase local
 ```
 
 **Fluxo TDD mantido intacto:**
+
 1. Escrever teste (fail)
 2. Implementar feature
 3. Teste passa
@@ -254,6 +281,7 @@ pnpm test  # usa Supabase local
 #### 4. **Custo Zero Sustentável**
 
 **Supabase Free Tier:**
+
 - 500MB database storage
 - 1GB file storage
 - 2GB bandwidth/mês
@@ -262,6 +290,7 @@ pnpm test  # usa Supabase local
 - Edge Functions incluídas
 
 **Para nosso caso de uso (MVP/testes):**
+
 - ~100 imagens (média 500KB) = 50MB
 - ~10 organizações = <1MB database
 - Tráfego estimado: <500MB/mês
@@ -272,24 +301,14 @@ pnpm test  # usa Supabase local
 
 ```javascript
 // ANTES: Express + Multer + JWT
-app.post('/api/images',
-  authMiddleware,
-  upload.single('file'),
-  async (req, res) => {
-    // 50 linhas de código...
-  }
-);
+app.post('/api/images', authMiddleware, upload.single('file'), async (req, res) => {
+  // 50 linhas de código...
+});
 
 // DEPOIS: Supabase
-const { data } = await supabase.storage
-  .from('images')
-  .upload('slide.jpg', file);
+const { data } = await supabase.storage.from('images').upload('slide.jpg', file);
 
-await supabase
-  .from('images')
-  .insert({ name, url: data.path })
-  .select()
-  .single();
+await supabase.from('images').insert({ name, url: data.path }).select().single();
 
 // RLS cuida da segurança automaticamente!
 ```
@@ -301,16 +320,19 @@ await supabase
 Features do roadmap que se beneficiam do Supabase:
 
 **Fase 1 (MVP):**
+
 - ✅ Realtime updates no player (já incluído)
 - ✅ Multi-organização (RLS nativo)
 - ✅ Storage persistente com CDN
 
 **Fase 2 (Crescimento):**
+
 - ✅ Gestão de múltiplas unidades (RLS por localização)
 - ✅ Permissões granulares (RLS policies)
 - ✅ Webhooks nativos
 
 **Fase 3 (Marketplace):**
+
 - ✅ Auth OAuth para anunciantes
 - ✅ Realtime para notificações
 - ✅ Storage para materiais de marketing
@@ -409,6 +431,7 @@ CREATE POLICY "public_player_read"
 ```
 
 **Vantagens:**
+
 - ✅ Segurança garantida no database
 - ✅ Impossível bypassar via API
 - ✅ Menos código de autorização no frontend
@@ -416,19 +439,20 @@ CREATE POLICY "public_player_read"
 
 ## Comparação de Custos (12 meses)
 
-| Plataforma | Custo Total Anual | Limitações |
-|------------|-------------------|------------|
-| **Supabase (escolhido)** | **$0** | 500MB DB, 1GB storage, suficiente para MVP |
-| Vercel + Neon | $0 | Storage efêmero, requer solução adicional |
-| Render Manual | $0 | DB deletado aos 90 dias, storage efêmero |
-| Railway | $60-84 | $5-7/mês, pode variar |
-| Render Pago | $228 | $19/mês fixo |
+| Plataforma               | Custo Total Anual | Limitações                                 |
+| ------------------------ | ----------------- | ------------------------------------------ |
+| **Supabase (escolhido)** | **$0**            | 500MB DB, 1GB storage, suficiente para MVP |
+| Vercel + Neon            | $0                | Storage efêmero, requer solução adicional  |
+| Render Manual            | $0                | DB deletado aos 90 dias, storage efêmero   |
+| Railway                  | $60-84            | $5-7/mês, pode variar                      |
+| Render Pago              | $228              | $19/mês fixo                               |
 
 **Economia anual vs alternativa mais barata paga: $60**
 
 ## Plano de Migração
 
 ### Fase 1: Setup Inicial (1-2 dias)
+
 - [ ] Criar projeto Supabase
 - [ ] Configurar Supabase CLI local
 - [ ] Criar migrations iniciais (schema atual)
@@ -436,24 +460,28 @@ CREATE POLICY "public_player_read"
 - [ ] Gerar types TypeScript
 
 ### Fase 2: Infraestrutura (2-3 dias)
+
 - [ ] Migrar schema Prisma → SQL migrations
 - [ ] Configurar RLS policies
 - [ ] Configurar auth (email/password inicialmente)
 - [ ] Setup CI/CD com Supabase
 
 ### Fase 3: Backend (3-4 dias)
+
 - [ ] Substituir endpoints Express por client direto
 - [ ] Migrar upload logic para Supabase Storage
 - [ ] Implementar RLS para multitenancy
 - [ ] Testes unitários com Supabase local
 
 ### Fase 4: Frontend (2-3 dias)
+
 - [ ] Integrar Supabase client
 - [ ] Substituir API calls por client direto
 - [ ] Implementar realtime subscriptions
 - [ ] Atualizar testes E2E
 
 ### Fase 5: Deploy (1 dia)
+
 - [ ] Deploy frontend no Vercel
 - [ ] Executar migrations em Supabase production
 - [ ] Configurar environment variables
@@ -466,6 +494,7 @@ CREATE POLICY "public_player_read"
 ### Risco 1: Vendor Lock-in
 
 **Mitigação:**
+
 - Supabase é 100% open source
 - Pode self-host se necessário no futuro
 - PostgreSQL standard (fácil dump/restore)
@@ -474,6 +503,7 @@ CREATE POLICY "public_player_read"
 ### Risco 2: Limites do Free Tier
 
 **Mitigação:**
+
 - Monitorar uso via Supabase dashboard
 - 500MB DB é suficiente para ~1000 organizações
 - 1GB storage = ~2000 imagens (500KB média)
@@ -482,6 +512,7 @@ CREATE POLICY "public_player_read"
 ### Risco 3: Curva de Aprendizado
 
 **Mitigação:**
+
 - Documentação excelente da Supabase
 - Comunidade ativa (Discord)
 - Patterns similares a outros frameworks
@@ -490,6 +521,7 @@ CREATE POLICY "public_player_read"
 ### Risco 4: Edge Functions (Deno)
 
 **Mitigação:**
+
 - Usar Edge Functions APENAS se necessário
 - Maioria das operações via client direto
 - Deno é similar a Node.js (TypeScript nativo)
@@ -507,6 +539,7 @@ A migração para **Full Supabase** é a escolha óbvia considerando:
 6. ✅ **Futuro**: Roadmap alinhado com features do Supabase
 
 **O cenário de hospedagem gratuita colapsou, mas Supabase se destaca como a única opção que oferece:**
+
 - Verdadeiro free tier generoso
 - Stack completo (não apenas database)
 - Excelente DX e suporte a TDD

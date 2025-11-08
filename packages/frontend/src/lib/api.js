@@ -1,15 +1,28 @@
 /**
  * API Service
  * Handles communication with backend API
+ *
+ * Feature Flag: VITE_USE_SUPABASE
+ * - false (default): Use Express backend API
+ * - true: Use Supabase directly
  */
 
+import * as supabaseApi from './supabaseApi.js';
+
 const API_BASE_URL = '/api';
+const USE_SUPABASE = import.meta.env.VITE_USE_SUPABASE === 'true';
 
 /**
  * Perform demo login and get JWT token
  * @returns {Promise<Object>} User data and token
  */
 export const demoLogin = async () => {
+  // Use Supabase if feature flag is enabled
+  if (USE_SUPABASE) {
+    return supabaseApi.demoLogin();
+  }
+
+  // Otherwise use Express backend
   const response = await fetch(`${API_BASE_URL}/auth/demo-login`, {
     method: 'POST',
     headers: {
@@ -57,6 +70,12 @@ export const clearAuthToken = () => {
  * @returns {Promise<Object>} Uploaded image data
  */
 export const uploadImage = async (file) => {
+  // Use Supabase if feature flag is enabled
+  if (USE_SUPABASE) {
+    return supabaseApi.uploadImage(file);
+  }
+
+  // Otherwise use Express backend
   const formData = new FormData();
   formData.append('image', file);
 
@@ -83,6 +102,12 @@ export const uploadImage = async (file) => {
  * @returns {Promise<Array>} List of images
  */
 export const getImages = async () => {
+  // Use Supabase if feature flag is enabled
+  if (USE_SUPABASE) {
+    return supabaseApi.getImages();
+  }
+
+  // Otherwise use Express backend
   const token = getAuthToken();
 
   const response = await fetch(`${API_BASE_URL}/upload`, {
@@ -105,6 +130,12 @@ export const getImages = async () => {
  * @returns {Promise<Object>} Deletion response
  */
 export const deleteImage = async (imageId) => {
+  // Use Supabase if feature flag is enabled
+  if (USE_SUPABASE) {
+    return supabaseApi.deleteImage(imageId);
+  }
+
+  // Otherwise use Express backend
   const token = getAuthToken();
 
   const response = await fetch(`${API_BASE_URL}/upload/${imageId}`, {

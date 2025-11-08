@@ -10,7 +10,7 @@
 
 - **Monorepo**: pnpm workspaces (packages/frontend, packages/backend)
 - **Frontend**: React 18 + Vite + Tailwind CSS
-- **Backend**: Node.js + Express + Prisma + PostgreSQL *(migrating to Supabase)*
+- **Backend**: Node.js + Express + Prisma + PostgreSQL _(migrating to Supabase)_
 - **Testing**: Vitest (unit) + Playwright (E2E)
 
 ## Folder Structure
