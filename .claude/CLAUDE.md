@@ -7,6 +7,34 @@
 - **Backend**: Node.js + Express + Prisma + PostgreSQL
 - **Testing**: Vitest (unit) + Playwright (E2E)
 
+## Folder Structure
+
+```
+slide-bar/
+├── .claude/              # AI assistant context
+├── .devcontainer/        # Docker development environment
+├── .vscode/              # VS Code settings and tasks
+├── docs/                 # Business/market documentation
+├── e2e/                  # Playwright E2E tests
+├── packages/
+│   ├── backend/          # Express API + Prisma
+│   │   ├── prisma/       # Database schema
+│   │   ├── src/
+│   │   │   ├── config/   # Configuration files
+│   │   │   ├── controllers/  # Request handlers
+│   │   │   ├── middleware/   # Auth, upload middleware
+│   │   │   ├── routes/   # API routes
+│   │   │   └── services/ # Business logic
+│   │   └── tests/        # Backend unit tests
+│   └── frontend/         # React + Vite + Tailwind
+│       ├── src/
+│       │   ├── components/  # React components
+│       │   ├── pages/    # Page components
+│       │   └── lib/      # API client, utilities
+│       └── tests/        # Frontend unit tests
+└── scripts/              # Dev/test automation scripts
+```
+
 ## Port Configuration
 
 ### Development
