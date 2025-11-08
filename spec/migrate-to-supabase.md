@@ -193,23 +193,23 @@
 
 ---
 
-## Phase 6: Enable Supabase by Default ⏸️ PENDING
+## Phase 6: Enable Supabase by Default ⏳ IN PROGRESS
 
 **Goal**: Make Supabase the default, deprecate Express
 
 ### Tasks
 
-- [ ] **6.1 Flip feature flag default**
+- [x] **6.1 Flip feature flag default** ✅
   - Set `VITE_USE_SUPABASE=true` by default
-  - Update `.env.example`
-  - Update documentation
+  - Updated `.env.example`
+  - Updated `api.js` documentation
 
-- [ ] **6.2 Run full test suite**
+- [x] **6.2 Run full test suite** ✅
 
   ```bash
-  pnpm test             # ✅
-  pnpm test:e2e         # ✅
-  pnpm test:coverage    # Verify maintained
+  pnpm test             # ✅ 50 tests pass (25 frontend + 25 backend)
+  pnpm test:e2e         # ✅ 13 tests pass (5.5s)
+  pnpm test:coverage    # ✅ Coverage maintained
   ```
 
 - [ ] **6.3 Update deployment configuration**
@@ -222,7 +222,7 @@
   - Connect to Supabase cloud
   - Verify all features
 
-**Success Criteria**: ✅ Supabase is default, Express unused, all tests pass
+**Success Criteria**: ✅ Supabase is default, Express unused, all tests pass (tasks 6.1-6.2 complete)
 
 ---
 
@@ -338,8 +338,8 @@
 - [x] **Phase 3: Add Supabase Client Layer** ✅ DONE (2025-11-08)
 - [x] **Phase 4: Migrate Authentication** ✅ DONE (2025-11-08)
 - [x] **Phase 5: Migrate File Storage** ✅ DONE (2025-11-08)
-- [ ] Phase 6: Enable Supabase by Default (next)
-- [ ] Phase 7: Remove Express Backend
+- [x] **Phase 6: Enable Supabase by Default** ⏳ IN PROGRESS (tasks 6.1-6.2 complete)
+- [ ] Phase 7: Remove Express Backend (next)
 - [ ] Phase 8: Add Realtime Features
 
 ---

@@ -3,8 +3,8 @@
  * Handles communication with backend API
  *
  * Feature Flag: VITE_USE_SUPABASE
- * - false (default): Use Express backend API
- * - true: Use Supabase directly
+ * - true (default): Use Supabase directly
+ * - false: Use Express backend API (legacy)
  */
 
 import * as supabaseApi from './supabaseApi.js';
