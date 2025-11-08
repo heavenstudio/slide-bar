@@ -28,7 +28,7 @@ export default async function globalSetup() {
       await tx.organization.deleteMany();
     });
 
-    console.log('✅ Database cleaned for test run');
+    console.warn('✅ Database cleaned for test run');
   } catch (error) {
     console.error('❌ Failed to clean database:', error.message);
   } finally {

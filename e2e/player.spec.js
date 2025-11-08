@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { truncateDatabase } from '../packages/backend/tests/helpers/database.js';
+import { TIMEOUTS } from './config.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -100,7 +101,7 @@ test.describe('Player Slideshow', () => {
 
     // Upload first image and wait for it to appear
     await fileInput.setInputFiles(testImagePath);
-    await page.waitForSelector('[data-testid="image-card"]', { timeout: 5000 });
+    await page.waitForSelector('[data-testid="image-card"]', { timeout: TIMEOUTS.SELECTOR });
     const firstImageCount = await page.locator('[data-testid="image-card"]').count();
     expect(firstImageCount).toBe(1);
 
@@ -111,7 +112,7 @@ test.describe('Player Slideshow', () => {
         return document.querySelectorAll('[data-testid="image-card"]').length === expectedCount;
       },
       2, // expecting 2 images
-      { timeout: 5000 }
+      { timeout: TIMEOUTS.SELECTOR }
     );
 
     // Navigate to player
@@ -138,7 +139,7 @@ test.describe('Player Slideshow', () => {
     const testImagePath = path.join(__dirname, '../packages/backend/tests/fixtures/test-image.jpg');
     const fileInput = page.locator('input[type="file"]');
     await fileInput.setInputFiles(testImagePath);
-    await page.waitForSelector('[data-testid="image-card"]', { timeout: 5000 });
+    await page.waitForSelector('[data-testid="image-card"]', { timeout: TIMEOUTS.SELECTOR });
 
     // Now navigate to player
     await page.goto('/player');
@@ -168,7 +169,7 @@ test.describe('Player Slideshow', () => {
     const testImagePath = path.join(__dirname, '../packages/backend/tests/fixtures/test-image.jpg');
     const fileInput = page.locator('input[type="file"]');
     await fileInput.setInputFiles(testImagePath);
-    await page.waitForSelector('[data-testid="image-card"]', { timeout: 5000 });
+    await page.waitForSelector('[data-testid="image-card"]', { timeout: TIMEOUTS.SELECTOR });
 
     // Navigate to player
     await page.goto('/player');

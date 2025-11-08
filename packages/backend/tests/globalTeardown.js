@@ -8,5 +8,5 @@ import { disconnectDatabase } from './helpers/database.js';
 
 export default async function globalTeardown() {
   await disconnectDatabase();
-  console.log('✅ Database connections closed');
+  console.warn('✅ Database connections closed');
 }

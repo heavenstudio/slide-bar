@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { truncateDatabase } from '../packages/backend/tests/helpers/database.js';
+import { TIMEOUTS } from './config.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -28,23 +29,34 @@ test.describe('Image Upload and Management', () => {
 
   // Clean up images after each test for proper isolation
   test.afterEach(async ({ request }) => {
-    // Get all images
-    const response = await request.get('/api/upload/images', {
-      headers: {
-        Authorization: 'Bearer demo-token',
-      },
-    });
+    try {
+      // Get all images
+      const response = await request.get('/api/upload/images', {
+        headers: {
+          Authorization: 'Bearer demo-token',
+        },
+      });
 
-    if (response.ok()) {
-      const data = await response.json();
-      // Delete each image
-      for (const image of data.images) {
-        await request.delete(`/api/upload/images/${image.id}`, {
-          headers: {
-            Authorization: 'Bearer demo-token',
-          },
-        });
+      if (response.ok()) {
+        const data = await response.json();
+        // Delete each image in parallel for faster cleanup
+        const deletePromises = data.images.map((image) =>
+          request
+            .delete(`/api/upload/images/${image.id}`, {
+              headers: {
+                Authorization: 'Bearer demo-token',
+              },
+            })
+            .catch((error) => {
+              // Log but don't fail the test if cleanup fails
+              console.warn(`Failed to delete image ${image.id}:`, error.message);
+            })
+        );
+        await Promise.all(deletePromises);
       }
+    } catch (error) {
+      // Log cleanup failures but don't fail the test
+      console.warn('Failed to cleanup images in afterEach:', error.message);
     }
   });
 
@@ -112,7 +124,7 @@ test.describe('Image Upload and Management', () => {
     await fileInput.setInputFiles(testImagePath);
 
     // Wait for upload to complete by checking for image card
-    await page.waitForSelector('[data-testid="image-card"]', { timeout: 5000 });
+    await page.waitForSelector('[data-testid="image-card"]', { timeout: TIMEOUTS.SELECTOR });
 
     // Verify image appears in the grid
     const imageCards = page
@@ -169,7 +181,7 @@ test.describe('Image Upload and Management', () => {
     const testImagePath = path.join(__dirname, '../packages/backend/tests/fixtures/test-image.jpg');
     const fileInput = page.locator('input[type="file"]');
     await fileInput.setInputFiles(testImagePath);
-    await page.waitForSelector('[data-testid="image-card"]', { timeout: 5000 });
+    await page.waitForSelector('[data-testid="image-card"]', { timeout: TIMEOUTS.SELECTOR });
 
     // Get initial count - wait for images to load
     await page.waitForSelector('[data-testid="image-card"]');
@@ -194,7 +206,7 @@ test.describe('Image Upload and Management', () => {
         return cards.length < expectedCount;
       },
       initialCount,
-      { timeout: 5000 }
+      { timeout: TIMEOUTS.SELECTOR }
     );
 
     // Verify count decreased
@@ -222,11 +234,11 @@ test.describe('Image Upload and Management', () => {
     // Upload first image
     const fileInput = page.locator('input[type="file"]');
     await fileInput.setInputFiles(testImagePath);
-    await page.waitForSelector('[data-testid="image-card"]', { timeout: 5000 });
+    await page.waitForSelector('[data-testid="image-card"]', { timeout: TIMEOUTS.SELECTOR });
 
     // Upload second image
     await fileInput.setInputFiles(testImagePath);
-    await page.waitForSelector('[data-testid="image-card"]', { timeout: 5000 });
+    await page.waitForSelector('[data-testid="image-card"]', { timeout: TIMEOUTS.SELECTOR });
 
     // Verify grid displays images
     const imageElements = page

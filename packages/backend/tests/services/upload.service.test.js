@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { UploadService } from '../../src/services/upload.service.js';
 import { getPrismaClient, createTestOrganization } from '../helpers/database.js';
 
+// eslint-disable-next-line max-lines-per-function -- Test suite with multiple nested describe blocks
 describe('UploadService', () => {
   let uploadService;
   let testOrganization;
