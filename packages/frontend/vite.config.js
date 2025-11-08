@@ -13,12 +13,12 @@ export default defineConfig({
     proxy: {
       '/api': {
         target: backendTarget,
-        changeOrigin: true
+        changeOrigin: true,
       },
       '/uploads': {
         target: backendTarget,
-        changeOrigin: true
-      }
-    }
-  }
+        changeOrigin: true,
+      },
+    },
+  },
 });

@@ -31,7 +31,7 @@ test.describe('Image Upload and Management', () => {
     // Get all images
     const response = await request.get('/api/upload/images', {
       headers: {
-        'Authorization': 'Bearer demo-token',
+        Authorization: 'Bearer demo-token',
       },
     });
 
@@ -41,7 +41,7 @@ test.describe('Image Upload and Management', () => {
       for (const image of data.images) {
         await request.delete(`/api/upload/images/${image.id}`, {
           headers: {
-            'Authorization': 'Bearer demo-token',
+            Authorization: 'Bearer demo-token',
           },
         });
       }

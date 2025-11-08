@@ -69,6 +69,7 @@ slide-bar/
 ## Code Quality & Testing Practices
 
 ### Test-Driven Development (TDD)
+
 - **Write tests first**: Create tests before implementation, verify they fail initially
 - **Red-Green-Refactor**: Failing test → Make it pass → Improve code quality
 - **High unit test coverage**: Focus on edge cases, functions, classes, and modules
@@ -79,6 +80,7 @@ slide-bar/
 - **Coverage analysis**: Run `pnpm test:coverage` after features to identify gaps
 
 ### Quality Tools
+
 - ESLint v9 (flat config) - configured and passing
 - Prettier for formatting - configured
 - Test coverage reporting configured (`pnpm test:coverage`)
@@ -87,6 +89,7 @@ slide-bar/
 - Format commands: `pnpm format`, `pnpm format:check`
 
 ### When Tests Fail
+
 1. **First**: Check implementation code for bugs (don't relax test assertions)
 2. **Avoid**: Making tests accept broader outputs (e.g., changing specific format checks to generic string checks)
 3. **Debug**: Understand why the test is failing before making changes
@@ -105,6 +108,24 @@ slide-bar/
 - All 13 tests passing:
   - 7 image upload tests (dashboard, upload, delete, grid, validation)
   - 6 player tests (public access, empty state, fullscreen, controls, dashboard link)
+
+## PR Workflow
+
+**Automated Checks** (GitHub Actions):
+- ESLint validation
+- Prettier formatting check
+- Unit tests (all packages)
+
+**Before Creating PR:**
+1. Fix lint errors: `pnpm lint` (0 errors required)
+2. Format code: `pnpm format`
+3. Run tests: `pnpm test` (all passing)
+4. Optional: Run E2E tests: `pnpm test:e2e`
+
+**CI Workflow** (`.github/workflows/pr-checks.yml`):
+- Runs on all PRs to main/master
+- Jobs: lint-and-format, test-unit
+- Must pass before merge
 
 ## Security Features
 

@@ -12,7 +12,7 @@ import { truncateDatabase, disconnectDatabase } from './helpers/database.js';
 if (!process.env.TEST_DATABASE_URL && !process.env.DATABASE_URL) {
   console.warn(
     '⚠️  WARNING: Neither TEST_DATABASE_URL nor DATABASE_URL is set. ' +
-    'Tests will fail if they need database access.'
+      'Tests will fail if they need database access.'
   );
 }
 

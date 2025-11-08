@@ -173,9 +173,9 @@ describe('UploadService', () => {
     it('should throw error if image not found', async () => {
       const nonExistentId = 'non-existent-id';
 
-      await expect(
-        uploadService.deleteImage(nonExistentId, testOrganization.id)
-      ).rejects.toThrow('Image not found');
+      await expect(uploadService.deleteImage(nonExistentId, testOrganization.id)).rejects.toThrow(
+        'Image not found'
+      );
     });
 
     it('should throw error if image belongs to different organization', async () => {
