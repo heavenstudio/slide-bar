@@ -137,7 +137,7 @@ jobs:
       - name: Start frontend server
         run: |
           cd packages/frontend
-          VITE_PORT=5174 nohup npx vite --port 5174 --host > /tmp/vite-test.log 2>&1 &
+          VITE_PORT=5174 BACKEND_PORT=3001 nohup npx vite --port 5174 --host > /tmp/vite-test.log 2>&1 &
           echo $! > /tmp/vite-test.pid
 
       - name: Wait for servers to be ready
