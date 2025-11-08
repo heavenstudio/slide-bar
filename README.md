@@ -404,11 +404,16 @@ Agora cada PR terá um preview environment automático! 🎉
 
 ### Notas do Free Tier
 
-⚠️ **Serviços dormem após 15 minutos de inatividade**
+⚠️ **Limitações do Free Tier:**
 
-- Primeira requisição demora ~30-60s para acordar
-- Perfeito para demos e staging
-- Para produção com usuários reais, upgrade para Starter ($7/mês por serviço)
+- **Serviços dormem** após 15 minutos de inatividade (~30-60s para acordar)
+- **Uploads são efêmeros** - imagens são perdidas quando o serviço reinicia
+- **Sem discos persistentes** - free tier não suporta armazenamento permanente
+
+**Recomendações:**
+
+- ✅ Perfeito para demos e staging
+- ⚠️ Para produção: upgrade para Starter ($7/mês) ou use cloud storage (S3, Cloudflare R2)
 
 ---
 
