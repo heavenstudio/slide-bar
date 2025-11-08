@@ -28,13 +28,13 @@ pnpm-debug.log*
 
 # Editor
 .idea/
+.vscode/
 *.swp
 *.swo
 *~
 
-# DevContainer - keep these for team setup
+# DevContainer - keep for team setup
 # .devcontainer/
-# .vscode/
 
 # OS
 .DS_Store

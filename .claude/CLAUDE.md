@@ -13,7 +13,6 @@
 slide-bar/
 ├── .claude/              # AI assistant context
 ├── .devcontainer/        # Docker development environment
-├── .vscode/              # VS Code settings and tasks
 ├── docs/                 # Business/market documentation
 ├── e2e/                  # Playwright E2E tests
 ├── packages/
