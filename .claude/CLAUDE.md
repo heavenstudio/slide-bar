@@ -157,6 +157,7 @@ When encountering ESLint warnings or errors:
 6. **DO NOT**: Remove or relax rules in `eslint.config.js` without user approval
 
 **Examples of proper fixes**:
+
 - ESLint `max-lines-per-function` warning → Extract helper functions or split into describe blocks
 - ESLint `no-console` warning → Change to `console.warn` or `console.error`, or remove
 - ESLint `max-len` warning → Break long lines, extract variables, or improve formatting
