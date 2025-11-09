@@ -51,6 +51,9 @@ cd "$PROJECT_ROOT"
 # Stop any existing E2E test containers
 docker compose -f docker-compose.e2e.yml down 2>/dev/null || true
 
+# Set PLAYWRIGHT_ARGS environment variable if provided
+export PLAYWRIGHT_ARGS="${PLAYWRIGHT_ARGS:-}"
+
 # Run tests - start containers and capture Playwright logs
 docker compose -f docker-compose.e2e.yml up --build -d
 
@@ -76,10 +79,23 @@ if [ -n "$PLAYWRIGHT_CONTAINER" ]; then
   echo "📊 Copying test report from container..."
   sleep 2
 
-  if docker cp "$PLAYWRIGHT_CONTAINER:/workspace/slide-bar/playwright-report" "$PROJECT_ROOT/" 2>/dev/null; then
+  # Create .test-output directory if it doesn't exist
+  mkdir -p "$PROJECT_ROOT/.test-output"
+
+  if docker cp "$PLAYWRIGHT_CONTAINER:/workspace/slide-bar/.test-output/playwright-report" "$PROJECT_ROOT/.test-output/" 2>/dev/null; then
     echo "✅ Report copied successfully"
   else
     echo "⚠️  Warning: Could not copy report from container"
+  fi
+
+  # Copy coverage data if E2E_COVERAGE is enabled
+  if [ "$E2E_COVERAGE" = "true" ]; then
+    echo "📊 Copying coverage data from container..."
+    if docker cp "$PLAYWRIGHT_CONTAINER:/workspace/slide-bar/.nyc_output" "$PROJECT_ROOT/" 2>/dev/null; then
+      echo "✅ Coverage data copied successfully"
+    else
+      echo "⚠️  Warning: No coverage data found (may not have been collected)"
+    fi
   fi
 else
   echo "❌ Playwright container not found"
@@ -91,12 +107,12 @@ docker compose -f docker-compose.e2e.yml down
 
 # Show report info
 echo ""
-if [ -d "$PROJECT_ROOT/playwright-report" ]; then
-  echo "📊 Test report available at: playwright-report/"
+if [ -d "$PROJECT_ROOT/.test-output/playwright-report" ]; then
+  echo "📊 Test report available at: .test-output/playwright-report/"
   echo "💡 To view the report, run: pnpm playwright show-report"
 
-  # Auto-open report only if tests passed
-  if [ $EXIT_CODE -eq 0 ]; then
+  # Auto-open report only if tests passed AND not in CI/automated mode
+  if [ $EXIT_CODE -eq 0 ] && [ -z "$CI" ] && [ -z "$E2E_COVERAGE" ]; then
     "$SCRIPT_DIR/show-report.sh"
   fi
 else

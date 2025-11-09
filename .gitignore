@@ -5,10 +5,9 @@ node_modules/
 .pnpm-store/
 
 # Testing
-coverage/
+.test-output/
+.nyc_output/
 *.lcov
-test-results/
-playwright-report/
 
 # Production
 dist/

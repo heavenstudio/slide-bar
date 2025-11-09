@@ -16,19 +16,14 @@ Plataforma de sinalização digital para restaurantes e bares com gerenciamento 
 # 1. Instalar dependências
 pnpm install
 
-# 2. Gerar cliente Prisma para macOS e Linux (necessário para testes E2E no Docker)
-cd packages/backend
-pnpm prisma:generate
-cd ../..
-
-# 3. Iniciar servidores de desenvolvimento (inicia o banco automaticamente)
+# 2. Iniciar servidores de desenvolvimento (inicia Supabase local automaticamente)
 pnpm start
 ```
 
 **Pronto!** Acesse a aplicação em:
 
 - 🌐 **Frontend:** http://localhost:5173
-- 🔧 **Backend:** http://localhost:3000
+- 🔧 **Supabase Studio:** http://localhost:54323
 
 ### Parar Servidores
 
@@ -40,17 +35,18 @@ pnpm stop
 
 ## 📋 Comandos Disponíveis
 
-| Comando                     | Descrição                                          |
-| --------------------------- | -------------------------------------------------- |
-| `pnpm start`                | Inicia servidores dev (frontend + backend + banco) |
-| `pnpm stop`                 | Para todos os servidores dev                       |
-| `pnpm build`                | Compila todos os pacotes para produção             |
-| `pnpm test`                 | Executa todos os testes unitários                  |
-| `pnpm test:watch`           | Executa testes em modo watch                       |
-| `pnpm test:coverage`        | Executa testes com relatório de cobertura          |
-| `pnpm test:e2e`             | Executa testes E2E (Playwright)                    |
-| `pnpm test:e2e:ui`          | Executa testes E2E em modo UI                      |
-| `pnpm test:e2e:show-report` | Visualiza último relatório de testes               |
+| Comando                     | Descrição                               |
+| --------------------------- | --------------------------------------- |
+| `pnpm start`                | Inicia frontend + Supabase local        |
+| `pnpm stop`                 | Para todos os servidores                |
+| `pnpm build`                | Compila frontend para produção          |
+| `pnpm test`                 | Executa testes unitários (85 testes)    |
+| `pnpm test:watch`           | Executa testes em modo watch            |
+| `pnpm test:coverage`        | Testes unitários com cobertura          |
+| `pnpm coverage:all`         | Cobertura completa (unit + E2E + merge) |
+| `pnpm test:e2e`             | Executa testes E2E (16 testes)          |
+| `pnpm test:e2e:ui`          | Executa testes E2E em modo UI           |
+| `pnpm test:e2e:show-report` | Visualiza último relatório de testes    |
 
 ---
 
@@ -58,19 +54,20 @@ pnpm stop
 
 ### Desenvolvimento
 
-| Serviço        | Porta | URL                         |
-| -------------- | ----- | --------------------------- |
-| Frontend       | 5173  | http://localhost:5173       |
-| Backend        | 3000  | http://localhost:3000       |
-| Banco de Dados | 5432  | postgresql://localhost:5432 |
+| Serviço         | Porta | URL                          |
+| --------------- | ----- | ---------------------------- |
+| Frontend        | 5173  | http://localhost:5173        |
+| Supabase API    | 54321 | http://localhost:54321       |
+| Supabase Studio | 54323 | http://localhost:54323       |
+| PostgreSQL      | 54322 | postgresql://localhost:54322 |
 
 ### Testes (E2E)
 
-| Serviço              | Porta |
-| -------------------- | ----- |
-| Frontend de Teste    | 5174  |
-| Backend de Teste     | 3001  |
-| Relatório Playwright | 9323  |
+| Serviço              | Porta | URL                    |
+| -------------------- | ----- | ---------------------- |
+| Frontend de Teste    | 5174  | http://localhost:5174  |
+| Supabase API (TEST)  | 55321 | http://localhost:55321 |
+| Relatório Playwright | 9323  | http://localhost:9323  |
 
 ---
 
@@ -91,9 +88,10 @@ pnpm stop
 
 ### Testes
 
-- Vitest (testes unitários)
+- Vitest (testes unitários e de integração)
 - Playwright (testes E2E)
-- 50 testes unitários + 13 testes E2E
+- 85 testes unitários + 16 testes E2E = 101 testes totais
+- ~97% de cobertura combinada
 
 ---
 
@@ -101,23 +99,18 @@ pnpm stop
 
 ```
 slide-bar/
-├── packages/
-│   ├── frontend/          # Aplicação React
-│   │   ├── src/
-│   │   │   ├── components/
-│   │   │   ├── pages/
-│   │   │   └── lib/
-│   │   └── tests/
-│   └── backend/           # API Express
-│       ├── src/
-│       │   ├── controllers/
-│       │   ├── services/
-│       │   ├── routes/
-│       │   └── middleware/
-│       └── tests/
+├── docs/                  # Documentação adicional
 ├── scripts/               # Scripts dev/teste
-├── e2e/                   # Testes E2E
-└── docs/                  # Documentação adicional
+├── src/                   # Aplicação React
+│   ├── components/        # Componentes React
+│   ├── pages/             # Páginas (Dashboard, Player)
+│   └── lib/               # Cliente Supabase, utilitários
+├── supabase/              # Configuração Supabase (migrations, functions)
+├── tests/                 # Todos os testes
+│   ├── config/            # Configuração de testes
+│   ├── e2e/               # Testes E2E (specs/, fixtures/, support/)
+│   ├── helpers/           # Helpers compartilhados (limpeza DB)
+│   └── unit/              # Testes unitários (lib/, components/, pages/)
 ```
 
 ---
@@ -133,8 +126,37 @@ pnpm test
 ### Cobertura de Testes
 
 ```bash
+# Cobertura dos testes unitários/integração (Vitest)
 pnpm test:coverage
+
+# Cobertura dos testes E2E com instrumentação (Playwright)
+pnpm test:e2e:coverage
+
+# Mesclar coberturas de Vitest + Playwright
+pnpm coverage:merge
+
+# Verificar thresholds de cobertura
+pnpm coverage:check
+
+# Verificação rápida (apenas Vitest, ~5s)
+pnpm coverage:quick
+
+# Cobertura completa: unit + E2E + merge + check (~60s)
+pnpm coverage:all
 ```
+
+**Cobertura Combinada**: O projeto suporta combinação de cobertura de testes unitários (Vitest) e E2E (Playwright) para uma visão completa:
+
+- **Vitest**: ~94% de cobertura em testes unitários (~5s)
+- **Playwright**: Cobertura adicional via E2E (~10s)
+- **Combinada**: ~97% linhas, ~94% statements, ~77% branches, ~94% functions
+
+**Comandos recomendados**:
+
+- Desenvolvimento local: `pnpm coverage:quick` (apenas Vitest, rápido)
+- Antes de criar PR: `pnpm coverage:all` (completo com E2E)
+
+A cobertura combinada é gerada em `.test-output/merged-coverage/` e inclui relatórios em JSON e HTML.
 
 ### Testes E2E
 
@@ -151,10 +173,10 @@ pnpm test:e2e:show-report
 
 **Estatísticas de Testes:**
 
-- ✅ 37 testes unitários (100% passando)
-- ✅ 13 testes E2E (100% passando)
-- ✅ Cobertura Frontend + Backend
-- ⚡ E2E boot time: ~7 segundos (browsers pré-instalados no Docker)
+- ✅ 85 testes unitários (100% passando, ~5s)
+- ✅ 16 testes E2E (100% passando, ~10s)
+- ✅ ~97% de cobertura combinada
+- ⚡ Total: 101 testes em ~15 segundos
 
 ---
 
@@ -173,16 +195,37 @@ tail -f /tmp/backend-dev.log
 ### Gerenciamento do Banco de Dados
 
 ```bash
-# Abrir Prisma Studio (editor visual do BD)
-cd packages/backend
-pnpm prisma:studio
+# Abrir Supabase Studio (editor visual do BD)
+# Acesse: http://localhost:54323
 
 # Criar nova migration
-pnpm prisma:migrate
+supabase migration new nome_da_migration
 
-# Gerar cliente Prisma
-pnpm prisma:generate
+# Aplicar migrations
+supabase db push
+
+# Reset do banco (cuidado!)
+supabase db reset
 ```
+
+### Gerenciamento de Usuários
+
+```bash
+# Abrir Supabase Studio
+# Acesse: http://localhost:54323
+
+# Navegar para Authentication > Users
+# - Criar novos usuários
+# - Editar usuários existentes
+# - Gerenciar roles e permissões
+# - Visualizar sessões ativas
+
+# Usuário demo padrão:
+# Email: demo@example.com
+# Senha: demo-password-123
+```
+
+**Nota**: Gerenciamento de usuários é feito diretamente no Supabase Studio ou via Supabase CLI, não há interface de administração na aplicação.
 
 ---
 
@@ -216,23 +259,19 @@ pnpm start
 
 ### Erros de binários específicos de plataforma (testes E2E Docker)
 
-Se você ver erros como "You installed esbuild for another platform" ou erros de plataforma do Prisma:
+Se você ver erros como "You installed esbuild for another platform":
 
-**Causa:** macOS e Linux (container Docker) requerem binários nativos diferentes para esbuild e Prisma.
+**Causa:** macOS e Linux (container Docker) requerem binários nativos diferentes para esbuild.
 
 **Solução:** O projeto está configurado para suportar ambas as plataformas:
 
 - **esbuild**: `@esbuild/linux-arm64@0.21.5` instalado como dependência de dev
-- **Prisma**: `binaryTargets = ["native", "linux-arm64-openssl-1.1.x"]` em `schema.prisma`
+- **Rollup**: `@rollup/rollup-darwin-arm64` para macOS ARM
 
 Se ainda encontrar problemas:
 
 ```bash
-# Regenerar cliente Prisma para ambas as plataformas
-cd packages/backend
-pnpm prisma:generate
-
-# Ou reinstalar dependências
+# Reinstalar dependências
 pnpm install
 ```
 
@@ -406,8 +445,7 @@ supabase db push
 2. Faça deploy do frontend:
 
 ```bash
-# Deploy do frontend
-cd packages/frontend
+# Deploy do frontend (na raiz do projeto)
 vercel
 ```
 

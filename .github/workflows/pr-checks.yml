@@ -83,12 +83,19 @@ jobs:
       - name: Start Supabase local instance
         run: supabase start
 
-      - name: Run unit tests
-        run: pnpm test
+      - name: Run unit tests with coverage
+        run: pnpm test:coverage
         env:
           VITE_SUPABASE_URL: http://127.0.0.1:55321
           VITE_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0
           SUPABASE_SERVICE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU
+
+      - name: Upload Vitest coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: vitest-coverage
+          path: coverage/
+          retention-days: 1
 
   test-e2e:
     name: E2E Tests
@@ -123,6 +130,12 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Download Vitest coverage
+        uses: actions/download-artifact@v4
+        with:
+          name: vitest-coverage
+          path: coverage/
 
       - name: Get Playwright version
         id: playwright-version
@@ -165,11 +178,12 @@ jobs:
       - name: Start Supabase local instance
         run: supabase start
 
-      - name: Start frontend server
+      - name: Start frontend server with coverage instrumentation
         run: |
           VITE_PORT=5174 nohup npx vite --port 5174 --host > /tmp/vite-test.log 2>&1 &
           echo $! > /tmp/vite-test.pid
         env:
+          E2E_COVERAGE: true
           VITE_SUPABASE_URL: http://127.0.0.1:55321
           VITE_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0
 
@@ -189,12 +203,19 @@ jobs:
           cat /tmp/vite-test.log
           exit 1
 
-      - name: Run E2E tests
+      - name: Run E2E tests with coverage
         run: VITE_PORT=5174 npx playwright test
         env:
+          E2E_COVERAGE: true
           VITE_SUPABASE_URL: http://127.0.0.1:55321
           VITE_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0
           SUPABASE_SERVICE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU
+
+      - name: Merge coverage reports
+        run: node scripts/merge-coverage.js
+
+      - name: Check combined coverage thresholds
+        run: node scripts/check-coverage.js
 
       - name: Stop frontend server
         if: always()

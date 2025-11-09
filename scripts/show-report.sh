@@ -5,7 +5,7 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 PROJECT_ROOT="$( cd "$SCRIPT_DIR/.." && pwd )"
 
 # Check if report exists
-if [ ! -d "$PROJECT_ROOT/playwright-report" ]; then
+if [ ! -d "$PROJECT_ROOT/.test-output/playwright-report" ]; then
   echo "❌ No Playwright report found. Run 'pnpm test:e2e' first."
   exit 1
 fi
@@ -26,7 +26,7 @@ else
   echo "📊 Starting Playwright report server on host (not in Docker)..."
   # Run server in background, but keep process group alive so we can show the message
   cd "$PROJECT_ROOT"
-  nohup npx playwright show-report --host 0.0.0.0 --port 9323 > /tmp/playwright-report.log 2>&1 &
+  nohup npx playwright show-report .test-output/playwright-report --host 0.0.0.0 --port 9323 > /tmp/playwright-report.log 2>&1 &
   SERVER_PID=$!
   echo "⏳ Waiting for server to start..."
   sleep 3

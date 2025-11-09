@@ -91,6 +91,6 @@ export function createMockImageFile(filename = 'test.jpg', content = 'test image
     slice: (start, end) => data.slice(start, end),
     // Expose the raw data for Supabase upload
     [Symbol.toStringTag]: 'File',
-    ...data
+    ...data,
   };
 }

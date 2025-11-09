@@ -1,7 +1,7 @@
-import { test, expect } from './fixtures.js';
+import { test, expect } from '../support/fixtures.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { TIMEOUTS } from './config.js';
+import { TIMEOUTS } from '../support/constants.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -81,7 +81,7 @@ test.describe('Image Upload and Management', () => {
     await page.waitForSelector('h2:has-text("Enviar Nova Imagem")');
 
     // Create a test image file
-    const testImagePath = path.join(__dirname, './fixtures/test-image.jpg');
+    const testImagePath = path.join(__dirname, '../fixtures/test-image.jpg');
 
     // Find the file input (it's hidden, so we use setInputFiles directly)
     const fileInput = page.locator('input[type="file"]');
@@ -142,7 +142,7 @@ test.describe('Image Upload and Management', () => {
     await page.waitForSelector('h2:has-text("Enviar Nova Imagem")');
 
     // Upload an image to ensure we have at least one
-    const testImagePath = path.join(__dirname, './fixtures/test-image.jpg');
+    const testImagePath = path.join(__dirname, '../fixtures/test-image.jpg');
     const fileInput = page.locator('input[type="file"]');
     await fileInput.setInputFiles(testImagePath);
     await page.waitForSelector('[data-testid="image-card"]', { timeout: TIMEOUTS.SELECTOR });
@@ -197,7 +197,7 @@ test.describe('Image Upload and Management', () => {
     await page.waitForSelector('h1:has-text("Slide Bar")');
     await page.waitForSelector('h2:has-text("Enviar Nova Imagem")');
 
-    const testImagePath = path.join(__dirname, './fixtures/test-image.jpg');
+    const testImagePath = path.join(__dirname, '../fixtures/test-image.jpg');
 
     // Upload first image
     const fileInput = page.locator('input[type="file"]');

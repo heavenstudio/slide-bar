@@ -5,10 +5,7 @@ import '@testing-library/jest-dom';
 const originalConsoleWarn = console.warn;
 console.warn = (...args) => {
   const message = args[0];
-  if (
-    typeof message === 'string' &&
-    message.includes('Multiple GoTrueClient instances detected')
-  ) {
+  if (typeof message === 'string' && message.includes('Multiple GoTrueClient instances detected')) {
     return; // Suppress this specific warning
   }
   originalConsoleWarn(...args);

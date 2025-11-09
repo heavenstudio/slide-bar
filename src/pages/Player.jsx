@@ -29,7 +29,18 @@ export default function Player() {
         throw new Error(fetchError.message);
       }
 
-      setImages(data || []);
+      const newImages = data || [];
+      setImages(newImages);
+
+      // Adjust currentIndex if it's out of bounds after image deletion
+      setCurrentIndex((prevIndex) => {
+        if (newImages.length === 0) return 0;
+        if (prevIndex >= newImages.length) {
+          // If current index is beyond new length, go to last image
+          return newImages.length - 1;
+        }
+        return prevIndex;
+      });
     } catch (err) {
       setError(err.message);
     } finally {
@@ -37,14 +48,24 @@ export default function Player() {
     }
   }, []);
 
-  // Load images on mount
+  // Load images on mount and set up Realtime subscription
   useEffect(() => {
     loadImages();
 
-    // Refresh images every 5 minutes to get new uploads
-    const refreshInterval = setInterval(loadImages, 5 * 60 * 1000);
+    // Subscribe to real-time changes on the images table
+    const channel = supabase
+      .channel('images-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'images' }, (payload) => {
+        // Instantly reload images when database changes (INSERT, UPDATE, or DELETE)
+        console.log('Realtime event received:', payload.eventType);
+        loadImages();
+      })
+      .subscribe();
 
-    return () => clearInterval(refreshInterval);
+    // Cleanup: unsubscribe when component unmounts
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [loadImages]);
 
   // Auto-advance slideshow

@@ -11,28 +11,25 @@
 
 ```
 slide-bar/
-├── .claude/              # AI assistant context
-├── .devcontainer/        # Docker development environment
 ├── docs/                 # Business/market documentation
+├── scripts/              # Dev/test automation scripts
+├── spec/                 # Feature specifications (spec-driven development)
 ├── src/                  # React + Vite + Tailwind
 │   ├── components/       # React components
-│   ├── pages/            # Page components
-│   └── lib/              # Supabase API client, utilities
-├── tests/                # All tests (unit + E2E + fixtures)
-│   ├── components/       # Component tests
-│   ├── pages/            # Page tests
-│   ├── helpers/          # Test helpers (Supabase cleanup, etc.)
-│   ├── fixtures/         # Test fixtures (images, Playwright config)
-│   ├── *.test.js(x)      # Unit/integration tests (Vitest)
-│   ├── *.spec.js         # E2E tests (Playwright)
-│   ├── config.js         # E2E test configuration
-│   ├── fixtures.js       # Playwright fixtures
-│   ├── global-setup.js   # E2E global setup
-│   └── global-teardown.js # E2E global teardown
-├── scripts/              # Dev/test automation scripts
-└── supabase/             # Supabase config, migrations, functions
-    ├── config.toml       # Local Supabase configuration
-    └── migrations/       # Database schema migrations
+│   ├── lib/              # Supabase API client, utilities
+│   └── pages/            # Page components
+├── supabase/             # Supabase config, migrations, functions
+└── tests/                # All tests (unit + E2E + fixtures)
+    ├── config/           # Test configuration (setup.js for Vitest)
+    ├── e2e/
+    │   ├── fixtures/     # Test assets (images)
+    │   ├── specs/        # E2E test files (*.spec.js)
+    │   └── support/      # E2E helpers (constants, fixtures, global-setup/teardown)
+    ├── helpers/          # Shared test helpers (Supabase cleanup)
+    └── unit/
+        ├── components/   # Component unit tests (includes App.test.jsx)
+        ├── lib/          # Library unit tests
+        └── pages/        # Page unit tests
 ```
 
 ## Port Configuration
@@ -63,7 +60,46 @@ slide-bar/
 - **Platform-Specific Binaries**:
   - **esbuild**: Requires `@esbuild/linux-arm64@0.21.5` for Docker E2E tests (macOS uses darwin-arm64)
 
-## Code Quality & Testing Practices
+## Development Practices
+
+### Spec-Driven Development
+
+For complex features or major changes, create a specification document first:
+
+**Process** (inspired by GitHub's spec-kit):
+1. Create `spec/feature-name.md` before writing code
+2. Document: Goal, Architecture, Tasks, Success Criteria, Progress
+3. Break down into phases with clear checkpoints
+4. Mark tasks complete with ✅ as you progress
+5. Keep spec updated throughout development
+
+**Example**: `spec/migrate-to-supabase.md` - 9-phase migration with TDD at every step
+
+**When to use specs**:
+- Major architectural changes
+- Multi-phase migrations
+- Features requiring coordination across multiple components
+- When you need to track progress over multiple sessions
+
+**Spec template**:
+```markdown
+# Feature Name
+
+**Status**: 🟡 In Progress / ✅ Done
+**Started**: YYYY-MM-DD
+**Approach**: Brief description
+
+## Goal
+What we're trying to achieve
+
+## Phase 1: Phase Name
+- [ ] Task 1
+- [ ] Task 2
+
+**Success Criteria**: How we know it's done
+```
+
+**Timestamps**: Always use system time from `<env>Today's date</env>` context for all dates/timestamps. Never use placeholder dates.
 
 ### Test-Driven Development (TDD)
 
@@ -80,8 +116,9 @@ slide-bar/
 
 - ESLint v9 (flat config) - configured and passing
 - Prettier for formatting - configured
-- Test coverage reporting configured (`pnpm test:coverage`)
-- 18 integration tests + 13 E2E tests (all passing)
+- Test coverage reporting configured (`pnpm coverage:all`)
+- 85 unit tests + 16 E2E tests = 101 total (all passing)
+- Coverage: ~97% lines, ~94% statements, ~77% branches, ~94% functions
 - Lint commands: `pnpm lint`, `pnpm lint:fix`
 - Format commands: `pnpm format`, `pnpm format:check`
 
@@ -95,87 +132,55 @@ slide-bar/
 
 ### Test Architecture
 
-- **18 integration tests** calling real Supabase TEST instance (`http://127.0.0.1:55321`)
+- **unit tests** in `tests/unit/**/*.test.{js,jsx}` calling real Supabase TEST instance (port 55321)
+- **E2E tests** in `tests/e2e/specs/*.spec.js`
 - **Isolated from dev**: Unit tests use TEST Supabase (port 55321), dev uses main Supabase (port 54321)
-- **Shared with E2E**: Both unit and E2E tests use the same TEST instance (started by E2E script)
+- **Shared TEST instance**: Both unit and E2E tests use the same TEST instance (started by E2E script)
 - **Test helpers** in `tests/helpers/supabase.js`:
   - `createServiceClient()` - Service role client bypassing RLS for cleanup
   - `cleanDatabase()` - Delete all test data using service role
   - `useSupabaseCleanup()` - Automatic cleanup after each test
   - `createMockImageFile()` - Custom file-like objects for uploads
 
-### Critical Challenges Solved
-
-1. **Test Data Isolation**
-   - **Problem**: Unit tests were deleting dev data from port 54321
-   - **Solution**: Point unit tests to TEST Supabase (port 55321) via vitest.config.js
-   - **Result**: Dev data on port 54321 is never touched by tests
-
-2. **jsdom MIME Type Limitations**
-   - **Problem**: jsdom's File API doesn't preserve MIME types (converts to `text/plain`)
-   - **Solution**: Custom file-like object with `arrayBuffer()` + explicit `contentType` in Supabase upload
-   - **Location**: `tests/helpers/supabase.js:createMockImageFile()`, `src/lib/supabaseApi.js:uploadImage()`
-
-3. **Sequential Test Execution Required**
-   - **Problem**: Parallel tests cause race conditions with shared database state
-   - **Solution**: Configure Vitest with `pool: 'forks', singleFork: true` in `vitest.config.js`
-
-4. **Console Warning Noise**
-   - **Problem**: "Multiple GoTrueClient instances" warnings clutter test output
-   - **Solution**: Filter `console.warn` in `tests/setup.js` to suppress expected warnings
-
-5. **DOM Cleanup Between Test Files**
-   - **Problem**: Sequential execution caused DOM elements to persist across test files
-   - **Solution**: Add `cleanup()` call in `beforeEach` hooks
-
-6. **Vitest/Playwright Expect Conflict**
-   - **Problem**: Both frameworks tried to extend global `expect` object, causing `Cannot redefine property: Symbol($jest-matchers-object)` error
-   - **Solution**: Added `testMatch: '**/*.spec.js'` to `playwright.config.mjs` to prevent Playwright from loading Vitest setup files
-   - **Location**: `playwright.config.mjs:10`
-
 ## Test Organization
 
 ### Unit/Integration Tests (Vitest)
-- **Location**: `tests/*.test.js(x)`, `tests/components/`, `tests/pages/`
-- **Count**: 18 tests (4 test files)
-- **Performance**: ~1.5 seconds
-- **Database**: Uses TEST Supabase instance (port 55321)
-- **Helpers**: `tests/helpers/supabase.js` for database cleanup
-- **Configuration**: `vitest.config.js` excludes `tests/*.spec.js` (Playwright tests)
+
+- **Location**: `tests/unit/**/*.test.{js,jsx}`
+- **Configuration**: `vitest.config.js` with `include: ['tests/unit/**/*.{test,spec}.{js,jsx}']`
+- **CRITICAL**: Sequential execution via `pool: 'forks', singleFork: true` (prevents database race conditions)
 
 ### E2E Tests (Playwright)
-- **Location**: `tests/*.spec.js`
-- **Count**: 13 tests (2 test files)
-- **Performance**: ~6 seconds
-- **Database**: Uses TEST Supabase instance (port 55321), shared with unit tests
-- **Fixtures**: `tests/fixtures.js` for Playwright test helpers
-- **Configuration**: `playwright.config.mjs` points to `./tests` directory with `testMatch: '**/*.spec.js'`
-- **Global Setup/Teardown**: `tests/global-setup.js`, `tests/global-teardown.js`
+
+- **Location**: `tests/e2e/specs/*.spec.js`
+- **Configuration**: `playwright.config.mjs` with `testDir: './tests/e2e/specs'` and `testMatch: '**/*.spec.js'`
 - Tests run entirely inside Docker container (no port conflicts with dev servers)
-- All 13 tests passing:
-  - 7 image upload tests (dashboard, upload, delete, grid, validation)
-  - 6 player tests (public access, empty state, fullscreen, controls, dashboard link)
+
+### Combined Coverage
+
+- **Command**: `pnpm coverage:all` (runs unit + E2E + merge)
+- **Merge script**: `scripts/merge-coverage.js` - V8 + Istanbul → `.test-output/merged-coverage/`
 
 ## PR Workflow
-
-**Automated Checks** (GitHub Actions):
-
-- ESLint validation
-- Prettier formatting check
-- Unit tests (all packages)
 
 **Before Creating PR:**
 
 1. Fix lint errors: `pnpm lint` (0 errors required)
 2. Format code: `pnpm format`
-3. Run tests: `pnpm test` (all passing)
-4. Optional: Run E2E tests: `pnpm test:e2e`
+3. Run full coverage: `pnpm coverage:all` (unit + E2E + merge)
 
-**CI Workflow** (`.github/workflows/pr-checks.yml`):
+**Automated Checks** (GitHub Actions - `.github/workflows/pr-checks.yml`):
 
-- Runs on all PRs to main/master
-- Jobs: lint-and-format, test-unit
-- Must pass before merge
+- ESLint validation (must pass)
+- Prettier formatting check (must pass)
+- Unit tests (Vitest with Supabase local)
+- E2E tests (Playwright with Docker)
+- Combined coverage report
+
+**CI Setup**:
+- Uses Supabase CLI to start local stack
+- Runs tests sequentially (unit first, then E2E)
+- All checks must pass before merge
 
 ## Security Features
 
@@ -207,6 +212,16 @@ Essential configuration files only:
 - `.gitignore`, `.prettierrc`, `eslint.config.js`
 - `playwright.config.mjs`, `vitest.config.js`, `vite.config.js`
 - `index.html`, `postcss.config.js`, `tailwind.config.js` (Vite/frontend configs)
-- `README.md` (single source of truth for docs)
+- `docker-compose.e2e.yml` (E2E test infrastructure)
+- `README.md` (single source of truth for user docs)
 
-**Everything else belongs in subdirectories**
+**Everything else belongs in subdirectories**:
+- `.claude/` - AI assistant context
+- `.devcontainer/` - Docker development environment
+- `.github/` - CI/CD workflows
+- `docs/` - Business/market documentation
+- `scripts/` - Automation scripts
+- `spec/` - Feature specifications
+- `src/` - Application code
+- `supabase/` - Supabase configuration
+- `tests/` - All tests
