@@ -3,10 +3,10 @@
  * Cleans up test server processes
  */
 export default async function globalTeardown() {
-  console.log('🧹 Cleaning up test servers...');
+  console.warn('🧹 Cleaning up test servers...');
 
   // Cleanup is handled by the test script after Playwright finishes
   // This runs inside the Docker container where docker CLI isn't available
 
-  console.log('✅ Test servers cleaned up');
+  console.warn('✅ Test servers cleaned up');
 }
