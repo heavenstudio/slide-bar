@@ -491,6 +491,57 @@ Perfeito para MVPs e projetos pequenos! 🎉
 
 ---
 
+## ⚙️ CI/CD e Automação de Migrations
+
+### GitHub Actions
+
+O projeto possui workflows automatizados:
+
+1. **PR Checks** (`.github/workflows/pr-checks.yml`):
+   - Validação de lint e formatação
+   - Testes unitários e E2E
+   - Verificação de cobertura
+
+2. **Deploy Migrations** (`.github/workflows/deploy-migrations.yml`):
+   - Executa automaticamente após merge para `main`
+   - Aplica migrations no Supabase production
+   - Verifica status das migrations
+
+### Configurar GitHub Secrets
+
+Para habilitar o deploy automático de migrations, configure os seguintes secrets no GitHub:
+
+1. Acesse: `Settings > Secrets and variables > Actions > New repository secret`
+
+2. Adicione os seguintes secrets:
+
+| Secret | Descrição | Como obter |
+|--------|-----------|------------|
+| `SUPABASE_ACCESS_TOKEN` | Token de acesso ao Supabase | [Supabase Dashboard](https://app.supabase.com) > Account > Access Tokens > Generate new token |
+| `SUPABASE_PROJECT_REF` | Referência do projeto | Da URL do projeto (ex: `cdpxkskbpntoiarhtyuj` de `https://cdpxkskbpntoiarhtyuj.supabase.co`) |
+
+3. Após configurar, o workflow executará automaticamente quando migrations forem mescladas em `main`
+
+### Workflow Manual de Migrations
+
+Se preferir executar migrations manualmente:
+
+```bash
+# 1. Logar no Supabase
+supabase login
+
+# 2. Link com projeto de produção
+supabase link --project-ref YOUR_PROJECT_REF
+
+# 3. Push das migrations
+supabase db push --include-all
+
+# 4. Verificar status
+supabase migration list
+```
+
+---
+
 ## 📝 Licença
 
 UNLICENSED - Proprietário
