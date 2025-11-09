@@ -2,10 +2,13 @@
 
 ## Architecture
 
-- **Frontend-only**: React 18 + Vite + Tailwind CSS
+- **Frontend**: React 18 + Vite + Tailwind CSS
 - **Backend**: Supabase (PostgreSQL + Auth + Storage + Realtime)
+- **Deployment**: Vercel (frontend) + Supabase Cloud (backend)
 - **Testing**: Vitest (integration) + Playwright (E2E)
+- **CI/CD**: GitHub Actions (tests) + Vercel (auto-deploy)
 - **Migration Status**: ✅ Phase 8 complete (Project structure flattened, monorepo removed, all tests consolidated)
+- **Production Status**: ✅ Live at https://slide-bar.vercel.app
 
 ## Folder Structure
 
@@ -34,7 +37,7 @@ slide-bar/
 
 ## Port Configuration
 
-### Development
+### Development (Local)
 
 - Frontend: 5173
 - Supabase API: 54321 (local)
@@ -44,6 +47,13 @@ slide-bar/
 
 - Test Frontend: 5174
 - Playwright Report: 9323
+
+### Production
+
+- Frontend: https://slide-bar.vercel.app
+- Player: https://slide-bar.vercel.app/player
+- Supabase: https://cdpxkskbpntoiarhtyuj.supabase.co
+- Demo credentials: demo@example.com / demo-password-123
 
 ## Key Commands
 
@@ -132,6 +142,27 @@ What we're trying to achieve
 1. **First**: Check implementation code for bugs (don't relax test assertions)
 2. **Avoid**: Making tests accept broader outputs (e.g., changing specific format checks to generic string checks)
 3. **Debug**: Understand why the test is failing before making changes
+
+### ESLint and Code Quality Rules
+
+**CRITICAL: NEVER relax or disable ESLint rules without explicit user confirmation**
+
+When encountering ESLint warnings or errors:
+
+1. **DO**: Fix the code to comply with the rule (refactor, extract functions, split files)
+2. **DO**: Research industry best practices if the rule seems too strict
+3. **DO**: Ask the user for clarification if unsure about the best approach
+4. **DO NOT**: Add `eslint-disable` comments without user approval
+5. **DO NOT**: Increase rule limits (e.g., max-lines-per-function) without user approval
+6. **DO NOT**: Remove or relax rules in `eslint.config.js` without user approval
+
+**Examples of proper fixes**:
+
+- ESLint `max-lines-per-function` warning → Extract helper functions or split into describe blocks
+- ESLint `no-console` warning → Change to `console.warn` or `console.error`, or remove
+- ESLint `max-len` warning → Break long lines, extract variables, or improve formatting
+
+**If in doubt**: Always ask the user before modifying ESLint configuration
 
 ## Supabase Integration Testing
 

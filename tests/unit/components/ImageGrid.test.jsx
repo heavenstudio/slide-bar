@@ -19,19 +19,14 @@ const deleteImageSpy = vi.spyOn(api, 'deleteImage');
  * 4. Delete functionality
  * 5. Edge cases
  */
-describe('ImageGrid', () => {
+
+describe('ImageGrid - Empty State', () => {
   beforeEach(() => {
     cleanup();
     vi.clearAllMocks();
-    // Mock window.confirm to return true by default
     global.window.confirm = vi.fn(() => true);
-    // Mock window.alert
     global.window.alert = vi.fn();
   });
-
-  // ======================
-  // 1. Empty State Tests
-  // ======================
 
   it('should show empty state when no images', () => {
     render(<ImageGrid images={[]} />);
@@ -50,10 +45,15 @@ describe('ImageGrid', () => {
 
     expect(screen.getByText(/Nenhuma imagem enviada ainda/i)).toBeInTheDocument();
   });
+});
 
-  // ======================
-  // 2. Image Rendering Tests
-  // ======================
+describe('ImageGrid - Image Rendering', () => {
+  beforeEach(() => {
+    cleanup();
+    vi.clearAllMocks();
+    global.window.confirm = vi.fn(() => true);
+    global.window.alert = vi.fn();
+  });
 
   it('should render images in grid', () => {
     const mockImages = [
@@ -114,10 +114,15 @@ describe('ImageGrid', () => {
     const deleteButtons = screen.getAllByTestId('delete-button');
     expect(deleteButtons).toHaveLength(1);
   });
+});
 
-  // ======================
-  // 3. File Size Formatting Tests
-  // ======================
+describe('ImageGrid - File Size Formatting', () => {
+  beforeEach(() => {
+    cleanup();
+    vi.clearAllMocks();
+    global.window.confirm = vi.fn(() => true);
+    global.window.alert = vi.fn();
+  });
 
   it('should display file sizes in human-readable format', () => {
     const mockImages = [
@@ -178,10 +183,15 @@ describe('ImageGrid', () => {
 
     expect(screen.getByText(/0 Bytes/i)).toBeInTheDocument();
   });
+});
 
-  // ======================
-  // 4. Delete Functionality Tests
-  // ======================
+describe('ImageGrid - Delete Functionality', () => {
+  beforeEach(() => {
+    cleanup();
+    vi.clearAllMocks();
+    global.window.confirm = vi.fn(() => true);
+    global.window.alert = vi.fn();
+  });
 
   it('should show confirmation dialog when delete button clicked', () => {
     const mockImages = [
@@ -267,6 +277,15 @@ describe('ImageGrid', () => {
 
     expect(deleteImageSpy).not.toHaveBeenCalled();
     expect(mockOnImageDeleted).not.toHaveBeenCalled();
+  });
+});
+
+describe('ImageGrid - Delete Error Handling', () => {
+  beforeEach(() => {
+    cleanup();
+    vi.clearAllMocks();
+    global.window.confirm = vi.fn(() => true);
+    global.window.alert = vi.fn();
   });
 
   it('should show error alert when deletion fails', async () => {

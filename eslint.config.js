@@ -45,7 +45,11 @@ export default [
       // Code Quality
       complexity: ['error', 15],
       'max-depth': ['error', 4],
-      'max-lines-per-function': ['warn', { max: 150, skipBlankLines: true, skipComments: true }],
+      'max-len': [
+        'warn',
+        { code: 120, ignoreUrls: true, ignoreStrings: true, ignoreTemplateLiterals: true },
+      ],
+      'max-lines-per-function': ['warn', { max: 50, skipBlankLines: true, skipComments: true }],
 
       // React Rules
       'react/jsx-uses-react': 'error',
@@ -69,10 +73,17 @@ export default [
     },
   },
   {
-    // Allow console.log in test setup/teardown and server.js
-    files: ['e2e/global-*.js', '**/server.js'],
+    // Allow console in CLI scripts (they're meant for terminal output)
+    files: ['scripts/**/*.js'],
     rules: {
       'no-console': 'off',
+    },
+  },
+  {
+    // Relax function length limit for test files (describe/it blocks can be long)
+    files: ['**/*.{test,spec}.{js,jsx}', '**/tests/**/*.{js,jsx}'],
+    rules: {
+      'max-lines-per-function': ['warn', { max: 150, skipBlankLines: true, skipComments: true }],
     },
   },
   {

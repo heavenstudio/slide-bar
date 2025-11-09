@@ -90,17 +90,9 @@ function isExcludedJSX(filePath) {
 }
 
 /**
- * Analyze coverage and return violations
+ * Check overall coverage thresholds
  */
-function analyzeCoverage(coverage) {
-  const violations = {
-    critical: [],
-    warnings: [],
-  };
-
-  const total = coverage.total;
-
-  // Check overall coverage (critical)
+function checkOverallCoverage(total, violations) {
   if (total.lines.pct < THRESHOLDS.OVERALL_MIN) {
     violations.critical.push({
       type: 'OVERALL_MIN',
@@ -110,7 +102,6 @@ function analyzeCoverage(coverage) {
     });
   }
 
-  // Check overall coverage (warning)
   if (total.lines.pct < THRESHOLDS.OVERALL_TARGET) {
     violations.warnings.push({
       type: 'OVERALL_TARGET',
@@ -119,40 +110,50 @@ function analyzeCoverage(coverage) {
       threshold: THRESHOLDS.OVERALL_TARGET,
     });
   }
+}
 
-  // Check individual files
+/**
+ * Check JSX file coverage
+ */
+function checkJSXFileCoverage(filePath, fileData, violations) {
+  if (fileData.lines.pct === 0) {
+    violations.critical.push({
+      type: 'JSX_NO_TESTS',
+      file: filePath,
+      message: `JSX file has 0% coverage - MUST have at least a render test`,
+      current: 0,
+      threshold: THRESHOLDS.JSX_MIN,
+    });
+  } else if (fileData.lines.pct < THRESHOLDS.JSX_MIN) {
+    violations.warnings.push({
+      type: 'JSX_BELOW_TARGET',
+      file: filePath,
+      message: `JSX file has ${fileData.lines.pct.toFixed(2)}% coverage (target: ${THRESHOLDS.JSX_MIN}%)`,
+      current: fileData.lines.pct,
+      threshold: THRESHOLDS.JSX_MIN,
+      uncoveredLines: fileData.lines.total - fileData.lines.covered,
+    });
+  }
+}
+
+/**
+ * Analyze coverage and return violations
+ */
+function analyzeCoverage(coverage) {
+  const violations = { critical: [], warnings: [] };
+
+  checkOverallCoverage(coverage.total, violations);
+
   for (const [filePath, fileData] of Object.entries(coverage)) {
     if (filePath === 'total') continue;
 
     const isJSX = filePath.endsWith('.jsx');
     const isExcluded = isExcludedJSX(filePath);
 
-    // Check JSX files for 100% coverage (critical)
     if (isJSX && !isExcluded) {
-      // Check if file has ANY coverage at all
-      if (fileData.lines.pct === 0) {
-        violations.critical.push({
-          type: 'JSX_NO_TESTS',
-          file: filePath,
-          message: `JSX file has 0% coverage - MUST have at least a render test`,
-          current: 0,
-          threshold: THRESHOLDS.JSX_MIN,
-        });
-      }
-      // Check if JSX file has < 100% coverage
-      else if (fileData.lines.pct < THRESHOLDS.JSX_MIN) {
-        violations.warnings.push({
-          type: 'JSX_BELOW_TARGET',
-          file: filePath,
-          message: `JSX file has ${fileData.lines.pct.toFixed(2)}% coverage (target: ${THRESHOLDS.JSX_MIN}%)`,
-          current: fileData.lines.pct,
-          threshold: THRESHOLDS.JSX_MIN,
-          uncoveredLines: fileData.lines.total - fileData.lines.covered,
-        });
-      }
+      checkJSXFileCoverage(filePath, fileData, violations);
     }
 
-    // Check lib files for target coverage (warnings)
     if (filePath.includes('/lib/') && fileData.lines.pct < THRESHOLDS.LIB_TARGET) {
       violations.warnings.push({
         type: 'LIB_BELOW_TARGET',

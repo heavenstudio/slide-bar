@@ -184,6 +184,12 @@ describe('Supabase API - Images', () => {
       supabase.from = originalFrom;
     });
   });
+});
+
+describe('Supabase API - Image Operations', () => {
+  beforeEach(async () => {
+    await cleanDatabase();
+  });
 
   describe('uploadImage', () => {
     it('should upload image to Supabase Storage and create database record', async () => {
@@ -340,6 +346,12 @@ describe('Supabase API - Images', () => {
       supabase.from = originalFrom;
       supabase.storage = originalStorage;
     });
+  });
+});
+
+describe('Supabase API - Image Deletion', () => {
+  beforeEach(async () => {
+    await cleanDatabase();
   });
 
   describe('deleteImage', () => {

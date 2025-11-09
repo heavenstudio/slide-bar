@@ -2,6 +2,16 @@
 
 Plataforma de sinalização digital para restaurantes e bares com gerenciamento remoto de imagens.
 
+## 🚀 Demonstração ao Vivo
+
+**Produção:** https://slide-bar.vercel.app
+
+- **Dashboard:** Upload e gerenciamento de imagens
+- **Player:** https://slide-bar.vercel.app/player
+- **Credenciais Demo:**
+  - Email: `demo@example.com`
+  - Senha: `demo-password-123`
+
 ## Início Rápido
 
 ### Pré-requisitos
