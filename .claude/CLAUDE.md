@@ -67,6 +67,7 @@ slide-bar/
 For complex features or major changes, create a specification document first:
 
 **Process** (inspired by GitHub's spec-kit):
+
 1. Create `spec/feature-name.md` before writing code
 2. Document: Goal, Architecture, Tasks, Success Criteria, Progress
 3. Break down into phases with clear checkpoints
@@ -76,12 +77,14 @@ For complex features or major changes, create a specification document first:
 **Example**: `spec/migrate-to-supabase.md` - 9-phase migration with TDD at every step
 
 **When to use specs**:
+
 - Major architectural changes
 - Multi-phase migrations
 - Features requiring coordination across multiple components
 - When you need to track progress over multiple sessions
 
 **Spec template**:
+
 ```markdown
 # Feature Name
 
@@ -90,9 +93,11 @@ For complex features or major changes, create a specification document first:
 **Approach**: Brief description
 
 ## Goal
+
 What we're trying to achieve
 
 ## Phase 1: Phase Name
+
 - [ ] Task 1
 - [ ] Task 2
 
@@ -178,6 +183,7 @@ What we're trying to achieve
 - Combined coverage report
 
 **CI Setup**:
+
 - Uses Supabase CLI to start local stack
 - Runs tests sequentially (unit first, then E2E)
 - All checks must pass before merge
@@ -216,6 +222,7 @@ Essential configuration files only:
 - `README.md` (single source of truth for user docs)
 
 **Everything else belongs in subdirectories**:
+
 - `.claude/` - AI assistant context
 - `.devcontainer/` - Docker development environment
 - `.github/` - CI/CD workflows

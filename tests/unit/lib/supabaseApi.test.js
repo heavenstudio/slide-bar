@@ -24,7 +24,11 @@ import {
   uploadImage,
   deleteImage,
 } from '../../../src/lib/supabaseApi.js';
-import { setupSupabaseCleanup, cleanDatabase, createMockImageFile } from '../../helpers/supabase.js';
+import {
+  setupSupabaseCleanup,
+  cleanDatabase,
+  createMockImageFile,
+} from '../../helpers/supabase.js';
 
 // Setup automatic database cleanup after each test
 setupSupabaseCleanup();

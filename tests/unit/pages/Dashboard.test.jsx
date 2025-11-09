@@ -1,7 +1,11 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { render, screen, waitFor, fireEvent, cleanup } from '@testing-library/react';
 import Dashboard from '../../../src/pages/Dashboard';
-import { setupSupabaseCleanup, cleanDatabase, createMockImageFile } from '../../helpers/supabase.js';
+import {
+  setupSupabaseCleanup,
+  cleanDatabase,
+  createMockImageFile,
+} from '../../helpers/supabase.js';
 import { demoLogin, uploadImage, deleteImage } from '../../../src/lib/supabaseApi.js';
 
 // Setup automatic database cleanup after each test
