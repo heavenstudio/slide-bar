@@ -121,7 +121,8 @@ export const test = base.extend({
 
   // Database cleanup
   cleanDb: [
-    async (_, use) => {
+    // eslint-disable-next-line no-empty-pattern
+    async ({}, use) => {
       // Setup: Allow test to run first
       await use();
 
