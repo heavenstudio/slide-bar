@@ -96,10 +96,18 @@ jobs:
             echo "📦 Loading cached Docker images..."
             docker load -i /tmp/supabase-images.tar
             echo "✅ Docker images loaded from cache"
+            echo ""
+            echo "📋 Verifying loaded images:"
+            docker images | grep supabase | head -5
           fi
 
       - name: Start Supabase local instance
-        run: supabase start -x studio,imgproxy,inbucket,edge-runtime
+        run: |
+          echo "🚀 Starting Supabase (with local images if cached)..."
+          # Set pull policy to use local images when available (Docker Compose v2.22+)
+          # Falls back to default pull behavior on older versions
+          export COMPOSE_PULL_POLICY=missing
+          supabase start -x studio,imgproxy,inbucket,edge-runtime
 
       - name: Save Docker images to cache
         if: steps.cache-docker.outputs.cache-hit != 'true'
