@@ -192,7 +192,7 @@ Set up complete production deployment infrastructure:
 ## Phase 6: Documentation & Cleanup
 
 ### 6.1 Update Documentation
-- [ ] Update README.md with production URL (deferred to post-merge)
+- [x] Update README.md with production URL ✅
 - [x] Deployment spec completed and up-to-date ✅
 - [x] Troubleshooting documented (env var newline issue) ✅
 
@@ -282,14 +282,14 @@ vercel deploy --prod
 
 ## Success Metrics
 
-- [ ] Production URL accessible: https://<project>.vercel.app
-- [ ] Supabase cloud project running with all migrations
-- [ ] All E2E tests pass against production
-- [ ] Auto-deployments working (main → production)
-- [ ] Preview deployments working (PRs → preview URLs)
-- [ ] Lighthouse performance score > 90
-- [ ] Zero console errors in production
-- [ ] Documentation complete
+- [x] Production URL accessible: https://slide-bar.vercel.app ✅
+- [x] Supabase cloud project running with all migrations ✅
+- [ ] All E2E tests pass against production (deferred - manual testing complete)
+- [x] Auto-deployments working (main → production) ✅
+- [x] Preview deployments working (PRs → preview URLs) ✅
+- [ ] Lighthouse performance score > 90 (deferred - post-MVP optimization)
+- [x] Zero console errors in production ✅
+- [x] Documentation complete ✅
 
 ## Future Enhancements
 

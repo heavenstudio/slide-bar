@@ -2,10 +2,13 @@
 
 ## Architecture
 
-- **Frontend-only**: React 18 + Vite + Tailwind CSS
+- **Frontend**: React 18 + Vite + Tailwind CSS
 - **Backend**: Supabase (PostgreSQL + Auth + Storage + Realtime)
+- **Deployment**: Vercel (frontend) + Supabase Cloud (backend)
 - **Testing**: Vitest (integration) + Playwright (E2E)
+- **CI/CD**: GitHub Actions (tests) + Vercel (auto-deploy)
 - **Migration Status**: ✅ Phase 8 complete (Project structure flattened, monorepo removed, all tests consolidated)
+- **Production Status**: ✅ Live at https://slide-bar.vercel.app
 
 ## Folder Structure
 
@@ -34,7 +37,7 @@ slide-bar/
 
 ## Port Configuration
 
-### Development
+### Development (Local)
 
 - Frontend: 5173
 - Supabase API: 54321 (local)
@@ -44,6 +47,13 @@ slide-bar/
 
 - Test Frontend: 5174
 - Playwright Report: 9323
+
+### Production
+
+- Frontend: https://slide-bar.vercel.app
+- Player: https://slide-bar.vercel.app/player
+- Supabase: https://cdpxkskbpntoiarhtyuj.supabase.co
+- Demo credentials: demo@example.com / demo-password-123
 
 ## Key Commands
 
