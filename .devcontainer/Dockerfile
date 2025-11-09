@@ -1,7 +1,7 @@
-FROM node:18-bullseye
+FROM node:24.11.0-bullseye
 
 # Install pnpm globally
-RUN npm install -g pnpm@9.1.0
+RUN npm install -g pnpm@10.20.0
 
 # Install PostgreSQL client tools and Playwright dependencies
 RUN apt-get update && apt-get install -y \

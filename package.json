@@ -36,8 +36,8 @@
   "author": "",
   "license": "UNLICENSED",
   "engines": {
-    "node": ">=18.0.0",
-    "pnpm": ">=8.0.0"
+    "node": ">=24.11.0",
+    "pnpm": ">=10.20.0"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.80.0",
