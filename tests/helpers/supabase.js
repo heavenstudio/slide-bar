@@ -89,6 +89,16 @@ export function createMockImageFile(filename = 'test.jpg', content = 'test image
     arrayBuffer: async () => data.buffer,
     // For compatibility with code that reads the file as blob
     slice: (start, end) => data.slice(start, end),
+    // For compatibility with Supabase client's stream() usage
+    stream: () => {
+      // Return a ReadableStream-like object
+      return new ReadableStream({
+        start(controller) {
+          controller.enqueue(data);
+          controller.close();
+        },
+      });
+    },
     // Expose the raw data for Supabase upload
     [Symbol.toStringTag]: 'File',
     ...data,
