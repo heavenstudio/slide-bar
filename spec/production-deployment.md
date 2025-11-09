@@ -2,114 +2,89 @@
 
 **Status**: 🟡 In Progress
 **Started**: 2025-01-09
-**Approach**: Deploy frontend to Vercel and backend to Supabase Cloud with separate staging environment
+**Approach**: Deploy frontend to Vercel and backend to Supabase Cloud (single project)
 
 ## Goal
 
-Set up complete production deployment infrastructure with isolated staging:
+Set up complete production deployment infrastructure:
 - **Frontend**: Vercel (static hosting with automatic deployments)
-- **Backend**: Supabase Cloud - **2 projects** (Production + Staging)
+- **Backend**: Supabase Cloud (managed PostgreSQL + Auth + Storage + Realtime)
 - **CI/CD**: Automated deployments on push to main, preview deployments for PRs
-- **Isolation**: Preview deployments use staging Supabase, production uses production Supabase
 
 ## Architecture
 
 ```
-┌──────────────────────────────────────────────────────┐
-│ GitHub Repository                                     │
-│ ├── main branch → Production Deploy                   │
-│ └── PRs → Preview Deployments                         │
-└───────────────┬──────────────────────────────────────┘
-                │
-       ┌────────┴────────┐
-       │                 │
-       ▼                 ▼
-┌──────────────┐   ┌──────────────┐
-│   Vercel     │   │   Vercel     │
-│ (Production) │   │  (Preview)   │
-│              │   │              │
-└──────┬───────┘   └──────┬───────┘
-       │                  │
-       ▼                  ▼
-┌──────────────┐   ┌──────────────┐
-│  Supabase    │   │  Supabase    │
-│ (Production) │   │  (Staging)   │
-│ - PostgreSQL │   │ - PostgreSQL │
-│ - Auth       │   │ - Auth       │
-│ - Storage    │   │ - Storage    │
-│ - Realtime   │   │ - Realtime   │
-└──────────────┘   └──────────────┘
+┌─────────────────────────────────────────────────┐
+│ GitHub Repository                                │
+│ ├── main branch → Production                     │
+│ └── PRs → Preview Deployments                    │
+└─────────────┬───────────────────────────────────┘
+              │
+    ┌─────────┴─────────┐
+    │                   │
+    ▼                   ▼
+┌─────────┐      ┌─────────┐
+│ Vercel  │      │ Vercel  │
+│  (Prod) │      │(Preview)│
+└────┬────┘      └────┬────┘
+     │                │
+     └────────┬───────┘
+              ▼
+       ┌──────────────┐
+       │  Supabase    │
+       │ (Production) │
+       │ - PostgreSQL │
+       │ - Auth       │
+       │ - Storage    │
+       │ - Realtime   │
+       └──────────────┘
 ```
 
-**Benefits of 2 Projects:**
-- ✅ Complete data isolation (preview deployments don't touch production)
-- ✅ Safe testing of database migrations on PRs
-- ✅ Can test breaking changes without risk
-- ✅ Production data remains pristine
+**Single Project Approach:**
+- ✅ Simpler setup (one project to manage)
+- ✅ Preview deployments test against production data
+- ✅ Good enough for MVP/early stage
+- ⚠️ Preview deployments modify production data (acceptable for now)
 
-## Phase 1: Supabase Cloud Setup (Production + Staging)
+## Phase 1: Supabase Cloud Setup
 
-### 1.1 Create Production Supabase Project
-- [ ] Sign up/login to https://supabase.com
-- [ ] Create **PRODUCTION** project
-  - Organization: Choose/create organization
-  - Project name: **"slide-bar-prod"**
-  - Database password: Generate strong password (save securely as `PROD_DB_PASSWORD`)
-  - Region: Choose closest to target users
+### 1.1 Create Supabase Project
+- [x] Sign up/login to https://supabase.com ✅
+- [x] Create production project ✅
+  - Organization: heavenstudio
+  - Project name: slide-bar
+  - Project ID: cdpxkskbpntoiarhtyuj
+  - Database password: Saved in `.supabase-credentials.txt`
+  - Region: South America (São Paulo)
   - Pricing plan: Free tier
-- [ ] Wait for project provisioning (~2 minutes)
-- [ ] Save production credentials (label as PRODUCTION):
-  - Project URL: `https://<prod-project-id>.supabase.co`
-  - Project Reference ID: `<prod-project-id>`
-  - Anon public key: From project settings → API
-  - Service role key: From project settings → API (keep secret!)
+- [x] Save credentials in `.supabase-credentials.txt` (gitignored) ✅
 
-### 1.2 Create Staging Supabase Project
-- [ ] Create **STAGING** project (in same organization)
-  - Project name: **"slide-bar-staging"**
-  - Database password: Generate strong password (save securely as `STAGING_DB_PASSWORD`)
-  - Region: Same as production
-  - Pricing plan: Free tier
-- [ ] Wait for project provisioning (~2 minutes)
-- [ ] Save staging credentials (label as STAGING):
-  - Project URL: `https://<staging-project-id>.supabase.co`
-  - Project Reference ID: `<staging-project-id>`
-  - Anon public key: From project settings → API
-  - Service role key: From project settings → API (keep secret!)
+### 1.2 Run Database Migrations
+- [ ] Verify Supabase CLI installed: `supabase --version`
+- [ ] Link local project to cloud: `supabase link --project-ref cdpxkskbpntoiarhtyuj`
+- [ ] Push migrations to cloud: `supabase db push`
+- [ ] Verify migrations applied in Dashboard → Table Editor
+  - Check for: users, images tables
+  - Check for: RLS policies
 
-### 1.3 Run Database Migrations (Production)
-- [ ] Install Supabase CLI (if not installed): `brew install supabase/tap/supabase`
-- [ ] Link local project to production: `supabase link --project-ref <prod-project-id>`
-- [ ] Push migrations to production: `supabase db push`
-- [ ] Verify migrations applied in Production Dashboard → Table Editor
+### 1.3 Configure Storage
+- [ ] Verify `images` bucket created (should be automatic from migration)
+- [ ] Check RLS policies in Dashboard → Storage → Policies
+- [ ] Test upload manually (optional)
 
-### 1.4 Run Database Migrations (Staging)
-- [ ] Link local project to staging: `supabase link --project-ref <staging-project-id>`
-- [ ] Push migrations to staging: `supabase db push`
-- [ ] Verify migrations applied in Staging Dashboard → Table Editor
-
-### 1.5 Configure Storage (Both Projects)
-- [ ] **Production**: Verify `images` bucket created (automatic from migration)
-- [ ] **Production**: Check RLS policies in Storage → Policies
-- [ ] **Staging**: Verify `images` bucket created (automatic from migration)
-- [ ] **Staging**: Check RLS policies in Storage → Policies
-
-### 1.6 Create Demo User (Both Projects)
-- [ ] **Production**: Create demo user via Dashboard → Authentication → Users
+### 1.4 Create Demo User
+- [ ] Go to Dashboard → Authentication → Users
+- [ ] Click "Add user" → "Create new user"
   - Email: demo@example.com
   - Password: demo-password-123
-  - Confirm email: Enable
-- [ ] **Production**: Verify user created
-- [ ] **Staging**: Create demo user (same credentials)
-  - Email: demo@example.com
-  - Password: demo-password-123
-- [ ] **Staging**: Verify user created
+  - Auto Confirm User: Yes
+- [ ] Verify user created and confirmed
 
 **Success Criteria**:
-- ✅ Both Supabase projects running (production + staging)
-- ✅ All migrations applied to both projects
-- ✅ Demo user exists in both projects
-- ✅ Storage buckets configured with RLS in both projects
+- ✅ Supabase project running
+- ✅ All migrations applied (users table, images table, RLS policies, storage)
+- ✅ Demo user exists and is confirmed
+- ✅ Storage bucket configured with RLS
 
 ## Phase 2: Vercel Configuration
 
@@ -147,14 +122,10 @@ Set up complete production deployment infrastructure with isolated staging:
 - [ ] Node.js Version: 18.x or later
 
 ### 3.3 Configure Environment Variables
-- [ ] Add **Production** environment variables:
-  - `VITE_SUPABASE_URL` = `https://<prod-project-id>.supabase.co`
-  - `VITE_SUPABASE_ANON_KEY` = `<prod-anon-key>`
-  - Environment: **Production** only
-- [ ] Add **Preview** environment variables:
-  - `VITE_SUPABASE_URL` = `https://<staging-project-id>.supabase.co`
-  - `VITE_SUPABASE_ANON_KEY` = `<staging-anon-key>`
-  - Environment: **Preview** only
+- [ ] Add environment variables (both Production and Preview use same Supabase):
+  - `VITE_SUPABASE_URL` = `https://cdpxkskbpntoiarhtyuj.supabase.co`
+  - `VITE_SUPABASE_ANON_KEY` = `<anon-key-from-credentials-file>`
+  - Apply to: **Production** and **Preview** environments
 
 ### 3.4 Deploy
 - [ ] Click "Deploy"
@@ -254,17 +225,13 @@ VITE_SUPABASE_URL=http://127.0.0.1:54321
 VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
 
-### Production (Vercel Production → Supabase Production)
+### Production & Preview (Vercel → Supabase Cloud)
 ```bash
-VITE_SUPABASE_URL=https://<prod-project-id>.supabase.co
-VITE_SUPABASE_ANON_KEY=<prod-anon-key>
+VITE_SUPABASE_URL=https://cdpxkskbpntoiarhtyuj.supabase.co
+VITE_SUPABASE_ANON_KEY=<anon-key>
 ```
 
-### Preview (Vercel Preview → Supabase Staging)
-```bash
-VITE_SUPABASE_URL=https://<staging-project-id>.supabase.co
-VITE_SUPABASE_ANON_KEY=<staging-anon-key>
-```
+Note: Both production and preview deployments use the same Supabase project.
 
 ## Deployment Commands
 
@@ -316,11 +283,11 @@ vercel deploy --prod
 - Unlimited preview deployments
 
 ### Production Considerations
-- Staging environment isolated from production (safe testing)
-- Preview deployments use staging Supabase (complete data isolation)
+- Single Supabase project (simpler setup for MVP)
+- Preview deployments share production data (acceptable for early stage)
 - Demo user credentials publicly known (acceptable for MVP)
 - Email confirmations disabled for demo user (enable for real users)
-- Both Supabase projects on free tier (2 projects per organization)
+- Can add staging environment later if needed
 
 ## Success Metrics
 
