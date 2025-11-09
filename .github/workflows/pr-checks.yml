@@ -46,7 +46,6 @@ jobs:
   test-all:
     name: Tests (Unit + E2E)
     runs-on: ubuntu-latest
-    needs: [lint-and-format]
 
     steps:
       - uses: actions/checkout@v4
