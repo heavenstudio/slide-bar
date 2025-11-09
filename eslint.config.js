@@ -56,6 +56,16 @@ export default [
       // React Hooks
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'warn',
+
+      // Testing Best Practices
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "CallExpression[callee.property.name='waitForTimeout']",
+          message:
+            'Avoid waitForTimeout - use event-based waits instead (waitForSelector, waitForFunction, expect().toBeVisible, etc.). See .claude/skills/testing-standards.md for examples.',
+        },
+      ],
     },
   },
   {
@@ -71,10 +81,7 @@ export default [
       'node_modules/**',
       'dist/**',
       'build/**',
-      'coverage/**',
-      '**/coverage/**',
-      'playwright-report/**',
-      'test-results/**',
+      '.test-output/**',
       '**/*.config.js',
       '**/*.config.mjs',
       '.pnpm-store/**',

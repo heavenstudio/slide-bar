@@ -15,22 +15,14 @@ if [ -f /tmp/vite-dev.pid ]; then
   rm -f /tmp/vite-dev.pid
 fi
 
-# Stop backend
-if [ -f /tmp/backend-dev.pid ]; then
-  BACKEND_PID=$(cat /tmp/backend-dev.pid)
-  if ps -p $BACKEND_PID > /dev/null 2>&1; then
-    kill $BACKEND_PID 2>/dev/null
-    echo "✅ Backend server stopped (PID: $BACKEND_PID)"
-    STOPPED=1
-  fi
-  rm -f /tmp/backend-dev.pid
-fi
-
-# Clean up log files
-rm -f /tmp/vite-dev.log /tmp/backend-dev.log
+# Clean up log file
+rm -f /tmp/vite-dev.log
 
 if [ $STOPPED -eq 0 ]; then
   echo "ℹ️  No development servers were running"
 else
-  echo "✅ All development servers stopped"
+  echo "✅ Development server stopped"
+  echo ""
+  echo "ℹ️  Supabase is still running. To stop it, run:"
+  echo "   supabase stop"
 fi

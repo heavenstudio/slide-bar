@@ -6,25 +6,30 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export default defineConfig({
-  testDir: './e2e',
+  testDir: './tests/e2e/specs',
+  testMatch: '**/*.spec.js', // Only run .spec.js files
   fullyParallel: false, // Run sequentially for E2E tests
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: 1, // Run one test at a time
 
   // Global setup/teardown
-  globalSetup: path.join(__dirname, 'e2e', 'global-setup.js'),
-  globalTeardown: path.join(__dirname, 'e2e', 'global-teardown.js'),
+  globalSetup: path.join(__dirname, 'tests', 'e2e', 'support', 'global-setup.js'),
+  globalTeardown: path.join(__dirname, 'tests', 'e2e', 'support', 'global-teardown.js'),
 
   reporter: [
-    ['html', { open: 'never' }], // Generate report but don't auto-serve (blocking)
+    ['html', { outputFolder: '.test-output/playwright-report', open: 'never' }], // Generate report but don't auto-serve (blocking)
     ['list'],
   ],
 
+  outputDir: '.test-output/test-results',
+
   use: {
-    baseURL: process.env.VITE_PORT
-      ? `http://localhost:${process.env.VITE_PORT}`
-      : 'http://localhost:5174',
+    baseURL:
+      process.env.PLAYWRIGHT_BASE_URL ||
+      (process.env.VITE_PORT
+        ? `http://localhost:${process.env.VITE_PORT}`
+        : 'http://localhost:5174'),
     // Only record on failures to save ~40-50% test time
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
