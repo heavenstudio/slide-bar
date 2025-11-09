@@ -27,17 +27,14 @@ setupSupabaseCleanup();
  * 7. Auto-advance slideshow
  * 8. Realtime updates
  */
-describe('Player', () => {
+
+describe('Player - Basic Rendering', () => {
   beforeEach(async () => {
     cleanup();
     await cleanDatabase();
     vi.clearAllTimers();
     vi.useRealTimers();
   });
-
-  // ======================
-  // 1. Basic Rendering Tests
-  // ======================
 
   it('should fetch and display images', async () => {
     // Login and upload test images
@@ -121,10 +118,15 @@ describe('Player', () => {
       { timeout: 3000 }
     );
   });
+});
 
-  // ======================
-  // 2. Empty State Tests
-  // ======================
+describe('Player - States', () => {
+  beforeEach(async () => {
+    cleanup();
+    await cleanDatabase();
+    vi.clearAllTimers();
+    vi.useRealTimers();
+  });
 
   it('should show empty state when no images exist', async () => {
     render(<Player />);
@@ -170,18 +172,15 @@ describe('Player', () => {
       { timeout: 3000 }
     );
   });
+});
 
-  // ======================
-  // 4. Error State Tests
-  // ======================
-
-  // Note: Error state testing with mocks is complex with Supabase integration
-  // Skipping error state test for now - this path is covered by E2E tests
-  // Coverage: Lines 108-118 are defensive error handling
-
-  // ======================
-  // 5. Keyboard Controls Tests
-  // ======================
+describe('Player - Keyboard Controls', () => {
+  beforeEach(async () => {
+    cleanup();
+    await cleanDatabase();
+    vi.clearAllTimers();
+    vi.useRealTimers();
+  });
 
   it('should navigate to next image with right arrow key', async () => {
     await demoLogin();
@@ -290,10 +289,15 @@ describe('Player', () => {
       expect(screen.getByText('2 / 2')).toBeInTheDocument();
     });
   });
+});
 
-  // ======================
-  // 6. Pause/Resume Tests
-  // ======================
+describe('Player - Pause/Resume', () => {
+  beforeEach(async () => {
+    cleanup();
+    await cleanDatabase();
+    vi.clearAllTimers();
+    vi.useRealTimers();
+  });
 
   it('should pause slideshow when space key is pressed', async () => {
     await demoLogin();

@@ -25,15 +25,12 @@ import { uploadImage } from '../../../src/lib/supabaseApi';
  * 6. Error handling
  * 7. Success callbacks
  */
-describe('ImageUpload', () => {
+
+describe('ImageUpload - Basic Rendering', () => {
   beforeEach(() => {
-    cleanup(); // Clean up DOM from previous tests
+    cleanup();
     vi.clearAllMocks();
   });
-
-  // ======================
-  // 1. Basic Rendering Tests
-  // ======================
 
   it('should render upload area', () => {
     render(<ImageUpload />);
@@ -49,10 +46,13 @@ describe('ImageUpload', () => {
 
     expect(fileInput).toHaveAttribute('accept', 'image/jpeg,image/jpg,image/png');
   });
+});
 
-  // ======================
-  // 2. File Selection Tests
-  // ======================
+describe('ImageUpload - File Selection', () => {
+  beforeEach(() => {
+    cleanup();
+    vi.clearAllMocks();
+  });
 
   it('should open file selector when clicked', () => {
     render(<ImageUpload />);
@@ -85,10 +85,13 @@ describe('ImageUpload', () => {
       expect(uploadImage).toHaveBeenCalledWith(file);
     });
   });
+});
 
-  // ======================
-  // 3. Drag and Drop Tests
-  // ======================
+describe('ImageUpload - Drag and Drop', () => {
+  beforeEach(() => {
+    cleanup();
+    vi.clearAllMocks();
+  });
 
   it('should highlight drop area when dragging over', () => {
     render(<ImageUpload />);
@@ -178,10 +181,13 @@ describe('ImageUpload', () => {
       expect(uploadImage).toHaveBeenCalledWith(file);
     });
   });
+});
 
-  // ======================
-  // 4. File Validation Tests
-  // ======================
+describe('ImageUpload - File Validation', () => {
+  beforeEach(() => {
+    cleanup();
+    vi.clearAllMocks();
+  });
 
   it('should show error for invalid file type', async () => {
     render(<ImageUpload />);
@@ -226,10 +232,13 @@ describe('ImageUpload', () => {
     // Should NOT call uploadImage for invalid file
     expect(uploadImage).not.toHaveBeenCalled();
   });
+});
 
-  // ======================
-  // 5. Upload State Tests
-  // ======================
+describe('ImageUpload - Upload States', () => {
+  beforeEach(() => {
+    cleanup();
+    vi.clearAllMocks();
+  });
 
   it('should show uploading state', async () => {
     uploadImage.mockImplementation(
@@ -324,10 +333,13 @@ describe('ImageUpload', () => {
       expect(valueSetter).toHaveBeenCalledWith('');
     });
   });
+});
 
-  // ======================
-  // 6. Error Handling Tests
-  // ======================
+describe('ImageUpload - Error Handling', () => {
+  beforeEach(() => {
+    cleanup();
+    vi.clearAllMocks();
+  });
 
   it('should display error message when upload fails', async () => {
     const errorMessage = 'Network error occurred';
@@ -387,10 +399,13 @@ describe('ImageUpload', () => {
       expect(screen.queryByText('First error')).not.toBeInTheDocument();
     });
   });
+});
 
-  // ======================
-  // 7. Success Callback Tests
-  // ======================
+describe('ImageUpload - Success Callbacks', () => {
+  beforeEach(() => {
+    cleanup();
+    vi.clearAllMocks();
+  });
 
   it('should call onUploadSuccess callback after successful upload', async () => {
     const mockImageData = { id: '1', url: '/test.jpg', filename: 'test.jpg' };
