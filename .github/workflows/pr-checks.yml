@@ -91,6 +91,11 @@ jobs:
       - name: Start Supabase local instance
         run: supabase start -x studio,imgproxy,inbucket,edge-runtime
 
+      - name: Create demo user
+        run: ./scripts/create-demo-user.sh
+        env:
+          SUPABASE_URL: http://127.0.0.1:54321
+
       - name: Run unit tests with coverage
         run: pnpm test:coverage
         env:
@@ -194,6 +199,11 @@ jobs:
 
       - name: Start Supabase local instance
         run: supabase start -x studio,imgproxy,inbucket,edge-runtime
+
+      - name: Create demo user
+        run: ./scripts/create-demo-user.sh
+        env:
+          SUPABASE_URL: http://127.0.0.1:54321
 
       - name: Start frontend server with coverage instrumentation
         run: |
