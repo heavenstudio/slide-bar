@@ -12,27 +12,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-
       - name: Setup pnpm
-        uses: pnpm/action-setup@v2
+        uses: pnpm/action-setup@v4
         with:
           version: 10
 
-      - name: Get pnpm store directory
-        shell: bash
-        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-
-      - name: Setup pnpm cache
-        uses: actions/cache@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          path: ${{ env.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
+          node-version: lts/*
+          cache: 'pnpm'
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -50,27 +39,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-
       - name: Setup pnpm
-        uses: pnpm/action-setup@v2
+        uses: pnpm/action-setup@v4
         with:
           version: 10
 
-      - name: Get pnpm store directory
-        shell: bash
-        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-
-      - name: Setup pnpm cache
-        uses: actions/cache@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          path: ${{ env.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
+          node-version: lts/*
+          cache: 'pnpm'
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -80,42 +58,8 @@ jobs:
         with:
           version: latest
 
-      - name: Cache Supabase Docker images
-        id: cache-docker
-        uses: actions/cache@v4
-        with:
-          path: /tmp/supabase-images.tar
-          key: ${{ runner.os }}-supabase-images-${{ hashFiles('supabase/config.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-supabase-images-
-
-      - name: Load cached Docker images
-        if: steps.cache-docker.outputs.cache-hit == 'true'
-        run: |
-          if [ -f /tmp/supabase-images.tar ]; then
-            echo "📦 Loading cached Docker images..."
-            docker load -i /tmp/supabase-images.tar
-            echo "✅ Docker images loaded from cache"
-            echo ""
-            echo "📋 Verifying loaded images:"
-            docker images | grep supabase | head -5
-          fi
-
       - name: Start Supabase local instance
-        run: |
-          echo "🚀 Starting Supabase (with local images if cached)..."
-          # Set pull policy to use local images when available (Docker Compose v2.22+)
-          # Falls back to default pull behavior on older versions
-          export COMPOSE_PULL_POLICY=missing
-          supabase start -x studio,imgproxy,inbucket,edge-runtime
-
-      - name: Save Docker images to cache
-        if: steps.cache-docker.outputs.cache-hit != 'true'
-        run: |
-          echo "💾 Saving Docker images to cache..."
-          # Save all supabase images into a single tar file
-          docker images --format "{{.Repository}}:{{.Tag}}" | grep supabase | xargs docker save -o /tmp/supabase-images.tar
-          echo "✅ Docker images saved to cache"
+        run: supabase start -x studio,imgproxy,inbucket,edge-runtime
 
       - name: Create demo user
         run: ./scripts/create-demo-user.sh
