@@ -98,7 +98,7 @@ slide-bar/
 - **18 integration tests** calling real Supabase TEST instance (`http://127.0.0.1:55321`)
 - **Isolated from dev**: Unit tests use TEST Supabase (port 55321), dev uses main Supabase (port 54321)
 - **Shared with E2E**: Both unit and E2E tests use the same TEST instance (started by E2E script)
-- **Test helpers** in `packages/frontend/tests/helpers/supabase.js`:
+- **Test helpers** in `tests/helpers/supabase.js`:
   - `createServiceClient()` - Service role client bypassing RLS for cleanup
   - `cleanDatabase()` - Delete all test data using service role
   - `useSupabaseCleanup()` - Automatic cleanup after each test
@@ -127,6 +127,11 @@ slide-bar/
 5. **DOM Cleanup Between Test Files**
    - **Problem**: Sequential execution caused DOM elements to persist across test files
    - **Solution**: Add `cleanup()` call in `beforeEach` hooks
+
+6. **Vitest/Playwright Expect Conflict**
+   - **Problem**: Both frameworks tried to extend global `expect` object, causing `Cannot redefine property: Symbol($jest-matchers-object)` error
+   - **Solution**: Added `testMatch: '**/*.spec.js'` to `playwright.config.mjs` to prevent Playwright from loading Vitest setup files
+   - **Location**: `playwright.config.mjs:10`
 
 ## Test Organization
 
@@ -198,10 +203,10 @@ slide-bar/
 
 Essential configuration files only:
 
-- `package.json`, `pnpm-workspace.yaml`, `pnpm-lock.yaml`
+- `package.json`, `pnpm-lock.yaml` (no workspace config - flat structure)
 - `.gitignore`, `.prettierrc`, `eslint.config.js`
-- `playwright.config.mjs`
+- `playwright.config.mjs`, `vitest.config.js`, `vite.config.js`
+- `index.html`, `postcss.config.js`, `tailwind.config.js` (Vite/frontend configs)
 - `README.md` (single source of truth for docs)
-- `render.yaml` (deployment config)
 
 **Everything else belongs in subdirectories**
