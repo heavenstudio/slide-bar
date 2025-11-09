@@ -115,12 +115,9 @@ jobs:
         if: steps.cache-docker.outputs.cache-hit == 'true'
         run: |
           if [ -d /tmp/supabase-images ]; then
-            echo "📦 Loading cached Docker images..."
-            for image in /tmp/supabase-images/*.tar; do
-              if [ -f "$image" ]; then
-                docker load -i "$image"
-              fi
-            done
+            echo "📦 Loading cached Docker images in parallel..."
+            # Load all images in parallel for faster processing
+            find /tmp/supabase-images -name "*.tar" -print0 | xargs -0 -P 4 -I {} docker load -i {}
             echo "✅ Docker images loaded from cache"
           fi
 
@@ -130,13 +127,10 @@ jobs:
       - name: Save Docker images to cache
         if: steps.cache-docker.outputs.cache-hit != 'true'
         run: |
-          echo "💾 Saving Docker images to cache..."
+          echo "💾 Saving Docker images to cache in parallel..."
           mkdir -p /tmp/supabase-images
-          # Get list of supabase images
-          docker images --format "{{.Repository}}:{{.Tag}}" | grep supabase | while read image; do
-            filename=$(echo "$image" | tr '/:' '_')
-            docker save "$image" -o "/tmp/supabase-images/${filename}.tar"
-          done
+          # Get list of supabase images and save in parallel
+          docker images --format "{{.Repository}}:{{.Tag}}" | grep supabase | xargs -P 4 -I {} sh -c 'filename=$(echo "{}" | tr "/:." "_"); docker save "{}" -o "/tmp/supabase-images/${filename}.tar"'
           echo "✅ Docker images saved to cache"
 
       - name: Create demo user
