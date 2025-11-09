@@ -143,6 +143,26 @@ What we're trying to achieve
 2. **Avoid**: Making tests accept broader outputs (e.g., changing specific format checks to generic string checks)
 3. **Debug**: Understand why the test is failing before making changes
 
+### ESLint and Code Quality Rules
+
+**CRITICAL: NEVER relax or disable ESLint rules without explicit user confirmation**
+
+When encountering ESLint warnings or errors:
+
+1. **DO**: Fix the code to comply with the rule (refactor, extract functions, split files)
+2. **DO**: Research industry best practices if the rule seems too strict
+3. **DO**: Ask the user for clarification if unsure about the best approach
+4. **DO NOT**: Add `eslint-disable` comments without user approval
+5. **DO NOT**: Increase rule limits (e.g., max-lines-per-function) without user approval
+6. **DO NOT**: Remove or relax rules in `eslint.config.js` without user approval
+
+**Examples of proper fixes**:
+- ESLint `max-lines-per-function` warning → Extract helper functions or split into describe blocks
+- ESLint `no-console` warning → Change to `console.warn` or `console.error`, or remove
+- ESLint `max-len` warning → Break long lines, extract variables, or improve formatting
+
+**If in doubt**: Always ask the user before modifying ESLint configuration
+
 ## Supabase Integration Testing
 
 ### Test Architecture
