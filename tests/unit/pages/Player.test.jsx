@@ -1,11 +1,11 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, waitFor, cleanup, fireEvent } from '@testing-library/react';
 import Player from '../../../src/pages/Player';
-import { useSupabaseCleanup, cleanDatabase, createMockImageFile } from '../../helpers/supabase.js';
-import { demoLogin, uploadImage, deleteImage } from '../../../src/lib/supabaseApi.js';
+import { setupSupabaseCleanup, cleanDatabase, createMockImageFile } from '../../helpers/supabase.js';
+import { demoLogin, uploadImage } from '../../../src/lib/supabaseApi.js';
 
 // Setup automatic database cleanup after each test
-useSupabaseCleanup();
+setupSupabaseCleanup();
 
 /**
  * Player Component Tests

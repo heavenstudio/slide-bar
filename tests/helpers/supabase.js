@@ -64,7 +64,7 @@ export async function cleanDatabase() {
  * Setup automatic database cleanup after each test
  * Call this in test files that need database cleanup
  */
-export function useSupabaseCleanup() {
+export function setupSupabaseCleanup() {
   afterEach(async () => {
     await cleanDatabase();
   });

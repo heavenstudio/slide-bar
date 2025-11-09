@@ -24,10 +24,10 @@ import {
   uploadImage,
   deleteImage,
 } from '../../../src/lib/supabaseApi.js';
-import { useSupabaseCleanup, cleanDatabase, createMockImageFile } from '../../helpers/supabase.js';
+import { setupSupabaseCleanup, cleanDatabase, createMockImageFile } from '../../helpers/supabase.js';
 
 // Setup automatic database cleanup after each test
-useSupabaseCleanup();
+setupSupabaseCleanup();
 
 describe('Supabase API - Authentication', () => {
   beforeEach(async () => {
@@ -254,9 +254,9 @@ describe('Supabase API - Images', () => {
       };
 
       // Mock failed user data fetch
-      let callCount = 0;
+      let _callCount = 0;
       supabase.from = vi.fn((table) => {
-        callCount++;
+        _callCount++;
         if (table === 'users') {
           return {
             select: vi.fn(() => ({
@@ -300,9 +300,9 @@ describe('Supabase API - Images', () => {
       };
 
       // Mock database operations
-      let callCount = 0;
+      let _callCount = 0;
       supabase.from = vi.fn((table) => {
-        callCount++;
+        _callCount++;
         if (table === 'users') {
           return {
             select: vi.fn(() => ({
@@ -404,7 +404,7 @@ describe('Supabase API - Images', () => {
 
       // Mock database operations
       let callCount = 0;
-      supabase.from = vi.fn((table) => {
+      supabase.from = vi.fn(() => {
         callCount++;
         if (callCount === 1) {
           // First call: select (fetch image) - succeed

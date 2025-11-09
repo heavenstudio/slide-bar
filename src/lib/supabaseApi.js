@@ -89,7 +89,7 @@ export const uploadImage = async (file) => {
   // Support both File and Blob objects (Blob used in tests to work around jsdom limitations)
   const fileName = file.name || 'image.jpg';
   const fileId = crypto.randomUUID();
-  const fileExt = fileName.split('.').pop();
+  const _fileExt = fileName.split('.').pop();
   const filePath = `${fileId}/${fileName}`;
 
   // Upload to Supabase Storage

@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { render, screen, waitFor, cleanup } from '@testing-library/react';
 import App from '../../../src/App';
-import { useSupabaseCleanup, cleanDatabase } from '../../helpers/supabase.js';
+import { setupSupabaseCleanup, cleanDatabase } from '../../helpers/supabase.js';
 
 // Setup automatic database cleanup after each test
-useSupabaseCleanup();
+setupSupabaseCleanup();
 
 /**
  * App Component Tests

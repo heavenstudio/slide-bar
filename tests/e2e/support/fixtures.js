@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/rules-of-hooks */
 import { test as base } from '@playwright/test';
 import { createClient } from '@supabase/supabase-js';
 import fs from 'fs';
@@ -12,6 +13,7 @@ import { v4 as uuidv4 } from 'uuid';
  * - Istanbul coverage collection from E2E tests (when E2E_COVERAGE=true)
  *
  * Uses Supabase service role client to bypass RLS and clean test data.
+ * Note: Playwright fixtures use `use()` parameter which triggers React hooks linting, disabled for this file.
  */
 
 // Supabase configuration for E2E tests
@@ -108,7 +110,7 @@ export const test = base.extend({
           await page.evaluate(() =>
             window.collectIstanbulCoverage?.(JSON.stringify(window.__coverage__))
           );
-        } catch (error) {
+        } catch {
           // Ignore errors - page might be closed
         }
       }
@@ -119,7 +121,7 @@ export const test = base.extend({
 
   // Database cleanup
   cleanDb: [
-    async ({}, use) => {
+    async (_, use) => {
       // Setup: Allow test to run first
       await use();
 

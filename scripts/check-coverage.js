@@ -47,7 +47,7 @@ function loadCoverageData(coveragePath, label) {
     }
     const data = readFileSync(coveragePath, 'utf8');
     return { data: JSON.parse(data), label };
-  } catch (error) {
+  } catch {
     console.error(`⚠️  WARNING: Could not read ${label} coverage report`);
     return null;
   }

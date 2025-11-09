@@ -1,11 +1,11 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { render, screen, waitFor, fireEvent, cleanup } from '@testing-library/react';
 import Dashboard from '../../../src/pages/Dashboard';
-import { useSupabaseCleanup, cleanDatabase, createMockImageFile } from '../../helpers/supabase.js';
+import { setupSupabaseCleanup, cleanDatabase, createMockImageFile } from '../../helpers/supabase.js';
 import { demoLogin, uploadImage, deleteImage } from '../../../src/lib/supabaseApi.js';
 
 // Setup automatic database cleanup after each test
-useSupabaseCleanup();
+setupSupabaseCleanup();
 
 /**
  * Dashboard Component Tests
@@ -178,7 +178,7 @@ describe('Dashboard', () => {
     // Simulate upload success by uploading actual image
     await demoLogin();
     const mockFile = createMockImageFile('new-image.jpg', 'content');
-    const result = await uploadImage(mockFile);
+    const _result = await uploadImage(mockFile);
 
     // Manually trigger the callback (since we can't easily trigger ImageUpload component)
     // Instead, let's re-render or use refresh button

@@ -19,7 +19,7 @@ test.describe('Player Slideshow', () => {
   /**
    * Helper function to delete all images from dashboard
    */
-  async function deleteAllImages(page) {
+  async function _deleteAllImages(page) {
     // Navigate to dashboard to trigger auth
     await page.goto('/');
     await page.waitForSelector('h1:has-text("Slide Bar")');

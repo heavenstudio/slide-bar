@@ -57,7 +57,7 @@ export default function Player() {
       .channel('images-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'images' }, (payload) => {
         // Instantly reload images when database changes (INSERT, UPDATE, or DELETE)
-        console.log('Realtime event received:', payload.eventType);
+        console.warn('Realtime event received:', payload.eventType);
         loadImages();
       })
       .subscribe();
