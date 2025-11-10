@@ -26,10 +26,21 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const projectRoot = join(__dirname, '..');
 
+interface CoverageExists {
+  hasVitestCoverage: boolean;
+  hasPlaywrightCoverage: boolean;
+}
+
+interface CoverageData {
+  path?: string;
+  inputSourceMap?: unknown;
+  [key: string]: unknown;
+}
+
 /**
  * Check if coverage data exists
  */
-function checkCoverageExists() {
+function checkCoverageExists(): CoverageExists {
   const vitestCoverage = join(projectRoot, '.test-output/coverage', 'coverage-final.json');
   const nycOutput = join(projectRoot, '.nyc_output');
 
@@ -43,8 +54,8 @@ function checkCoverageExists() {
  * Normalize file paths to be consistent
  * Converts absolute paths (both local and Docker) to relative paths from project root
  */
-function normalizePaths(coverageData) {
-  const normalized = {};
+function normalizePaths(coverageData: Record<string, CoverageData>): Record<string, CoverageData> {
+  const normalized: Record<string, CoverageData> = {};
 
   for (const [filePath, data] of Object.entries(coverageData)) {
     // Convert to relative path from project root
@@ -72,7 +83,7 @@ function normalizePaths(coverageData) {
 /**
  * Copy and normalize Vitest coverage to .nyc_output
  */
-function prepareVitestCoverage() {
+function prepareVitestCoverage(): boolean {
   console.log('📦 Preparing Vitest coverage for merge...');
 
   const coverageFinal = join(projectRoot, '.test-output/coverage', 'coverage-final.json');
@@ -88,7 +99,7 @@ function prepareVitestCoverage() {
     mkdirSync(nycOutput, { recursive: true });
 
     // Read and normalize Vitest coverage paths
-    const vitestData = JSON.parse(readFileSync(coverageFinal, 'utf8'));
+    const vitestData = JSON.parse(readFileSync(coverageFinal, 'utf8')) as Record<string, CoverageData>;
     const normalizedData = normalizePaths(vitestData);
 
     // Write normalized Vitest coverage
@@ -97,7 +108,8 @@ function prepareVitestCoverage() {
     console.log('✅ Vitest coverage prepared');
     return true;
   } catch (error) {
-    console.error('❌ Failed to prepare Vitest coverage:', error.message);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error('❌ Failed to prepare Vitest coverage:', errorMessage);
     return false;
   }
 }
@@ -105,7 +117,7 @@ function prepareVitestCoverage() {
 /**
  * Normalize all Playwright coverage files
  */
-function normalizePlaywrightCoverage() {
+function normalizePlaywrightCoverage(): void {
   const nycOutput = join(projectRoot, '.nyc_output');
   const coverageFiles = readdirSync(nycOutput).filter((f) => f.startsWith('playwright_coverage_'));
 
@@ -113,7 +125,7 @@ function normalizePlaywrightCoverage() {
 
   coverageFiles.forEach((file) => {
     const filePath = join(nycOutput, file);
-    const data = JSON.parse(readFileSync(filePath, 'utf8'));
+    const data = JSON.parse(readFileSync(filePath, 'utf8')) as Record<string, CoverageData>;
     const normalized = normalizePaths(data);
     writeFileSync(filePath, JSON.stringify(normalized, null, 2));
   });
@@ -124,7 +136,7 @@ function normalizePlaywrightCoverage() {
 /**
  * Merge all coverage data using nyc
  */
-function mergeCoverage() {
+function mergeCoverage(): boolean {
   console.log('\n🔀 Merging coverage from all sources...');
 
   const nycOutput = join(projectRoot, '.nyc_output');
@@ -166,7 +178,7 @@ function mergeCoverage() {
 
     // Generate reports from merged coverage - exclude non-src paths
     execSync(
-      `npx nyc report --temp-dir=${mergedNycOutput} --reporter=json-summary --reporter=text --reporter=html --report-dir=${mergedDir} --exclude='tests/**' --exclude='scripts/**' --exclude='**/*.config.js' --exclude='**/*.config.mjs'`,
+      `npx nyc report --temp-dir=${mergedNycOutput} --reporter=json-summary --reporter=text --reporter=html --report-dir=${mergedDir} --exclude='tests/**' --exclude='scripts/**' --exclude='**/*.config.ts' --exclude='**/*.config.js' --exclude='**/*.config.mjs'`,
       {
         cwd: projectRoot,
         stdio: 'inherit',
@@ -178,7 +190,8 @@ function mergeCoverage() {
     console.log(`   View with: open .test-output/merged-coverage/index.html`);
     return true;
   } catch (error) {
-    console.error('❌ Failed to merge coverage:', error.message);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error('❌ Failed to merge coverage:', errorMessage);
     return false;
   }
 }
@@ -186,7 +199,7 @@ function mergeCoverage() {
 /**
  * Main execution
  */
-function main() {
+function main(): void {
   console.log('🧪 Merging coverage from Vitest + Playwright...\n');
 
   const { hasVitestCoverage, hasPlaywrightCoverage } = checkCoverageExists();
@@ -225,7 +238,7 @@ function main() {
 
   console.log('\n✨ Coverage merge complete!');
   console.log('   View report: open .test-output/merged-coverage/index.html');
-  console.log('   Check thresholds: node scripts/check-coverage.js');
+  console.log('   Check thresholds: node scripts/check-coverage.ts');
   process.exit(0);
 }
 

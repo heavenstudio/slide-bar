@@ -25,7 +25,7 @@ const __dirname = dirname(__filename);
 const THRESHOLDS = {
   // Critical blockers (exit code 1)
   OVERALL_MIN: 85, // Absolute minimum - blocks if below
-  JSX_MIN: 100, // All JSX files must have 100% coverage
+  TSX_MIN: 100, // All TSX files must have 100% coverage
 
   // Targets (warnings if below)
   OVERALL_TARGET: 90,
@@ -34,19 +34,57 @@ const THRESHOLDS = {
   LIB_TARGET: 95,
 };
 
-// Files to exclude from JSX coverage checks (entry points)
-const JSX_EXCLUSIONS = ['App.jsx', 'main.jsx'];
+// Files to exclude from TSX coverage checks (entry points)
+const TSX_EXCLUSIONS = ['App.tsx', 'main.tsx'];
+
+interface CoverageMetrics {
+  total: number;
+  covered: number;
+  skipped: number;
+  pct: number;
+}
+
+interface FileCoverage {
+  lines: CoverageMetrics;
+  statements: CoverageMetrics;
+  functions: CoverageMetrics;
+  branches: CoverageMetrics;
+}
+
+interface CoverageSummary {
+  total: FileCoverage;
+  [filePath: string]: FileCoverage;
+}
+
+interface CoverageReport {
+  data: CoverageSummary;
+  label: string;
+}
+
+interface Violation {
+  type: string;
+  message: string;
+  current: number;
+  threshold: number;
+  file?: string;
+  uncoveredLines?: number;
+}
+
+interface Violations {
+  critical: Violation[];
+  warnings: Violation[];
+}
 
 /**
  * Load coverage data from a specific path
  */
-function loadCoverageData(coveragePath, label) {
+function loadCoverageData(coveragePath: string, label: string): CoverageReport | null {
   try {
     if (!existsSync(coveragePath)) {
       return null;
     }
     const data = readFileSync(coveragePath, 'utf8');
-    return { data: JSON.parse(data), label };
+    return { data: JSON.parse(data) as CoverageSummary, label };
   } catch {
     console.error(`⚠️  WARNING: Could not read ${label} coverage report`);
     return null;
@@ -56,8 +94,8 @@ function loadCoverageData(coveragePath, label) {
 /**
  * Load all available coverage reports
  */
-function loadAllCoverageReports() {
-  const reports = {};
+function loadAllCoverageReports(): Record<string, CoverageReport> {
+  const reports: Record<string, CoverageReport> = {};
 
   // Vitest coverage (unit/integration tests)
   const vitestPath = join(__dirname, '../.test-output/coverage/coverage-summary.json');
@@ -83,16 +121,16 @@ function loadAllCoverageReports() {
 }
 
 /**
- * Check if file should be excluded from JSX coverage requirements
+ * Check if file should be excluded from TSX coverage requirements
  */
-function isExcludedJSX(filePath) {
-  return JSX_EXCLUSIONS.some((excluded) => filePath.endsWith(excluded));
+function isExcludedTSX(filePath: string): boolean {
+  return TSX_EXCLUSIONS.some((excluded) => filePath.endsWith(excluded));
 }
 
 /**
  * Check overall coverage thresholds
  */
-function checkOverallCoverage(total, violations) {
+function checkOverallCoverage(total: FileCoverage, violations: Violations): void {
   if (total.lines.pct < THRESHOLDS.OVERALL_MIN) {
     violations.critical.push({
       type: 'OVERALL_MIN',
@@ -113,24 +151,24 @@ function checkOverallCoverage(total, violations) {
 }
 
 /**
- * Check JSX file coverage
+ * Check TSX file coverage
  */
-function checkJSXFileCoverage(filePath, fileData, violations) {
+function checkTSXFileCoverage(filePath: string, fileData: FileCoverage, violations: Violations): void {
   if (fileData.lines.pct === 0) {
     violations.critical.push({
-      type: 'JSX_NO_TESTS',
+      type: 'TSX_NO_TESTS',
       file: filePath,
-      message: `JSX file has 0% coverage - MUST have at least a render test`,
+      message: `TSX file has 0% coverage - MUST have at least a render test`,
       current: 0,
-      threshold: THRESHOLDS.JSX_MIN,
+      threshold: THRESHOLDS.TSX_MIN,
     });
-  } else if (fileData.lines.pct < THRESHOLDS.JSX_MIN) {
+  } else if (fileData.lines.pct < THRESHOLDS.TSX_MIN) {
     violations.warnings.push({
-      type: 'JSX_BELOW_TARGET',
+      type: 'TSX_BELOW_TARGET',
       file: filePath,
-      message: `JSX file has ${fileData.lines.pct.toFixed(2)}% coverage (target: ${THRESHOLDS.JSX_MIN}%)`,
+      message: `TSX file has ${fileData.lines.pct.toFixed(2)}% coverage (target: ${THRESHOLDS.TSX_MIN}%)`,
       current: fileData.lines.pct,
-      threshold: THRESHOLDS.JSX_MIN,
+      threshold: THRESHOLDS.TSX_MIN,
       uncoveredLines: fileData.lines.total - fileData.lines.covered,
     });
   }
@@ -139,19 +177,19 @@ function checkJSXFileCoverage(filePath, fileData, violations) {
 /**
  * Analyze coverage and return violations
  */
-function analyzeCoverage(coverage) {
-  const violations = { critical: [], warnings: [] };
+function analyzeCoverage(coverage: CoverageSummary): Violations {
+  const violations: Violations = { critical: [], warnings: [] };
 
   checkOverallCoverage(coverage.total, violations);
 
   for (const [filePath, fileData] of Object.entries(coverage)) {
     if (filePath === 'total') continue;
 
-    const isJSX = filePath.endsWith('.jsx');
-    const isExcluded = isExcludedJSX(filePath);
+    const isTSX = filePath.endsWith('.tsx');
+    const isExcluded = isExcludedTSX(filePath);
 
-    if (isJSX && !isExcluded) {
-      checkJSXFileCoverage(filePath, fileData, violations);
+    if (isTSX && !isExcluded) {
+      checkTSXFileCoverage(filePath, fileData, violations);
     }
 
     if (filePath.includes('/lib/') && fileData.lines.pct < THRESHOLDS.LIB_TARGET) {
@@ -171,7 +209,7 @@ function analyzeCoverage(coverage) {
 /**
  * Print violations to console
  */
-function printViolations(violations) {
+function printViolations(violations: Violations): boolean {
   let hasIssues = false;
 
   // Print critical violations
@@ -228,7 +266,7 @@ function printViolations(violations) {
 /**
  * Print coverage summary for a specific report
  */
-function printCoverageSummary(label, total) {
+function printCoverageSummary(label: string, total: FileCoverage): void {
   console.log(`\n📊 ${label} Coverage Summary:`);
   console.log('='.repeat(60));
   console.log(
@@ -248,7 +286,7 @@ function printCoverageSummary(label, total) {
 /**
  * Main execution
  */
-function main() {
+function main(): void {
   console.log('\n🧪 Checking test coverage thresholds...\n');
 
   const reports = loadAllCoverageReports();
