@@ -25,14 +25,14 @@ slide-bar/
 │   └── types/            # TypeScript types (supabase.ts auto-generated, database.ts helpers)
 ├── supabase/             # Supabase config, migrations, functions
 └── tests/                # All tests (unit + E2E + fixtures)
-    ├── config/           # Test configuration (setup.js for Vitest)
+    ├── config/           # Test configuration (setup.ts for Vitest)
     ├── e2e/
     │   ├── fixtures/     # Test assets (images)
-    │   ├── specs/        # E2E test files (*.spec.js)
+    │   ├── specs/        # E2E test files (*.spec.ts)
     │   └── support/      # E2E helpers (constants, fixtures, global-setup/teardown)
     ├── helpers/          # Shared test helpers (Supabase cleanup)
     └── unit/
-        ├── components/   # Component unit tests (includes App.test.jsx)
+        ├── components/   # Component unit tests (includes App.test.tsx)
         ├── lib/          # Library unit tests
         └── pages/        # Page unit tests
 ```
@@ -249,7 +249,7 @@ const storageData = createMockStorageData('uploads/image.jpg');
 ### Combined Coverage
 
 - **Command**: `pnpm coverage:all` (runs unit + E2E + merge)
-- **Merge script**: `scripts/merge-coverage.js` - V8 + Istanbul → `.test-output/merged-coverage/`
+- **Merge script**: `scripts/merge-coverage.ts` - V8 + Istanbul → `.test-output/merged-coverage/`
 
 ## PR Workflow
 
