@@ -13,7 +13,7 @@ const vitePort = process.env.VITE_PORT ? parseInt(process.env.VITE_PORT, 10) : 5
 export default defineConfig({
   root: path.join(projectRoot, 'src'),
   envDir: projectRoot, // Load .env files from project root, not src/
-  publicDir: false, // No public directory
+  publicDir: path.join(projectRoot, 'public'), // Public assets (favicon, etc.)
   build: {
     outDir: path.join(projectRoot, 'dist'),
     emptyOutDir: true,

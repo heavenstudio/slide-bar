@@ -77,7 +77,7 @@ slide-bar/
 - **Vite Configuration** (`config/vite.config.ts`):
   - `root: src/` - index.html location
   - `envDir: projectRoot` - **CRITICAL:** Load .env from project root, not src/
-  - `publicDir: false` - No public directory in this project
+  - `publicDir: public/` - Static assets (favicon, etc.)
   - Must use `--config config/vite.config.ts` flag in all scripts
 - **Supabase Local**: Runs via Docker (`supabase start`), uses ports 54321-54324
 - **macOS ARM**: Requires `@rollup/rollup-darwin-arm64` dependency
