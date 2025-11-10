@@ -4,6 +4,7 @@ import ImageGrid from '../../../src/components/upload/ImageGrid';
 import * as api from '../../../src/lib/api';
 import type { Image } from '../../../src/types/database';
 import type { DeletionResponse } from '../../../src/lib/supabaseApi';
+import { createMockImage, createMockImages, createMockImageWithSize } from '../../helpers/fixtures';
 
 // Spy on deleteImage instead of mocking the entire module
 const deleteImageSpy = vi.spyOn(api, 'deleteImage');
@@ -58,65 +59,18 @@ describe('ImageGrid - Image Rendering', () => {
   });
 
   it('should render images in grid', () => {
-    const mockImages: Image[] = [
-      {
-        id: '1',
-        url: '/uploads/image1.jpg',
-        original_name: 'test1.jpg',
-        filename: 'image1.jpg',
-        path: '/uploads/image1.jpg',
-        mime_type: 'image/jpeg',
-        size: 50000,
-        organization_id: 'org-1',
-        created_at: '2025-11-09T00:00:00Z',
-        updated_at: '2025-11-09T00:00:00Z',
-      },
-      {
-        id: '2',
-        url: '/uploads/image2.png',
-        original_name: 'test2.png',
-        filename: 'image2.png',
-        path: '/uploads/image2.png',
-        mime_type: 'image/png',
-        size: 75000,
-        organization_id: 'org-1',
-        created_at: '2025-11-09T00:00:00Z',
-        updated_at: '2025-11-09T00:00:00Z',
-      },
-    ];
+    const mockImages = createMockImages(2);
 
     render(<ImageGrid images={mockImages} />);
 
     expect(screen.getByText('test1.jpg')).toBeInTheDocument();
-    expect(screen.getByText('test2.png')).toBeInTheDocument();
+    expect(screen.getByText('test2.jpg')).toBeInTheDocument();
   });
 
   it('should filter out images with null URLs', () => {
     const mockImages = [
-      {
-        id: '1',
-        url: '/uploads/image1.jpg',
-        original_name: 'test1.jpg',
-        filename: 'image1.jpg',
-        path: '/uploads/image1.jpg',
-        mime_type: 'image/jpeg',
-        size: 50000,
-        organization_id: 'org-1',
-        created_at: '2025-11-09T00:00:00Z',
-        updated_at: '2025-11-09T00:00:00Z',
-      },
-      {
-        id: '2',
-        url: null as unknown as string, // Should be filtered out
-        original_name: 'test2.png',
-        filename: 'image2.png',
-        path: '/uploads/image2.png',
-        mime_type: 'image/png',
-        size: 75000,
-        organization_id: 'org-1',
-        created_at: '2025-11-09T00:00:00Z',
-        updated_at: '2025-11-09T00:00:00Z',
-      },
+      createMockImage({ id: '1', original_name: 'test1.jpg' }),
+      createMockImage({ id: '2', url: null as unknown as string, original_name: 'test2.png' }),
     ] as Image[];
 
     render(<ImageGrid images={mockImages} />);
@@ -126,20 +80,7 @@ describe('ImageGrid - Image Rendering', () => {
   });
 
   it('should render delete button for each image', () => {
-    const mockImages: Image[] = [
-      {
-        id: '1',
-        url: '/uploads/image1.jpg',
-        original_name: 'test1.jpg',
-        filename: 'image1.jpg',
-        path: '/uploads/image1.jpg',
-        mime_type: 'image/jpeg',
-        size: 50000,
-        organization_id: 'org-1',
-        created_at: '2025-11-09T00:00:00Z',
-        updated_at: '2025-11-09T00:00:00Z',
-      },
-    ];
+    const mockImages = [createMockImage()];
 
     render(<ImageGrid images={mockImages} />);
 
@@ -157,20 +98,7 @@ describe('ImageGrid - File Size Formatting', () => {
   });
 
   it('should display file sizes in human-readable format', () => {
-    const mockImages: Image[] = [
-      {
-        id: '1',
-        url: '/uploads/image1.jpg',
-        original_name: 'test.jpg',
-        filename: 'image1.jpg',
-        path: '/uploads/image1.jpg',
-        mime_type: 'image/jpeg',
-        size: 1024, // 1 KB
-        organization_id: 'org-1',
-        created_at: '2025-11-09T00:00:00Z',
-        updated_at: '2025-11-09T00:00:00Z',
-      },
-    ];
+    const mockImages = [createMockImageWithSize(1024)]; // 1 KB
 
     render(<ImageGrid images={mockImages} />);
 
@@ -178,20 +106,7 @@ describe('ImageGrid - File Size Formatting', () => {
   });
 
   it('should format bytes correctly', () => {
-    const mockImages: Image[] = [
-      {
-        id: '1',
-        url: '/uploads/image1.jpg',
-        original_name: 'test.jpg',
-        filename: 'image1.jpg',
-        path: '/uploads/image1.jpg',
-        mime_type: 'image/jpeg',
-        size: 512, // 512 Bytes
-        organization_id: 'org-1',
-        created_at: '2025-11-09T00:00:00Z',
-        updated_at: '2025-11-09T00:00:00Z',
-      },
-    ];
+    const mockImages = [createMockImageWithSize(512)]; // 512 Bytes
 
     render(<ImageGrid images={mockImages} />);
 
@@ -199,20 +114,7 @@ describe('ImageGrid - File Size Formatting', () => {
   });
 
   it('should format megabytes correctly', () => {
-    const mockImages: Image[] = [
-      {
-        id: '1',
-        url: '/uploads/image1.jpg',
-        original_name: 'test.jpg',
-        filename: 'image1.jpg',
-        path: '/uploads/image1.jpg',
-        mime_type: 'image/jpeg',
-        size: 1048576, // 1 MB
-        organization_id: 'org-1',
-        created_at: '2025-11-09T00:00:00Z',
-        updated_at: '2025-11-09T00:00:00Z',
-      },
-    ];
+    const mockImages = [createMockImageWithSize(1048576)]; // 1 MB
 
     render(<ImageGrid images={mockImages} />);
 
@@ -220,20 +122,7 @@ describe('ImageGrid - File Size Formatting', () => {
   });
 
   it('should format zero bytes correctly', () => {
-    const mockImages: Image[] = [
-      {
-        id: '1',
-        url: '/uploads/image1.jpg',
-        original_name: 'test.jpg',
-        filename: 'image1.jpg',
-        path: '/uploads/image1.jpg',
-        mime_type: 'image/jpeg',
-        size: 0,
-        organization_id: 'org-1',
-        created_at: '2025-11-09T00:00:00Z',
-        updated_at: '2025-11-09T00:00:00Z',
-      },
-    ];
+    const mockImages = [createMockImageWithSize(0)];
 
     render(<ImageGrid images={mockImages} />);
 
@@ -250,20 +139,7 @@ describe('ImageGrid - Delete Functionality', () => {
   });
 
   it('should show confirmation dialog when delete button clicked', () => {
-    const mockImages: Image[] = [
-      {
-        id: '1',
-        url: '/uploads/image1.jpg',
-        original_name: 'test.jpg',
-        filename: 'image1.jpg',
-        path: '/uploads/image1.jpg',
-        mime_type: 'image/jpeg',
-        size: 1024,
-        organization_id: 'org-1',
-        created_at: '2025-11-09T00:00:00Z',
-        updated_at: '2025-11-09T00:00:00Z',
-      },
-    ];
+    const mockImages = [createMockImage()];
 
     render(<ImageGrid images={mockImages} />);
 
@@ -276,20 +152,7 @@ describe('ImageGrid - Delete Functionality', () => {
   it('should call deleteImage API when confirmed', async () => {
     deleteImageSpy.mockResolvedValue({ success: true });
     const mockOnImageDeleted = vi.fn();
-    const mockImages: Image[] = [
-      {
-        id: '1',
-        url: '/uploads/image1.jpg',
-        original_name: 'test.jpg',
-        filename: 'image1.jpg',
-        path: '/uploads/image1.jpg',
-        mime_type: 'image/jpeg',
-        size: 1024,
-        organization_id: 'org-1',
-        created_at: '2025-11-09T00:00:00Z',
-        updated_at: '2025-11-09T00:00:00Z',
-      },
-    ];
+    const mockImages = [createMockImage()];
 
     render(<ImageGrid images={mockImages} onImageDeleted={mockOnImageDeleted} />);
 
@@ -304,20 +167,7 @@ describe('ImageGrid - Delete Functionality', () => {
   it('should call onImageDeleted callback after successful deletion', async () => {
     deleteImageSpy.mockResolvedValue({ success: true });
     const mockOnImageDeleted = vi.fn();
-    const mockImages: Image[] = [
-      {
-        id: '1',
-        url: '/uploads/image1.jpg',
-        original_name: 'test.jpg',
-        filename: 'image1.jpg',
-        path: '/uploads/image1.jpg',
-        mime_type: 'image/jpeg',
-        size: 1024,
-        organization_id: 'org-1',
-        created_at: '2025-11-09T00:00:00Z',
-        updated_at: '2025-11-09T00:00:00Z',
-      },
-    ];
+    const mockImages = [createMockImage()];
 
     render(<ImageGrid images={mockImages} onImageDeleted={mockOnImageDeleted} />);
 
@@ -332,20 +182,7 @@ describe('ImageGrid - Delete Functionality', () => {
   it('should not delete image when confirmation is cancelled', async () => {
     window.confirm = vi.fn(() => false); // User clicks "Cancel"
     const mockOnImageDeleted = vi.fn();
-    const mockImages: Image[] = [
-      {
-        id: '1',
-        url: '/uploads/image1.jpg',
-        original_name: 'test.jpg',
-        filename: 'image1.jpg',
-        path: '/uploads/image1.jpg',
-        mime_type: 'image/jpeg',
-        size: 1024,
-        organization_id: 'org-1',
-        created_at: '2025-11-09T00:00:00Z',
-        updated_at: '2025-11-09T00:00:00Z',
-      },
-    ];
+    const mockImages = [createMockImage()];
 
     render(<ImageGrid images={mockImages} onImageDeleted={mockOnImageDeleted} />);
 
@@ -371,20 +208,7 @@ describe('ImageGrid - Delete Error Handling', () => {
   it('should show error alert when deletion fails', async () => {
     const errorMessage = 'Network error';
     deleteImageSpy.mockRejectedValue(new Error(errorMessage));
-    const mockImages: Image[] = [
-      {
-        id: '1',
-        url: '/uploads/image1.jpg',
-        original_name: 'test.jpg',
-        filename: 'image1.jpg',
-        path: '/uploads/image1.jpg',
-        mime_type: 'image/jpeg',
-        size: 1024,
-        organization_id: 'org-1',
-        created_at: '2025-11-09T00:00:00Z',
-        updated_at: '2025-11-09T00:00:00Z',
-      },
-    ];
+    const mockImages = [createMockImage()];
 
     render(<ImageGrid images={mockImages} />);
 
@@ -403,20 +227,7 @@ describe('ImageGrid - Delete Error Handling', () => {
     });
     deleteImageSpy.mockReturnValue(deletePromise);
 
-    const mockImages: Image[] = [
-      {
-        id: '1',
-        url: '/uploads/image1.jpg',
-        original_name: 'test.jpg',
-        filename: 'image1.jpg',
-        path: '/uploads/image1.jpg',
-        mime_type: 'image/jpeg',
-        size: 1024,
-        organization_id: 'org-1',
-        created_at: '2025-11-09T00:00:00Z',
-        updated_at: '2025-11-09T00:00:00Z',
-      },
-    ];
+    const mockImages = [createMockImage()];
 
     render(<ImageGrid images={mockImages} />);
 
@@ -444,20 +255,7 @@ describe('ImageGrid - Delete Error Handling', () => {
     });
     deleteImageSpy.mockReturnValue(deletePromise);
 
-    const mockImages: Image[] = [
-      {
-        id: '1',
-        url: '/uploads/image1.jpg',
-        original_name: 'test.jpg',
-        filename: 'image1.jpg',
-        path: '/uploads/image1.jpg',
-        mime_type: 'image/jpeg',
-        size: 1024,
-        organization_id: 'org-1',
-        created_at: '2025-11-09T00:00:00Z',
-        updated_at: '2025-11-09T00:00:00Z',
-      },
-    ];
+    const mockImages = [createMockImage()];
 
     render(<ImageGrid images={mockImages} />);
 
@@ -475,20 +273,7 @@ describe('ImageGrid - Delete Error Handling', () => {
 
   it('should work without onImageDeleted callback', async () => {
     deleteImageSpy.mockResolvedValue({ success: true });
-    const mockImages: Image[] = [
-      {
-        id: '1',
-        url: '/uploads/image1.jpg',
-        original_name: 'test.jpg',
-        filename: 'image1.jpg',
-        path: '/uploads/image1.jpg',
-        mime_type: 'image/jpeg',
-        size: 1024,
-        organization_id: 'org-1',
-        created_at: '2025-11-09T00:00:00Z',
-        updated_at: '2025-11-09T00:00:00Z',
-      },
-    ];
+    const mockImages = [createMockImage()];
 
     // No onImageDeleted provided
     render(<ImageGrid images={mockImages} />);

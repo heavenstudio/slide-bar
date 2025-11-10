@@ -186,15 +186,42 @@ When encountering ESLint warnings or errors:
 
 ### Test Architecture
 
-- **unit tests** in `tests/unit/**/*.test.{js,jsx}` calling real Supabase TEST instance (port 55321)
-- **E2E tests** in `tests/e2e/specs/*.spec.js`
+- **unit tests** in `tests/unit/**/*.test.{ts,tsx}` calling real Supabase TEST instance (port 55321)
+- **E2E tests** in `tests/e2e/specs/*.spec.ts`
 - **Isolated from dev**: Unit tests use TEST Supabase (port 55321), dev uses main Supabase (port 54321)
 - **Shared TEST instance**: Both unit and E2E tests use the same TEST instance (started by E2E script)
-- **Test helpers** in `tests/helpers/supabase.js`:
-  - `createServiceClient()` - Service role client bypassing RLS for cleanup
-  - `cleanDatabase()` - Delete all test data using service role
-  - `useSupabaseCleanup()` - Automatic cleanup after each test
-  - `createMockImageFile()` - Custom file-like objects for uploads
+
+### Test Helpers
+
+**`tests/helpers/supabase.ts`** - Supabase test utilities:
+- `createServiceClient()` - Service role client bypassing RLS for cleanup
+- `cleanDatabase()` - Delete all test data using service role
+- `useSupabaseCleanup()` - Automatic cleanup after each test
+- `createMockImageFile()` - Custom file-like objects for uploads
+
+**`tests/helpers/fixtures.ts`** - Mock data factories:
+- `createMockImage(overrides?)` - Single mock Image with sensible defaults
+- `createMockImages(count, baseOverrides?)` - Array of mock Images with unique IDs
+- `createMockPngImage(overrides?)` - Mock PNG image
+- `createMockImageWithSize(sizeInBytes, overrides?)` - Mock image with specific size
+- `createMockStorageData(path?)` - Mock Supabase storage upload response
+- `mockImages` - Predefined mock images for common scenarios
+
+**Usage examples**:
+```typescript
+// Simple usage
+const image = createMockImage();
+const images = createMockImages(3);
+
+// With overrides
+const largeImage = createMockImage({ size: 2000000, mime_type: 'image/png' });
+
+// For size formatting tests
+const testImage = createMockImageWithSize(1048576); // 1 MB
+
+// For storage upload tests
+const storageData = createMockStorageData('uploads/image.jpg');
+```
 
 ## Test Organization
 

@@ -11,6 +11,7 @@ vi.mock('../../../src/lib/supabaseApi', () => ({
 import ImageUpload from '../../../src/components/upload/ImageUpload';
 import { uploadImage } from '../../../src/lib/supabaseApi';
 import type { Image } from '../../../src/types/database';
+import { createMockImage } from '../../helpers/fixtures';
 
 /**
  * ImageUpload Component Tests
@@ -69,18 +70,11 @@ describe('ImageUpload - File Selection', () => {
   });
 
   it('should upload file when selected via file input', async () => {
-    const mockImage: Image = {
-      id: '1',
+    const mockImage = createMockImage({
       url: '/test.jpg',
-      filename: 'test.jpg',
-      original_name: 'test.jpg',
-      mime_type: 'image/jpeg',
       size: 1024,
       path: 'uploads/test.jpg',
-      organization_id: 'org-1',
-      created_at: '2025-11-09T00:00:00Z',
-      updated_at: '2025-11-09T00:00:00Z',
-    };
+    });
     (uploadImage as Mock).mockResolvedValue(mockImage);
 
     render(<ImageUpload />);
@@ -142,18 +136,7 @@ describe('ImageUpload - Drag and Drop', () => {
   });
 
   it('should upload file when dropped', async () => {
-    const mockImage: Image = {
-      id: '1',
-      url: '/test.jpg',
-      filename: 'test.jpg',
-      original_name: 'test.jpg',
-      mime_type: 'image/jpeg',
-      size: 1024,
-      path: 'uploads/test.jpg',
-      organization_id: 'org-1',
-      created_at: '2025-11-09T00:00:00Z',
-      updated_at: '2025-11-09T00:00:00Z',
-    };
+    const mockImage = createMockImage();
     (uploadImage as Mock).mockResolvedValue(mockImage);
 
     render(<ImageUpload />);
@@ -176,18 +159,7 @@ describe('ImageUpload - Drag and Drop', () => {
   });
 
   it('should remove highlight after drop', async () => {
-    const mockImage: Image = {
-      id: '1',
-      url: '/test.jpg',
-      filename: 'test.jpg',
-      original_name: 'test.jpg',
-      mime_type: 'image/jpeg',
-      size: 1024,
-      path: 'uploads/test.jpg',
-      organization_id: 'org-1',
-      created_at: '2025-11-09T00:00:00Z',
-      updated_at: '2025-11-09T00:00:00Z',
-    };
+    const mockImage = createMockImage();
     (uploadImage as Mock).mockResolvedValue(mockImage);
 
     render(<ImageUpload />);
@@ -279,18 +251,7 @@ describe('ImageUpload - Upload States', () => {
   });
 
   it('should show uploading state', async () => {
-    const mockImage: Image = {
-      id: '1',
-      url: '/test.jpg',
-      filename: 'test.jpg',
-      original_name: 'test.jpg',
-      mime_type: 'image/jpeg',
-      size: 1024,
-      path: 'uploads/test.jpg',
-      organization_id: 'org-1',
-      created_at: '2025-11-09T00:00:00Z',
-      updated_at: '2025-11-09T00:00:00Z',
-    };
+    const mockImage = createMockImage();
     (uploadImage as Mock).mockImplementation(
       () => new Promise((resolve) => setTimeout(() => resolve(mockImage), 100))
     );
@@ -326,18 +287,7 @@ describe('ImageUpload - Upload States', () => {
   });
 
   it('should disable file input during upload', async () => {
-    const mockImage: Image = {
-      id: '1',
-      url: '/test.jpg',
-      filename: 'test.jpg',
-      original_name: 'test.jpg',
-      mime_type: 'image/jpeg',
-      size: 1024,
-      path: 'uploads/test.jpg',
-      organization_id: 'org-1',
-      created_at: '2025-11-09T00:00:00Z',
-      updated_at: '2025-11-09T00:00:00Z',
-    };
+    const mockImage = createMockImage();
     (uploadImage as Mock).mockImplementation(
       () => new Promise((resolve) => setTimeout(() => resolve(mockImage), 100))
     );
@@ -369,18 +319,7 @@ describe('ImageUpload - Upload States', () => {
   });
 
   it('should reset file input after successful upload', async () => {
-    const mockImage: Image = {
-      id: '1',
-      url: '/test.jpg',
-      filename: 'test.jpg',
-      original_name: 'test.jpg',
-      mime_type: 'image/jpeg',
-      size: 1024,
-      path: 'uploads/test.jpg',
-      organization_id: 'org-1',
-      created_at: '2025-11-09T00:00:00Z',
-      updated_at: '2025-11-09T00:00:00Z',
-    };
+    const mockImage = createMockImage();
     (uploadImage as Mock).mockResolvedValue(mockImage);
 
     render(<ImageUpload />);
@@ -437,18 +376,7 @@ describe('ImageUpload - Error Handling', () => {
   });
 
   it('should clear previous error when new upload starts', async () => {
-    const mockImage: Image = {
-      id: '1',
-      url: '/test.jpg',
-      filename: 'test.jpg',
-      original_name: 'test.jpg',
-      mime_type: 'image/jpeg',
-      size: 1024,
-      path: 'uploads/test.jpg',
-      organization_id: 'org-1',
-      created_at: '2025-11-09T00:00:00Z',
-      updated_at: '2025-11-09T00:00:00Z',
-    };
+    const mockImage = createMockImage();
     // First upload fails
     (uploadImage as Mock).mockRejectedValueOnce(new Error('First error'));
     // Second upload succeeds
@@ -527,18 +455,7 @@ describe('ImageUpload - Success Callbacks', () => {
   });
 
   it('should work without onUploadSuccess callback', async () => {
-    const mockImage: Image = {
-      id: '1',
-      url: '/test.jpg',
-      filename: 'test.jpg',
-      original_name: 'test.jpg',
-      mime_type: 'image/jpeg',
-      size: 1024,
-      path: 'uploads/test.jpg',
-      organization_id: 'org-1',
-      created_at: '2025-11-09T00:00:00Z',
-      updated_at: '2025-11-09T00:00:00Z',
-    };
+    const mockImage = createMockImage();
     (uploadImage as Mock).mockResolvedValue(mockImage);
 
     // No onUploadSuccess prop provided

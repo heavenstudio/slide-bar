@@ -29,6 +29,7 @@ import {
   cleanDatabase,
   createMockImageFile,
 } from '../../helpers/supabase';
+import { createMockStorageData } from '../../helpers/fixtures';
 
 // Setup automatic database cleanup after each test
 setupSupabaseCleanup();
@@ -253,7 +254,7 @@ describe('Supabase API - Image Operations', () => {
       const originalStorage = supabase.storage;
 
       // Mock successful storage upload
-      const mockStorageData = { path: 'test-id/test.jpg' };
+      const mockStorageData = createMockStorageData();
       supabase.storage = {
         from: vi.fn(() => ({
           upload: vi.fn().mockResolvedValue({ data: mockStorageData, error: null }),
@@ -299,7 +300,7 @@ describe('Supabase API - Image Operations', () => {
       const originalStorage = supabase.storage;
 
       // Mock successful storage upload
-      const mockStorageData = { path: 'test-id/test.jpg' };
+      const mockStorageData = createMockStorageData();
       supabase.storage = {
         from: vi.fn(() => ({
           upload: vi.fn().mockResolvedValue({ data: mockStorageData, error: null }),
