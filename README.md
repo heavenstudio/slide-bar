@@ -17,8 +17,8 @@ Plataforma de sinalização digital para restaurantes e bares com gerenciamento 
 ### Pré-requisitos
 
 - Docker Desktop (em execução)
-- Node.js >= 18
-- pnpm >= 8
+- Node.js >= 22.21.1 (LTS)
+- pnpm >= 10.20.0
 
 ### Instalação
 
@@ -92,7 +92,7 @@ pnpm stop
 - React 19 + Vite 7 + **TypeScript**
 - React Router 7
 - Tailwind CSS v4
-- Vitest 3 (testes unitários)
+- Vitest 4.0.8 (testes unitários)
 - Playwright 1.56 (testes E2E)
 
 ### Backend
@@ -103,11 +103,11 @@ pnpm stop
 ### Testes e Qualidade
 
 - **TypeScript** com strict mode habilitado
-- **Vitest 3** (testes unitários e de integração)
+- **Vitest 4.0.8** (testes unitários e de integração)
 - **Playwright 1.56** (testes E2E)
 - **ESLint 9** + **Prettier 3.6** (linting e formatação)
 - 85 testes unitários + 16 testes E2E = 101 testes totais
-- ~97% de cobertura combinada
+- ~89% de cobertura combinada (linhas)
 
 ---
 
@@ -175,9 +175,9 @@ pnpm coverage:all
 
 **Cobertura Combinada**: O projeto suporta combinação de cobertura de testes unitários (Vitest) e E2E (Playwright) para uma visão completa:
 
-- **Vitest**: ~94% de cobertura em testes unitários (~5s)
-- **Playwright**: Cobertura adicional via E2E (~10s)
-- **Combinada**: ~97% linhas, ~94% statements, ~77% branches, ~94% functions
+- **Vitest**: ~89% de cobertura em testes unitários
+- **Playwright**: Cobertura adicional via E2E
+- **Combinada**: ~89% linhas, ~88% statements, ~61% branches, ~88% functions
 
 **Comandos recomendados**:
 
@@ -201,10 +201,10 @@ pnpm test:e2e:show-report
 
 **Estatísticas de Testes:**
 
-- ✅ 85 testes unitários (100% passando, ~5s)
-- ✅ 16 testes E2E (100% passando, ~10s)
-- ✅ ~97% de cobertura combinada
-- ⚡ Total: 101 testes em ~15 segundos
+- ✅ 85 testes unitários (100% passando)
+- ✅ 16 testes E2E (100% passando)
+- ✅ ~89% de cobertura combinada (linhas)
+- ⚡ Total: 101 testes
 
 ---
 
@@ -293,7 +293,7 @@ Se você ver erros como "You installed esbuild for another platform":
 
 **Solução:** O projeto está configurado para suportar ambas as plataformas:
 
-- **esbuild**: `@esbuild/linux-arm64@0.21.5` instalado como dependência de dev
+- **esbuild**: `@esbuild/linux-arm64@0.25.12` instalado como dependência de dev
 - **Rollup**: `@rollup/rollup-darwin-arm64` para macOS ARM
 
 Se ainda encontrar problemas:
