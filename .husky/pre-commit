@@ -1,0 +1,34 @@
+#!/bin/sh
+# Husky pre-commit hook - Run all quality checks before commit
+
+echo "🔍 Running pre-commit checks..."
+
+# 1. Format check
+echo "\n📝 Checking code formatting..."
+pnpm format:check || {
+  echo "❌ Formatting check failed. Run 'pnpm format' to fix."
+  exit 1
+}
+
+# 2. Lint
+echo "\n🔧 Running ESLint..."
+pnpm lint || {
+  echo "❌ Linting failed. Fix errors or run 'pnpm lint:fix'."
+  exit 1
+}
+
+# 3. Type check
+echo "\n🔎 Running TypeScript type check..."
+pnpm type-check || {
+  echo "❌ Type checking failed. Fix TypeScript errors."
+  exit 1
+}
+
+# 4. Run tests with coverage
+echo "\n🧪 Running tests with coverage..."
+pnpm coverage:all || {
+  echo "❌ Tests or coverage check failed."
+  exit 1
+}
+
+echo "\n✅ All pre-commit checks passed!"
