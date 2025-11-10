@@ -13,11 +13,11 @@ Migrate all packages and runtimes to their latest LTS/stable versions to ensure 
 
 ### Runtimes
 
-| Package      | Current | Target                | Status                                  |
-| ------------ | ------- | --------------------- | --------------------------------------- |
-| Node.js      | 24.7.0  | 22.21.1 (LTS "Jod")   | ⚠️ Downgrade for Vercel compatibility   |
-| pnpm         | 10.20.0 | 10.20.0               | ✅ Already latest                       |
-| Supabase CLI | 2.54.11 | 2.54.11               | ✅ Already latest                       |
+| Package      | Current | Target              | Status                                |
+| ------------ | ------- | ------------------- | ------------------------------------- |
+| Node.js      | 24.7.0  | 22.21.1 (LTS "Jod") | ⚠️ Downgrade for Vercel compatibility |
+| pnpm         | 10.20.0 | 10.20.0             | ✅ Already latest                     |
+| Supabase CLI | 2.54.11 | 2.54.11             | ✅ Already latest                     |
 
 ### Core Dependencies
 
