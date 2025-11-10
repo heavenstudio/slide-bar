@@ -4,6 +4,7 @@ import path from 'path';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const projectRoot = path.resolve(__dirname, '..');
 
 export default defineConfig({
   testDir: './tests/e2e/specs',
@@ -14,8 +15,8 @@ export default defineConfig({
   workers: 1, // Run one test at a time
 
   // Global setup/teardown
-  globalSetup: path.join(__dirname, 'tests', 'e2e', 'support', 'global-setup.ts'),
-  globalTeardown: path.join(__dirname, 'tests', 'e2e', 'support', 'global-teardown.ts'),
+  globalSetup: path.join(projectRoot, 'tests', 'e2e', 'support', 'global-setup.ts'),
+  globalTeardown: path.join(projectRoot, 'tests', 'e2e', 'support', 'global-teardown.ts'),
 
   reporter: [
     ['html', { outputFolder: '.test-output/playwright-report', open: 'never' }], // Generate report but don't auto-serve (blocking)

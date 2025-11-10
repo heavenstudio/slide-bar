@@ -254,24 +254,30 @@ When encountering ESLint warnings or errors:
 
 ### Root Folder - Allowed Files Only
 
-Essential configuration files only:
+Essential files only (configs moved to `config/`):
 
-- `package.json`, `pnpm-lock.yaml` (no workspace config - flat structure)
-- `.gitignore`, `.prettierrc`, `eslint.config.js`
-- `tsconfig.json` (TypeScript configuration with strict mode)
-- `playwright.config.ts`, `vitest.config.ts`, `vite.config.ts` (all TypeScript)
-- `index.html`, `postcss.config.js`, `tailwind.config.js` (Vite/frontend configs)
-- `docker-compose.e2e.yml` (E2E test infrastructure)
-- `README.md` (single source of truth for user docs)
+- `package.json`, `pnpm-lock.yaml` - Package manager files
+- `.gitignore`, `.dockerignore` - Version control ignore files
+- `.nvmrc`, `.pnpmrc` - Tool configuration files
+- `.env*` files - Environment variables (required in root by Vite)
+- `README.md` - Single source of truth for user docs
+
+**All configuration files now in `config/` folder**:
+
+- Build tool configs: `vite.config.ts`, `vitest.config.ts`, `playwright.config.ts`
+- Code quality configs: `tsconfig.json`, `eslint.config.js`, `.prettierrc`, `.prettierignore`
+- Style configs: `postcss.config.js`
+- Infrastructure configs: `docker-compose.e2e.yml`, `vercel.json`
 
 **Everything else belongs in subdirectories**:
 
 - `.claude/` - AI assistant context
 - `.devcontainer/` - Docker development environment
 - `.github/` - CI/CD workflows
+- `config/` - All configuration files
 - `docs/` - Business/market documentation
 - `scripts/` - Automation scripts
 - `spec/` - Feature specifications
-- `src/` - Application code
+- `src/` - Application code (including index.html)
 - `supabase/` - Supabase configuration
 - `tests/` - All tests

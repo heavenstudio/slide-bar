@@ -96,7 +96,7 @@ jobs:
 
       - name: Start frontend server with coverage instrumentation
         run: |
-          VITE_PORT=5174 nohup npx vite --port 5174 --host > /tmp/vite-test.log 2>&1 &
+          VITE_PORT=5174 nohup npx vite --config config/vite.config.ts --port 5174 --host > /tmp/vite-test.log 2>&1 &
           echo $! > /tmp/vite-test.pid
         env:
           E2E_COVERAGE: true
@@ -120,7 +120,7 @@ jobs:
           exit 1
 
       - name: Run E2E tests with coverage
-        run: VITE_PORT=5174 npx playwright test
+        run: VITE_PORT=5174 npx playwright test --config config/playwright.config.ts
         env:
           E2E_COVERAGE: true
           VITE_SUPABASE_URL: http://127.0.0.1:54321

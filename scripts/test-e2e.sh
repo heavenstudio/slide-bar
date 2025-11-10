@@ -49,17 +49,17 @@ echo "🧪 Running E2E tests with unified Docker Compose..."
 cd "$PROJECT_ROOT"
 
 # Stop any existing E2E test containers
-docker compose -f docker-compose.e2e.yml down 2>/dev/null || true
+docker compose -f config/docker-compose.e2e.yml down 2>/dev/null || true
 
 # Set PLAYWRIGHT_ARGS environment variable if provided
 export PLAYWRIGHT_ARGS="${1:-}"
 
 # Run tests - start containers and capture Playwright logs
-docker compose -f docker-compose.e2e.yml up --build -d
+docker compose -f config/docker-compose.e2e.yml up --build -d
 
 # Wait for tests to complete by watching Playwright container
 echo "⏳ Waiting for tests to complete..."
-PLAYWRIGHT_CONTAINER=$(docker compose -f docker-compose.e2e.yml ps -q playwright 2>/dev/null)
+PLAYWRIGHT_CONTAINER=$(docker compose -f config/docker-compose.e2e.yml ps -q playwright 2>/dev/null)
 
 if [ -n "$PLAYWRIGHT_CONTAINER" ]; then
   # Stream logs while tests run
@@ -103,7 +103,7 @@ else
 fi
 
 # Cleanup
-docker compose -f docker-compose.e2e.yml down
+docker compose -f config/docker-compose.e2e.yml down
 
 # Show report info
 echo ""
