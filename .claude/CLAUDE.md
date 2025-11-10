@@ -267,7 +267,7 @@ Essential files only (configs moved to `config/`):
 - Build tool configs: `vite.config.ts`, `vitest.config.ts`, `playwright.config.ts`
 - Code quality configs: `tsconfig.json`, `eslint.config.js`, `.prettierrc`, `.prettierignore`
 - Style configs: `postcss.config.js`
-- Infrastructure configs: `docker-compose.e2e.yml`, `vercel.json`
+- Infrastructure configs: `docker-compose.test.yml`, `vercel.json`
 
 **Everything else belongs in subdirectories**:
 
