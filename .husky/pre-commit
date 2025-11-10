@@ -5,30 +5,34 @@ echo "🔍 Running pre-commit checks..."
 
 # 1. Format check
 echo "\n📝 Checking code formatting..."
-pnpm format:check || {
+pnpm format:check > /dev/null 2>&1 || {
   echo "❌ Formatting check failed. Run 'pnpm format' to fix."
   exit 1
 }
+echo "✅ Formatting passed"
 
 # 2. Lint
 echo "\n🔧 Running ESLint..."
-pnpm lint || {
+pnpm lint > /dev/null 2>&1 || {
   echo "❌ Linting failed. Fix errors or run 'pnpm lint:fix'."
   exit 1
 }
+echo "✅ Linting passed"
 
 # 3. Type check
 echo "\n🔎 Running TypeScript type check..."
-pnpm type-check || {
+pnpm type-check > /dev/null 2>&1 || {
   echo "❌ Type checking failed. Fix TypeScript errors."
   exit 1
 }
+echo "✅ Type checking passed"
 
 # 4. Run tests with coverage
-echo "\n🧪 Running tests with coverage..."
-pnpm coverage:all || {
-  echo "❌ Tests or coverage check failed."
+echo "\n🧪 Running tests with coverage (this may take a minute)..."
+pnpm coverage:all > /dev/null 2>&1 || {
+  echo "❌ Tests or coverage check failed. Run 'pnpm coverage:all' to see details."
   exit 1
 }
+echo "✅ Tests and coverage passed"
 
 echo "\n✅ All pre-commit checks passed!"
