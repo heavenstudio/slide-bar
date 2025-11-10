@@ -11,21 +11,21 @@ const projectRoot = path.resolve(__dirname, '..');
 const vitePort = process.env.VITE_PORT ? parseInt(process.env.VITE_PORT, 10) : 5173;
 
 export default defineConfig({
-  root: projectRoot,
+  root: path.join(projectRoot, 'src'),
+  publicDir: path.join(projectRoot, 'public'),
   build: {
-    rollupOptions: {
-      input: './src/index.html',
-    },
+    outDir: path.join(projectRoot, 'dist'),
+    emptyOutDir: true,
   },
   plugins: [
     react(),
     // Instrument code for E2E coverage when E2E_COVERAGE is set
     process.env.E2E_COVERAGE === 'true' &&
       istanbul({
-        include: 'src/**/*.{js,jsx,ts,tsx}',
+        include: '**/*.{js,jsx,ts,tsx}',
         exclude: [
           'node_modules',
-          'tests/',
+          '../tests/',
           '**/*.spec.js',
           '**/*.test.js',
           '**/*.spec.ts',
