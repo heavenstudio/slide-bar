@@ -287,27 +287,36 @@ Migrate all packages and runtimes to their latest LTS/stable versions to ensure 
 
 ---
 
-### Phase 8: Update Remaining Dependencies
+### Phase 8: Update Remaining Dependencies ✅
 
 **Goal**: Update smaller utility packages
 
-**Dependencies to update**:
+**Dependencies reviewed**:
 
-- `uuid`: 13.0.0 → latest
-- `globals`: 16.5.0 → latest
-- `c8`: 10.1.3 → latest (or remove if not needed with Vitest coverage)
-- `nyc`: 17.1.0 → latest (or remove if not needed)
-- `@istanbuljs/nyc-config-typescript`: 1.0.2 → latest
+- `uuid`: 13.0.0 ✅ (already latest)
+- `globals`: 16.5.0 ✅ (already latest)
+- `c8`: 10.1.3 → **REMOVED** (not used, Vitest has coverage)
+- `nyc`: 17.1.0 ✅ (needed by merge-coverage.js, already latest)
+- `@istanbuljs/nyc-config-typescript`: 1.0.2 ✅ (needed by nyc, already latest)
+
+**Changes made**:
+
+- Removed `c8` package (not used anywhere in the codebase)
+- Kept `nyc` and `@istanbuljs/nyc-config-typescript` (actively used by scripts/merge-coverage.js)
+- All other utility packages already at latest versions
 
 **Steps**:
 
-- [ ] Review if c8/nyc are still needed (Vitest has coverage)
-- [ ] Update or remove coverage tools
-- [ ] Update uuid and other utilities
-- [ ] Run tests: `pnpm test && pnpm test:e2e`
-- [ ] Run coverage: `pnpm coverage:all`
+- [x] Review if c8/nyc are still needed
+  - c8: Not used ❌
+  - nyc: Used by merge-coverage.js ✅
+- [x] Remove c8 package
+- [x] Verify all other packages at latest versions
+- [x] Run unit tests: `pnpm test` (85/85 passing ✅)
+- [x] Run E2E tests: `pnpm test:e2e` (16/16 passing ✅)
+- [x] Run coverage: `pnpm coverage:all` (97% lines, 94% statements ✅)
 
-**Success Criteria**: Unused packages removed, utilities updated, tests passing
+**Success Criteria**: ✅ Unused c8 removed, all utilities at latest versions, all tests passing, committed
 
 ---
 
@@ -428,7 +437,7 @@ After each phase:
 
 ## Progress Tracking
 
-**Current Phase**: Phase 8 (Update Remaining Dependencies)
-**Completed Phases**: 7/10 ✅
+**Current Phase**: Phase 9 (Update CI/CD & Docker)
+**Completed Phases**: 8/10 ✅
 **Blockers**: None
-**Next Steps**: Review and update utility packages (uuid, globals, coverage tools)
+**Next Steps**: Update CI/CD configuration and Docker images
