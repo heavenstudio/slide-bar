@@ -8,7 +8,7 @@ services:
     working_dir: /workspace/slide-bar
     volumes:
       - .:/workspace/slide-bar
-      - test_node_modules:/workspace/slide-bar/node_modules  # Separate volume for Linux node_modules
+      - test_node_modules:/workspace/slide-bar/node_modules # Separate volume for Linux node_modules
     command: sh -c "chown -R node:node /workspace/slide-bar/node_modules && su node -c 'CI=true pnpm install && pnpm vite --port 5174 --host'"
     environment:
       - VITE_SUPABASE_URL=http://supabase_kong_slide-bar-test:8000
