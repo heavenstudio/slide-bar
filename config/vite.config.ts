@@ -23,16 +23,14 @@ export default defineConfig({
     // Instrument code for E2E coverage when E2E_COVERAGE is set
     process.env.E2E_COVERAGE === 'true' &&
       istanbul({
-        include: '**/*.{js,jsx,ts,tsx}',
+        include: '**/*.{ts,tsx}',
         exclude: [
           'node_modules',
           '../tests/',
-          '**/*.spec.js',
-          '**/*.test.js',
           '**/*.spec.ts',
           '**/*.test.ts',
         ],
-        extension: ['.js', '.jsx', '.ts', '.tsx'],
+        extension: ['.ts', '.tsx'],
         requireEnv: false,
         forceBuildInstrument: true,
       }),

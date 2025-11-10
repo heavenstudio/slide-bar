@@ -3,7 +3,7 @@
  * Tests for the Supabase-based API layer using real Supabase instance
  *
  * These are integration tests that connect to a local Supabase instance
- * running at http://127.0.0.1:54321 (configured in vitest.config.js)
+ * running at http://127.0.0.1:54321 (configured in vitest.config.ts)
  *
  * Testing approach: TDD (Test-Driven Development)
  * Coverage target: 95%+
@@ -23,12 +23,12 @@ import {
   getImages,
   uploadImage,
   deleteImage,
-} from '../../../src/lib/supabaseApi.js';
+} from '../../../src/lib/supabaseApi';
 import {
   setupSupabaseCleanup,
   cleanDatabase,
   createMockImageFile,
-} from '../../helpers/supabase.js';
+} from '../../helpers/supabase';
 
 // Setup automatic database cleanup after each test
 setupSupabaseCleanup();
@@ -52,7 +52,7 @@ describe('Supabase API - Authentication', () => {
 
     it('should throw error when login fails (invalid credentials)', async () => {
       // Mock the supabase auth to simulate login failure
-      const { supabase } = await import('../../../src/lib/supabase.js');
+      const { supabase } = await import('../../../src/lib/supabase');
       const originalSignIn = supabase.auth.signInWithPassword;
 
       // Temporarily mock the signIn to return an error
@@ -67,7 +67,7 @@ describe('Supabase API - Authentication', () => {
     });
 
     it('should throw error when no session is created', async () => {
-      const { supabase } = await import('../../../src/lib/supabase.js');
+      const { supabase } = await import('../../../src/lib/supabase');
       const originalSignIn = supabase.auth.signInWithPassword;
 
       // Mock to return data but no session
@@ -94,7 +94,7 @@ describe('Supabase API - Authentication', () => {
     });
 
     it('should return null when not logged in', async () => {
-      const { supabase } = await import('../../../src/lib/supabase.js');
+      const { supabase } = await import('../../../src/lib/supabase');
       await supabase.auth.signOut();
 
       const session = await getSession();
@@ -120,7 +120,7 @@ describe('Supabase API - Authentication', () => {
     });
 
     it('should throw error when sign out fails', async () => {
-      const { supabase } = await import('../../../src/lib/supabase.js');
+      const { supabase } = await import('../../../src/lib/supabase');
       const originalSignOut = supabase.auth.signOut;
 
       // Mock signOut to fail
@@ -168,7 +168,7 @@ describe('Supabase API - Images', () => {
     });
 
     it('should throw error when database query fails', async () => {
-      const { supabase } = await import('../../../src/lib/supabase.js');
+      const { supabase } = await import('../../../src/lib/supabase');
       const originalFrom = supabase.from;
 
       // Mock the from method to simulate database error
@@ -176,7 +176,7 @@ describe('Supabase API - Images', () => {
         select: vi.fn(() => ({
           order: vi.fn(() => Promise.resolve({ data: null, error: { message: 'Database error' } })),
         })),
-      }));
+      })) as any;
 
       await expect(getImages()).rejects.toThrow('Database error');
 
@@ -212,7 +212,7 @@ describe('Supabase API - Image Operations', () => {
 
     it('should throw error when not authenticated', async () => {
       // Import supabase client to sign out
-      const { supabase } = await import('../../../src/lib/supabase.js');
+      const { supabase } = await import('../../../src/lib/supabase');
 
       // Ensure user is signed out
       await supabase.auth.signOut();
@@ -225,7 +225,7 @@ describe('Supabase API - Image Operations', () => {
     it('should throw error when storage upload fails', async () => {
       await demoLogin();
 
-      const { supabase } = await import('../../../src/lib/supabase.js');
+      const { supabase } = await import('../../../src/lib/supabase');
       const originalStorage = supabase.storage;
 
       // Mock storage to fail
@@ -235,7 +235,7 @@ describe('Supabase API - Image Operations', () => {
             .fn()
             .mockResolvedValue({ data: null, error: { message: 'Storage upload failed' } }),
         })),
-      };
+      } as any;
 
       const mockFile = createMockImageFile('test.jpg');
 
@@ -248,7 +248,7 @@ describe('Supabase API - Image Operations', () => {
     it('should throw error when user data fetch fails', async () => {
       await demoLogin();
 
-      const { supabase } = await import('../../../src/lib/supabase.js');
+      const { supabase } = await import('../../../src/lib/supabase');
       const originalFrom = supabase.from;
       const originalStorage = supabase.storage;
 
@@ -261,7 +261,7 @@ describe('Supabase API - Image Operations', () => {
             .fn()
             .mockReturnValue({ data: { publicUrl: 'http://example.com/test.jpg' } }),
         })),
-      };
+      } as any;
 
       // Mock failed user data fetch
       let _callCount = 0;
@@ -280,7 +280,7 @@ describe('Supabase API - Image Operations', () => {
         }
         // For other tables, use original
         return originalFrom(table);
-      });
+      }) as any;
 
       const mockFile = createMockImageFile('test.jpg');
 
@@ -294,7 +294,7 @@ describe('Supabase API - Image Operations', () => {
     it('should throw error when database insert fails', async () => {
       await demoLogin();
 
-      const { supabase } = await import('../../../src/lib/supabase.js');
+      const { supabase } = await import('../../../src/lib/supabase');
       const originalFrom = supabase.from;
       const originalStorage = supabase.storage;
 
@@ -307,7 +307,7 @@ describe('Supabase API - Image Operations', () => {
             .fn()
             .mockReturnValue({ data: { publicUrl: 'http://example.com/test.jpg' } }),
         })),
-      };
+      } as any;
 
       // Mock database operations
       let _callCount = 0;
@@ -336,7 +336,7 @@ describe('Supabase API - Image Operations', () => {
           };
         }
         return originalFrom(table);
-      });
+      }) as any;
 
       const mockFile = createMockImageFile('test.jpg');
 
@@ -384,7 +384,7 @@ describe('Supabase API - Image Deletion', () => {
       const mockFile = createMockImageFile('test.jpg');
       const uploadedImage = await uploadImage(mockFile);
 
-      const { supabase } = await import('../../../src/lib/supabase.js');
+      const { supabase } = await import('../../../src/lib/supabase');
       const originalStorage = supabase.storage;
 
       // Mock storage delete to fail
@@ -392,7 +392,7 @@ describe('Supabase API - Image Deletion', () => {
         from: vi.fn(() => ({
           remove: vi.fn().mockResolvedValue({ error: { message: 'Storage delete failed' } }),
         })),
-      };
+      } as any;
 
       await expect(deleteImage(uploadedImage.id)).rejects.toThrow('Storage delete failed');
 
@@ -407,7 +407,7 @@ describe('Supabase API - Image Deletion', () => {
       const mockFile = createMockImageFile('test.jpg');
       const uploadedImage = await uploadImage(mockFile);
 
-      const { supabase } = await import('../../../src/lib/supabase.js');
+      const { supabase } = await import('../../../src/lib/supabase');
       const originalFrom = supabase.from;
       const originalStorage = supabase.storage;
 
@@ -416,7 +416,7 @@ describe('Supabase API - Image Deletion', () => {
         from: vi.fn(() => ({
           remove: vi.fn().mockResolvedValue({ error: null }),
         })),
-      };
+      } as any;
 
       // Mock database operations
       let callCount = 0;
@@ -442,7 +442,7 @@ describe('Supabase API - Image Deletion', () => {
             })),
           };
         }
-      });
+      }) as any;
 
       await expect(deleteImage(uploadedImage.id)).rejects.toThrow('Database delete failed');
 
