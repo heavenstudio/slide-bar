@@ -74,6 +74,12 @@ slide-bar/
   - All source code must be TypeScript (.ts/.tsx)
   - All scripts must be TypeScript (run with `tsx`)
   - Coverage checks validate TSX files (not JSX)
+- **React 19 JSX Transform**: NEVER use explicit `JSX.Element` return type annotations
+  - React 19's new JSX transform doesn't export JSX namespace globally
+  - Using `JSX.Element` causes "Cannot find namespace 'JSX'" errors in strict CI environments
+  - **Best practice**: Let TypeScript infer component return types automatically
+  - ESLint rule enforces this with `no-restricted-syntax` blocking JSX namespace usage
+  - Example: `function App() { return <div>...</div> }` NOT `function App(): JSX.Element`
 - **Vite Configuration** (`config/vite.config.ts`):
   - `root: src/` - index.html location
   - `envDir: projectRoot` - **CRITICAL:** Load .env from project root, not src/

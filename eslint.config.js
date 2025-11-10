@@ -117,6 +117,15 @@ export default [
       ],
       // TypeScript handles these
       'no-undef': 'off',
+      // Ban JSX.Element - React 19 best practice is to infer return types
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: 'TSTypeReference > Identifier[name="JSX"]',
+          message:
+            'Do not use JSX.Element or JSX namespace types. Let TypeScript infer component return types. This is React 19 best practice and avoids "Cannot find namespace JSX" errors.',
+        },
+      ],
     },
   },
   {

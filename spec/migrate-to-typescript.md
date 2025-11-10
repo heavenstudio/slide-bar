@@ -535,6 +535,14 @@ All 14 phases completed successfully. TypeScript migration is done with strict m
 - **Challenge**: CI workflow called `.js` scripts that no longer existed after migration
 - **Solution**: Updated workflow to use pnpm scripts which internally call tsx
 
+**9. React 19 JSX Namespace Errors in CI**
+
+- **Challenge**: CI failed with "Cannot find namespace 'JSX'" errors on 10 function return types, but worked locally
+- **Root cause**: Explicit `JSX.Element` return type annotations incompatible with React 19's new JSX transform
+- **Why local worked**: macOS pnpm symlink hoisting + TypeScript cache allowed fallback type resolution
+- **Solution**: Removed all `JSX.Element` return type annotations, using TypeScript's inferred types (React 19 best practice)
+- **Prevention**: Added ESLint rule to ban JSX namespace usage with `no-restricted-syntax`
+
 ### Benefits Observed
 
 **Development Experience**:

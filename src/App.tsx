@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route } from 'react-router';
 import Dashboard from './pages/Dashboard';
 import Player from './pages/Player';
 
-function App(): JSX.Element {
+function App() {
   return (
     <BrowserRouter>
       <Routes>

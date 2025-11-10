@@ -7,7 +7,7 @@ import { Image } from '../types/database';
 /**
  * Dashboard header with title and player link
  */
-function DashboardHeader(): JSX.Element {
+function DashboardHeader() {
   return (
     <header className="bg-white shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -57,7 +57,7 @@ interface UploadSectionProps {
 function UploadSection({
   isAuthenticating,
   onUploadSuccess,
-}: UploadSectionProps): JSX.Element | null {
+}: UploadSectionProps) {
   if (isAuthenticating) return null;
   return (
     <section className="mb-12">
@@ -84,7 +84,7 @@ function ImagesSection({
   error,
   onRefresh,
   onImageDeleted,
-}: ImagesSectionProps): JSX.Element {
+}: ImagesSectionProps) {
   return (
     <section>
       <div className="flex justify-between items-center mb-4">
@@ -173,7 +173,7 @@ function useImageLoader(): UseImageLoaderReturn {
  * Dashboard Page
  * Main page for managing uploaded images
  */
-export default function Dashboard(): JSX.Element {
+export default function Dashboard() {
   const { images, setImages, isLoading, isAuthenticating, error, loadImages } = useImageLoader();
 
   const handleUpload = (img: Image): void => setImages((prev) => [img, ...prev]);

@@ -6,7 +6,7 @@ import type { RealtimeChannel } from '@supabase/supabase-js';
 /**
  * Loading state component
  */
-function LoadingState(): JSX.Element {
+function LoadingState() {
   return (
     <div className="fixed inset-0 bg-black flex items-center justify-center">
       <div className="text-center">
@@ -24,7 +24,7 @@ interface ErrorStateProps {
   error: string;
 }
 
-function ErrorState({ error }: ErrorStateProps): JSX.Element {
+function ErrorState({ error }: ErrorStateProps) {
   return (
     <div className="fixed inset-0 bg-black flex items-center justify-center">
       <div className="text-center text-white">
@@ -38,7 +38,7 @@ function ErrorState({ error }: ErrorStateProps): JSX.Element {
 /**
  * Empty state component
  */
-function EmptyState(): JSX.Element {
+function EmptyState() {
   return (
     <div className="fixed inset-0 bg-black flex items-center justify-center">
       <div className="text-center text-white">
@@ -65,7 +65,7 @@ function SlideshowUI({
   currentIndex,
   imagesCount,
   isPaused,
-}: SlideshowUIProps): JSX.Element {
+}: SlideshowUIProps) {
   return (
     <div className="fixed inset-0 bg-black">
       <img
@@ -174,7 +174,7 @@ function useKeyboardControls(
  * Player Page
  * Public-facing fullscreen slideshow player for displaying images on TV/monitors
  */
-export default function Player(): JSX.Element {
+export default function Player() {
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [isPaused, setIsPaused] = useState<boolean>(false);
   const [slideDuration] = useState<number>(5000);
