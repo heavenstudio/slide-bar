@@ -9,6 +9,8 @@ export default defineConfig({
     setupFiles: './tests/config/setup.ts',
     include: ['tests/unit/**/*.{test,spec}.{ts,tsx}'],
     exclude: ['node_modules', 'tests/e2e/**/*.spec.{ts,tsx}'],
+    // Increase timeout for Supabase integration tests (v4 needs more time)
+    testTimeout: 10000,
     // Run tests sequentially to avoid database conflicts in integration tests
     pool: 'forks',
     poolOptions: {

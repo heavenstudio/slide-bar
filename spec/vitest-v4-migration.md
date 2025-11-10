@@ -448,8 +448,13 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ## Progress Tracking
 
-**Status**: 🟡 In Progress
-**Current Phase**: Phase 1 (Pre-Migration Audit)
-**Completed Phases**: 0/8
-**Blockers**: None
-**Next Step**: Commit this spec file and begin Phase 2
+**Status**: 🟡 In Progress - Phase 5 (Fixing v4 issues)
+**Current Phase**: Phase 5 (Fix Breaking Changes)
+**Completed Phases**: 4/8 ✅
+**Test Status**: 81/85 passing (4 failing tests, all timing-related)
+**Blockers**:
+
+- Player.test.tsx: 2 timeouts (should fetch and display images, should navigate to previous image)
+- Dashboard.test.tsx: 2 timeouts (should load and display images, should remove image)
+
+**Next Step**: Investigate timing issues with Supabase data loading in v4
