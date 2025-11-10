@@ -27,7 +27,7 @@
     "skipLibCheck": true,
 
     /* Testing */
-    "types": ["vitest/globals", "@testing-library/jest-dom"]
+    "types": ["vitest/globals", "@testing-library/jest-dom", "@types/react", "@types/react-dom"]
   },
   "include": [
     "src/**/*",
