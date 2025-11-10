@@ -168,20 +168,35 @@ Migrate all packages and runtimes to their latest LTS/stable versions to ensure 
 
 ---
 
-### Phase 5: Update React Router (Major)
+### Phase 5: Update React Router (Major) ✅
 
-**Goal**: Update React Router to latest version
+**Goal**: Update React Router 6 → React Router 7
+
+**Dependencies updated**:
+
+- Removed: `react-router-dom` 6.30.1
+- Added: `react-router` 7.9.5
+
+**Breaking Changes**:
+
+- Package renamed from `react-router-dom` to `react-router`
+- Import path changed: `'react-router-dom'` → `'react-router'`
+- No future flags needed (simple routing structure)
 
 **Steps**:
 
-- [ ] Check latest React Router version
-- [ ] Read migration guide (if major version change)
-- [ ] Update `react-router-dom`
-- [ ] Check for breaking changes in routing code
-- [ ] Run tests: `pnpm test && pnpm test:e2e`
-- [ ] Verify navigation works in dev: `pnpm dev`
+- [x] Read React Router 7 migration guide
+- [x] Check routing code for deprecated patterns (none found ✅)
+- [x] Remove `react-router-dom`, install `react-router` 7.9.5
+- [x] Update import in src/App.jsx (`react-router-dom` → `react-router`)
+- [x] Run unit tests: `pnpm test` (85/85 passing ✅)
+- [x] Rebuild Docker images with React Router 7
+- [x] Run E2E tests: `pnpm test:e2e` (16/16 passing ✅)
+- [x] Restart dev server (Vite 7 + React 19 + React Router 7 ✅)
 
-**Success Criteria**: Latest React Router installed, all routes working, tests passing
+**Success Criteria**: ✅ React Router 7 installed, all routes working, all tests passing, committed (0427ec1)
+
+**Notes**: Clean migration - simple routing structure with no data loaders, fetchers, or splat paths
 
 ---
 
@@ -391,7 +406,7 @@ After each phase:
 
 ## Progress Tracking
 
-**Current Phase**: Phase 5 (Update React Router)
-**Completed Phases**: 4/10 ✅
+**Current Phase**: Phase 6 (Update Testing Infrastructure)
+**Completed Phases**: 5/10 ✅
 **Blockers**: None
-**Next Steps**: Update React Router 6 → 7 (major version)
+**Next Steps**: Update Vitest, Playwright, and testing libraries
