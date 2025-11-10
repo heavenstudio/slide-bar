@@ -262,12 +262,15 @@ Essential files only (configs moved to `config/`):
 - `.env*` files - Environment variables (required in root by Vite)
 - `README.md` - Single source of truth for user docs
 
-**All configuration files now in `config/` folder**:
+**Most configuration files in `config/` folder**:
 
 - Build tool configs: `vite.config.ts`, `vitest.config.ts`, `playwright.config.ts`
 - Code quality configs: `tsconfig.json`, `eslint.config.js`, `.prettierrc`, `.prettierignore`
-- Style configs: `postcss.config.js`
 - Infrastructure configs: `docker-compose.test.yml`, `vercel.json`
+
+**Configuration files that must stay in root**:
+
+- `postcss.config.js` - Required by PostCSS/Vite (cannot be moved)
 
 **Everything else belongs in subdirectories**:
 

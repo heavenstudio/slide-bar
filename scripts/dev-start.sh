@@ -27,7 +27,7 @@ fi
 
 # Start frontend
 cd "$PROJECT_ROOT"
-nohup ./node_modules/.bin/vite --host --port 5173 > /tmp/vite-dev.log 2>&1 &
+nohup ./node_modules/.bin/vite --config config/vite.config.ts --host --port 5173 > /tmp/vite-dev.log 2>&1 &
 echo $! > /tmp/vite-dev.pid
 
 # Wait for frontend to start
