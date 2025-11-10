@@ -24,10 +24,7 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-    "skipLibCheck": true,
-
-    /* Testing */
-    "types": ["vitest/globals", "@testing-library/jest-dom", "@types/react", "@types/react-dom"]
+    "skipLibCheck": true
   },
   "include": [
     "src/**/*",
