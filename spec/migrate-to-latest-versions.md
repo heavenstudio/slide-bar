@@ -13,11 +13,11 @@ Migrate all packages and runtimes to their latest LTS/stable versions to ensure 
 
 ### Runtimes
 
-| Package      | Current | Target                  | Status            |
-| ------------ | ------- | ----------------------- | ----------------- |
-| Node.js      | 24.7.0  | 24.11.0 (LTS "Krypton") | ⚠️ Minor update   |
-| pnpm         | 10.20.0 | 10.20.0                 | ✅ Already latest |
-| Supabase CLI | 2.54.11 | 2.54.11                 | ✅ Already latest |
+| Package      | Current | Target                | Status                                  |
+| ------------ | ------- | --------------------- | --------------------------------------- |
+| Node.js      | 24.7.0  | 22.21.1 (LTS "Jod")   | ⚠️ Downgrade for Vercel compatibility   |
+| pnpm         | 10.20.0 | 10.20.0               | ✅ Already latest                       |
+| Supabase CLI | 2.54.11 | 2.54.11               | ✅ Already latest                       |
 
 ### Core Dependencies
 
@@ -77,7 +77,7 @@ Migrate all packages and runtimes to their latest LTS/stable versions to ensure 
 
 ### Phase 2: Update Node.js & Runtime ✅
 
-**Goal**: Update Node.js to latest LTS 24.11.0
+**Goal**: Update Node.js to 22.21.1 LTS (Vercel compatible)
 
 - [x] Update Node.js to 24.11.0 using nvm/fnm
 - [x] Create `.nvmrc` file with version 24.11.0
@@ -90,8 +90,17 @@ Migrate all packages and runtimes to their latest LTS/stable versions to ensure 
 - [x] Run E2E tests: `pnpm test:e2e` (16/16 passing)
 - [x] Set nvm default to 24.11.0
 - [x] Verify dev server runs correctly
+- [x] **CORRECTED**: Vercel only supports Node 20.x and 22.x (not 24.x yet)
+- [x] Downgrade to Node.js 22.21.1 LTS (Vercel's default 22.x)
+- [x] Update `.nvmrc` to 22.21.1
+- [x] Update `package.json` engines to >=22.21.1
+- [x] Update `.github/workflows/pr-checks.yml` to 22.21.1
+- [x] Update `.devcontainer/Dockerfile` to 22.21.1-bullseye
+- [x] Reinstall dependencies with Node 22.21.1
+- [x] Re-run all tests (85/85 passing ✅)
+- [x] Verify build still works (618.53 kB ✅)
 
-**Success Criteria**: ✅ Node 24.11.0 installed, all tests passing, committed (84b6c53)
+**Success Criteria**: ✅ Node 22.21.1 installed (Vercel compatible), all tests passing, committed
 
 ---
 
@@ -107,7 +116,7 @@ Migrate all packages and runtimes to their latest LTS/stable versions to ensure 
 
 **Breaking Changes**:
 
-- Requires Node.js 20.19+ (we have 24.11.0 ✅)
+- Requires Node.js 20.19+ (we have 22.21.1 ✅)
 - ESM-only distribution
 - Browser target changed to 'baseline-widely-available'
 - Check for plugin compatibility
@@ -331,17 +340,17 @@ Migrate all packages and runtimes to their latest LTS/stable versions to ensure 
 - `docker-compose.e2e.yml` ✅
 - `.devcontainer/Dockerfile` ✅
 
-**Current versions** (all already updated in Phase 2):
+**Current versions** (all updated to Node 22.21.1):
 
-- Node.js: 24.11.0 ✅ (GitHub Actions + Dockerfile)
+- Node.js: 22.21.1 ✅ (GitHub Actions + Dockerfile)
 - pnpm: 10.20.0 ✅ (Dockerfile)
 - Playwright: 1.56.1 ✅ (Dockerfile, matches package.json)
 - Supabase CLI: `latest` ✅ (GitHub Actions uses supabase/setup-cli@v1 with version: latest)
 
 **Steps**:
 
-- [x] Review GitHub Actions Node version → 24.11.0 ✅ (already updated in Phase 2)
-- [x] Review Docker images Node version → 24.11.0-bullseye ✅ (already updated in Phase 2)
+- [x] Review GitHub Actions Node version → 22.21.1 ✅ (corrected from 24.11.0 for Vercel)
+- [x] Review Docker images Node version → 22.21.1-bullseye ✅ (corrected from 24.11.0 for Vercel)
 - [x] Review Supabase CLI version in CI → using `latest` ✅
 - [x] Review Playwright version in Docker → 1.56.1 ✅ (matches package.json)
 
@@ -442,7 +451,8 @@ After each phase:
 - **React Router 7**: Major upgrade, requires React 18+, Node 20+, unified package
 - **Vite 7**: Requires Node 20.19+, ESM-only, new browser targets, 5-100x faster
 - **Tailwind CSS 4**: Stable as of Jan 2025, requires Safari 16.4+/Chrome 111+/Firefox 128+
-- **Node 24 LTS "Krypton"**: Active support until April 2028
+- **Node 22.21.1 LTS "Jod"**: Vercel's default Node.js version (22.x), active support until April 2027
+- **Vercel Compatibility**: Initially targeted Node 24.11.0, but Vercel only supports 20.x and 22.x as of 2025-11-09
 - **pnpm**: Already on latest (10.20.0)
 - **Supabase JS**: Already on latest (2.80.0)
 - **Supabase CLI**: Already on latest (2.54.11)

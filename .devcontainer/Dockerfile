@@ -1,4 +1,4 @@
-FROM node:24.11.0-bullseye
+FROM node:22.21.1-bullseye
 
 # Install pnpm globally
 RUN npm install -g pnpm@10.20.0

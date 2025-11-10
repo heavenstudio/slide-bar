@@ -36,7 +36,7 @@
   "author": "",
   "license": "UNLICENSED",
   "engines": {
-    "node": ">=24.11.0",
+    "node": ">=22.21.1",
     "pnpm": ">=10.20.0"
   },
   "dependencies": {

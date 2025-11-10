@@ -7,7 +7,7 @@
 - **Deployment**: Vercel (frontend) + Supabase Cloud (backend)
 - **Testing**: Vitest 3 (unit/integration) + Playwright 1.56 (E2E)
 - **CI/CD**: GitHub Actions (tests) + Vercel (auto-deploy)
-- **Migration Status**: ✅ All dependencies migrated to latest LTS/stable versions (Node 24.11.0 LTS)
+- **Migration Status**: ✅ All dependencies migrated to latest LTS/stable versions (Node 22.21.1 LTS)
 - **Production Status**: ✅ Live at https://slide-bar.vercel.app
 
 ## Folder Structure
