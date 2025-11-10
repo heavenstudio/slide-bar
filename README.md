@@ -115,8 +115,15 @@ pnpm stop
 
 ```
 slide-bar/
+├── config/                # Configurações de build/teste
+│   ├── vite.config.ts     # Configuração Vite
+│   ├── vitest.config.ts   # Configuração Vitest (testes unitários)
+│   ├── playwright.config.ts # Configuração Playwright (E2E)
+│   └── docker-compose.test.yml # Infraestrutura de testes Docker
 ├── docs/                  # Documentação adicional
-├── scripts/               # Scripts dev/teste
+├── scripts/               # Scripts dev/teste (TypeScript)
+│   ├── check-coverage.ts  # Validação de cobertura de testes
+│   └── merge-coverage.ts  # Mesclagem de cobertura Vitest+Playwright
 ├── src/                   # Aplicação React + TypeScript
 │   ├── components/        # Componentes React (.tsx)
 │   ├── pages/             # Páginas (Dashboard, Player)
@@ -128,7 +135,10 @@ slide-bar/
 │   ├── e2e/               # Testes E2E (specs/, fixtures/, support/)
 │   ├── helpers/           # Helpers compartilhados (limpeza DB)
 │   └── unit/              # Testes unitários (lib/, components/, pages/)
-├── tsconfig.json          # Configuração TypeScript
+├── tsconfig.json          # Configuração TypeScript (strict mode)
+├── eslint.config.js       # Configuração ESLint (bloqueia arquivos .js)
+├── postcss.config.js      # Configuração PostCSS/Tailwind
+└── vercel.json            # Configuração de deploy Vercel
 ```
 
 ---
@@ -327,6 +337,8 @@ pnpm install
 **Infraestrutura:**
 
 - ✅ **TypeScript** com strict mode e tipos auto-gerados do Supabase
+- ✅ **Configurações organizadas**: build/teste em `config/`, tooling na raiz
+- ✅ **Proteção de qualidade**: ESLint bloqueia arquivos JavaScript (.js/.jsx)
 - ✅ Supabase Auth (demo login: demo@example.com / demo-password-123)
 - ✅ Supabase Storage (armazenamento de imagens)
 - ✅ Supabase PostgreSQL (banco de dados)

@@ -70,6 +70,15 @@ slide-bar/
 
 ## Critical Compatibility Notes
 
+- **TypeScript-Only Codebase**: ESLint blocks any .js/.jsx files except `eslint.config.js` and `postcss.config.js`
+  - All source code must be TypeScript (.ts/.tsx)
+  - All scripts must be TypeScript (run with `tsx`)
+  - Coverage checks validate TSX files (not JSX)
+- **Vite Configuration** (`config/vite.config.ts`):
+  - `root: src/` - index.html location
+  - `envDir: projectRoot` - **CRITICAL:** Load .env from project root, not src/
+  - `publicDir: false` - No public directory in this project
+  - Must use `--config config/vite.config.ts` flag in all scripts
 - **Supabase Local**: Runs via Docker (`supabase start`), uses ports 54321-54324
 - **macOS ARM**: Requires `@rollup/rollup-darwin-arm64` dependency
 - **Platform-Specific Binaries**:
@@ -270,10 +279,10 @@ Essential files only (configs moved to `config/`):
 **Tooling configuration files in root** (required for standard tooling/deployment):
 
 - `tsconfig.json` - Required in root for IDE TypeScript support
-- `eslint.config.js` - Required in root for IDE/editor integration
+- `eslint.config.js` - Required in root for IDE/editor integration (also blocks .js/.jsx files)
 - `.prettierrc`, `.prettierignore` - Required in root for IDE/editor integration
-- `postcss.config.js` - Required in root by PostCSS/Vite
-- `vercel.json` - Required in root by Vercel deployment
+- `postcss.config.js` - **CRITICAL:** Must stay in root for PostCSS/Vite (DO NOT move to config/)
+- `vercel.json` - Required in root by Vercel deployment platform
 
 **Everything else belongs in subdirectories**:
 
