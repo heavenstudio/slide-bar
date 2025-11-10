@@ -9,15 +9,10 @@ export default defineConfig({
     setupFiles: './tests/config/setup.ts',
     include: ['tests/unit/**/*.{test,spec}.{ts,tsx}'],
     exclude: ['node_modules', 'tests/e2e/**/*.spec.{ts,tsx}'],
-    // Increase timeout for Supabase integration tests (v4 needs more time)
-    testTimeout: 10000,
-    // Run tests sequentially to avoid database conflicts in integration tests
+    // v4: Disable file parallelism to run test files sequentially (avoids database conflicts)
+    fileParallelism: false,
+    // v4: Use forks pool for proper test file isolation (prevents module mock leakage)
     pool: 'forks',
-    poolOptions: {
-      forks: {
-        singleFork: true,
-      },
-    },
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'json-summary', 'html'],

@@ -55,7 +55,7 @@ describe('Supabase API - Authentication', () => {
       // Mock the supabase auth to simulate login failure
       const { supabase } = await import('../../../src/lib/supabase');
 
-      // Use vi.spyOn for cleaner mocking (auto-restored by vi.restoreAllMocks)
+      // Use vi.spyOn for cleaner mocking
       vi.spyOn(supabase.auth, 'signInWithPassword').mockResolvedValue({
         data: { user: null, session: null },
         error: {
@@ -71,7 +71,7 @@ describe('Supabase API - Authentication', () => {
     it('should throw error when no session is created', async () => {
       const { supabase } = await import('../../../src/lib/supabase');
 
-      // Use vi.spyOn for cleaner mocking (auto-restored by vi.restoreAllMocks)
+      // Use vi.spyOn for cleaner mocking
       vi.spyOn(supabase.auth, 'signInWithPassword').mockResolvedValue({
         data: { user: null, session: null },
         error: null,
@@ -121,7 +121,7 @@ describe('Supabase API - Authentication', () => {
     it('should throw error when sign out fails', async () => {
       const { supabase } = await import('../../../src/lib/supabase');
 
-      // Use vi.spyOn for cleaner mocking (auto-restored by vi.restoreAllMocks)
+      // Use vi.spyOn for cleaner mocking
       vi.spyOn(supabase.auth, 'signOut').mockResolvedValue({
         error: {
           message: 'Sign out failed',
