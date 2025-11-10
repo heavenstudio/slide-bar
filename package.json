@@ -43,7 +43,7 @@
     "@supabase/supabase-js": "^2.80.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "react-router-dom": "^6.20.1"
+    "react-router": "^7.9.5"
   },
   "devDependencies": {
     "@esbuild/linux-arm64": "^0.25.12",
