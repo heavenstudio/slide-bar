@@ -515,10 +515,10 @@ Para habilitar o deploy automático de migrations, configure os seguintes secret
 
 2. Adicione os seguintes secrets:
 
-| Secret | Descrição | Como obter |
-|--------|-----------|------------|
+| Secret                  | Descrição                   | Como obter                                                                                    |
+| ----------------------- | --------------------------- | --------------------------------------------------------------------------------------------- |
 | `SUPABASE_ACCESS_TOKEN` | Token de acesso ao Supabase | [Supabase Dashboard](https://app.supabase.com) > Account > Access Tokens > Generate new token |
-| `SUPABASE_PROJECT_REF` | Referência do projeto | Da URL do projeto (ex: `cdpxkskbpntoiarhtyuj` de `https://cdpxkskbpntoiarhtyuj.supabase.co`) |
+| `SUPABASE_PROJECT_REF`  | Referência do projeto       | Da URL do projeto (ex: `cdpxkskbpntoiarhtyuj` de `https://cdpxkskbpntoiarhtyuj.supabase.co`)  |
 
 3. Após configurar, o workflow executará automaticamente quando migrations forem mescladas em `main`
 
