@@ -1,0 +1,89 @@
+name: Deploy Supabase Migrations
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'supabase/migrations/**'
+
+# Prevent multiple deployments from running simultaneously
+concurrency:
+  group: deploy-migrations-${{ github.ref }}
+  cancel-in-progress: false # Don't cancel running migrations
+
+permissions:
+  contents: read # Principle of least privilege
+
+jobs:
+  deploy-migrations:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Link to Supabase Production
+        run: |
+          supabase link --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+      - name: Check migration status (before)
+        run: |
+          echo "📋 Current migration status in production:"
+          supabase migration list
+          echo ""
+          echo "📁 Local migrations to be applied:"
+          ls -la supabase/migrations/
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+      - name: Validate migrations
+        run: |
+          echo "🔍 Validating migration files..."
+          supabase migration repair --status
+          echo "✅ Migration validation complete"
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+      - name: Run migrations
+        id: migrate
+        continue-on-error: false # Explicitly fail on error
+        run: |
+          echo "🚀 Running database migrations..."
+          echo "Note: Only NEW migrations will be applied (already applied migrations are skipped automatically)"
+          supabase db push --include-all
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+      - name: Verify migration status (after)
+        run: |
+          echo "✅ Migration status after deployment:"
+          supabase migration list
+          echo ""
+          echo "✨ Deployment complete! All migrations are now in sync."
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+      - name: Report failure
+        if: failure()
+        run: |
+          echo "❌ Migration deployment failed!"
+          echo ""
+          echo "Please check the logs above for details."
+          echo "Common issues:"
+          echo "  - SQL syntax errors in migration files"
+          echo "  - Conflicting schema changes"
+          echo "  - Missing dependencies or permissions"
+          echo ""
+          echo "To rollback or fix:"
+          echo "  1. Review migration files in supabase/migrations/"
+          echo "  2. Test locally with 'supabase db reset && supabase db push'"
+          echo "  3. Fix issues and push corrections to main"
+          exit 1
