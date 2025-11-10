@@ -8,7 +8,7 @@ import tsparser from '@typescript-eslint/parser';
 export default [
   js.configs.recommended,
   {
-    files: ['**/*.{js,jsx,ts,tsx}'],
+    files: ['**/*.{ts,tsx}'],
     plugins: {
       react,
       'react-hooks': reactHooks,
@@ -106,14 +106,14 @@ export default [
   },
   {
     // Allow console in CLI scripts (they're meant for terminal output)
-    files: ['scripts/**/*.{js,ts}'],
+    files: ['scripts/**/*.ts'],
     rules: {
       'no-console': 'off',
     },
   },
   {
     // Relax function length limit for test files (describe/it blocks can be long)
-    files: ['**/*.{test,spec}.{js,jsx,ts,tsx}', '**/tests/**/*.{js,jsx,ts,tsx}'],
+    files: ['**/*.{test,spec}.{ts,tsx}', '**/tests/**/*.{ts,tsx}'],
     rules: {
       'max-lines-per-function': ['warn', { max: 150, skipBlankLines: true, skipComments: true }],
     },
@@ -125,8 +125,8 @@ export default [
       'dist/**',
       'build/**',
       '.test-output/**',
-      '**/*.config.js',
-      '**/*.config.mjs',
+      'eslint.config.js',
+      'postcss.config.js',
       '**/*.config.ts',
       '.pnpm-store/**',
     ],
