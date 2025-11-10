@@ -175,8 +175,8 @@ pnpm coverage:all
 
 **Cobertura Combinada**: O projeto suporta combinação de cobertura de testes unitários (Vitest) e E2E (Playwright) para uma visão completa:
 
-- **Vitest**: ~89% de cobertura em testes unitários (~5s)
-- **Playwright**: Cobertura adicional via E2E (~10s)
+- **Vitest**: ~89% de cobertura em testes unitários
+- **Playwright**: Cobertura adicional via E2E
 - **Combinada**: ~89% linhas, ~88% statements, ~61% branches, ~88% functions
 
 **Comandos recomendados**:
@@ -201,10 +201,10 @@ pnpm test:e2e:show-report
 
 **Estatísticas de Testes:**
 
-- ✅ 85 testes unitários (100% passando, ~7s)
-- ✅ 16 testes E2E (100% passando, ~10s)
+- ✅ 85 testes unitários (100% passando)
+- ✅ 16 testes E2E (100% passando)
 - ✅ ~89% de cobertura combinada (linhas)
-- ⚡ Total: 101 testes em ~17 segundos
+- ⚡ Total: 101 testes
 
 ---
 
