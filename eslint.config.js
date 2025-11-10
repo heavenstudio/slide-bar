@@ -8,6 +8,21 @@ import tsparser from '@typescript-eslint/parser';
 export default [
   js.configs.recommended,
   {
+    // Block any .js/.jsx files (TypeScript-only codebase)
+    files: ['**/*.{js,jsx}'],
+    ignores: ['eslint.config.js', 'postcss.config.js', 'dist/**'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: 'Program',
+          message:
+            'JavaScript files are not allowed. This is a TypeScript-only codebase. Please use .ts or .tsx files instead.',
+        },
+      ],
+    },
+  },
+  {
     files: ['**/*.{ts,tsx}'],
     plugins: {
       react,
