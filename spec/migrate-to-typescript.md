@@ -452,6 +452,7 @@ All 14 phases completed successfully. TypeScript migration is done with strict m
 **Timeline**: 2 days (2025-11-09 to 2025-11-10)
 
 **Files Converted**:
+
 - 9 source files (.js/.jsx → .ts/.tsx)
 - 14 test files (.js/.jsx → .ts/.tsx)
 - 5 configuration files (.js/.mjs → .ts)
@@ -459,6 +460,7 @@ All 14 phases completed successfully. TypeScript migration is done with strict m
 - **Total**: ~30 files migrated
 
 **Final Stats**:
+
 - TypeScript 5.9.3 (latest stable)
 - Strict mode enabled
 - 0 type errors
@@ -467,6 +469,7 @@ All 14 phases completed successfully. TypeScript migration is done with strict m
 - ~97% line coverage maintained
 
 **Dependencies Added**:
+
 - `typescript@5.9.3`
 - `@types/node@22.10.6`
 - `@types/react@19.0.6`
@@ -493,52 +496,63 @@ All 14 phases completed successfully. TypeScript migration is done with strict m
 ### Challenges Encountered & Solved
 
 **1. PostCSS Configuration Location**
+
 - **Challenge**: Moving `postcss.config.js` to `config/` broke CSS loading
 - **Solution**: PostCSS requires config in project root, kept it there with ESLint exception
 
 **2. Coverage Showing Duplicate .js/.jsx and .ts/.tsx Files**
+
 - **Challenge**: Coverage reports showed both JavaScript and TypeScript versions
 - **Solution**: Updated Vitest and Vite configs to only include `.ts`/`.tsx` patterns
 
 **3. ESLint TypeScript Integration**
+
 - **Challenge**: ESLint v9 flat config + TypeScript required careful setup
 - **Solution**: Properly configured `@typescript-eslint/parser` and added rule to block `.js`/.jsx` files
 
 **4. Mock Object Typing in Tests**
+
 - **Challenge**: Mocking Supabase client with complex nested methods
 - **Solution**: Used `as any` strategically for mock objects where full typing was impractical
 
 **5. File Upload Typing**
+
 - **Challenge**: Test helpers needed to create file-like objects
 - **Solution**: Created `createMockImageFile()` helper with proper File interface typing
 
 **6. Coverage Script Terminology**
+
 - **Challenge**: Coverage warnings referenced "JSX" after migration to TypeScript
 - **Solution**: Updated all coverage scripts to use "TSX" terminology consistently
 
 **7. Test Code Duplication**
+
 - **Challenge**: Mock data objects duplicated 18+ times across test files (13 lines each)
 - **Solution**: Created test fixtures with factory functions, reducing to 1-3 lines per mock
 
 **8. GitHub Actions TypeScript Migration**
+
 - **Challenge**: CI workflow called `.js` scripts that no longer existed after migration
 - **Solution**: Updated workflow to use pnpm scripts which internally call tsx
 
 ### Benefits Observed
 
 **Development Experience**:
+
 - ✅ IntelliSense and autocompletion work perfectly in VS Code
 - ✅ Catch type errors at compile-time instead of runtime
 - ✅ Supabase auto-generated types provide excellent database type safety
 - ✅ Refactoring is safer with compiler catching breaking changes
 
 **Code Quality**:
+
 - ✅ Strict mode enabled with zero type errors
 - ✅ Explicit interfaces for all component props
 - ✅ Better documentation through type definitions
 - ✅ CI/CD includes type checking, preventing bad merges
 
 **Testing**:
+
 - ✅ All 101 tests (85 unit + 16 E2E) passing
 - ✅ Coverage maintained at ~97% lines, ~94% statements
 - ✅ Test files have type safety, catching more bugs early
@@ -546,12 +560,14 @@ All 14 phases completed successfully. TypeScript migration is done with strict m
 - ✅ Reusable test helpers improve maintainability
 
 **Project Organization**:
+
 - ✅ Configuration files moved to `config/` folder (cleaner root)
 - ✅ TypeScript-only enforcement via ESLint (no accidental JS files)
 - ✅ Public folder for static assets with custom favicon
 - ✅ Consistent tooling: all scripts use `tsx` to run TypeScript
 
 **Migration Process**:
+
 - ✅ TDD approach validated every step (tests passed after each phase)
 - ✅ Incremental migration prevented big-bang failures
 - ✅ Spec-driven development kept work organized across sessions

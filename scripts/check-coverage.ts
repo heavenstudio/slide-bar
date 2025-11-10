@@ -153,7 +153,11 @@ function checkOverallCoverage(total: FileCoverage, violations: Violations): void
 /**
  * Check TSX file coverage
  */
-function checkTSXFileCoverage(filePath: string, fileData: FileCoverage, violations: Violations): void {
+function checkTSXFileCoverage(
+  filePath: string,
+  fileData: FileCoverage,
+  violations: Violations
+): void {
   if (fileData.lines.pct === 0) {
     violations.critical.push({
       type: 'TSX_NO_TESTS',

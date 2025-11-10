@@ -194,12 +194,14 @@ When encountering ESLint warnings or errors:
 ### Test Helpers
 
 **`tests/helpers/supabase.ts`** - Supabase test utilities:
+
 - `createServiceClient()` - Service role client bypassing RLS for cleanup
 - `cleanDatabase()` - Delete all test data using service role
 - `useSupabaseCleanup()` - Automatic cleanup after each test
 - `createMockImageFile()` - Custom file-like objects for uploads
 
 **`tests/helpers/fixtures.ts`** - Mock data factories:
+
 - `createMockImage(overrides?)` - Single mock Image with sensible defaults
 - `createMockImages(count, baseOverrides?)` - Array of mock Images with unique IDs
 - `createMockPngImage(overrides?)` - Mock PNG image
@@ -208,6 +210,7 @@ When encountering ESLint warnings or errors:
 - `mockImages` - Predefined mock images for common scenarios
 
 **Usage examples**:
+
 ```typescript
 // Simple usage
 const image = createMockImage();

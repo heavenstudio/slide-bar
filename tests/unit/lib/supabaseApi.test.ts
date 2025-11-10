@@ -24,11 +24,7 @@ import {
   uploadImage,
   deleteImage,
 } from '../../../src/lib/supabaseApi';
-import {
-  setupSupabaseCleanup,
-  cleanDatabase,
-  createMockImageFile,
-} from '../../helpers/supabase';
+import { setupSupabaseCleanup, cleanDatabase, createMockImageFile } from '../../helpers/supabase';
 import { createMockStorageData } from '../../helpers/fixtures';
 
 // Setup automatic database cleanup after each test

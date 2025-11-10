@@ -99,7 +99,10 @@ function prepareVitestCoverage(): boolean {
     mkdirSync(nycOutput, { recursive: true });
 
     // Read and normalize Vitest coverage paths
-    const vitestData = JSON.parse(readFileSync(coverageFinal, 'utf8')) as Record<string, CoverageData>;
+    const vitestData = JSON.parse(readFileSync(coverageFinal, 'utf8')) as Record<
+      string,
+      CoverageData
+    >;
     const normalizedData = normalizePaths(vitestData);
 
     // Write normalized Vitest coverage

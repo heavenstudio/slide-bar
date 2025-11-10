@@ -50,10 +50,7 @@ export function createMockImage(overrides?: Partial<Image>): Image {
  * const images = createMockImages(3);
  * const jpegImages = createMockImages(2, { mime_type: 'image/jpeg' });
  */
-export function createMockImages(
-  count: number = 2,
-  baseOverrides?: Partial<Image>
-): Image[] {
+export function createMockImages(count: number = 2, baseOverrides?: Partial<Image>): Image[] {
   return Array.from({ length: count }, (_, index) => {
     const num = index + 1;
     return createMockImage({
@@ -91,10 +88,7 @@ export function createMockPngImage(overrides?: Partial<Image>): Image {
  * @param overrides - Optional fields to override defaults
  * @returns Image object with specified size
  */
-export function createMockImageWithSize(
-  sizeInBytes: number,
-  overrides?: Partial<Image>
-): Image {
+export function createMockImageWithSize(sizeInBytes: number, overrides?: Partial<Image>): Image {
   return createMockImage({
     size: sizeInBytes,
     ...overrides,

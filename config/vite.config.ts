@@ -24,12 +24,7 @@ export default defineConfig({
     process.env.E2E_COVERAGE === 'true' &&
       istanbul({
         include: '**/*.{ts,tsx}',
-        exclude: [
-          'node_modules',
-          '../tests/',
-          '**/*.spec.ts',
-          '**/*.test.ts',
-        ],
+        exclude: ['node_modules', '../tests/', '**/*.spec.ts', '**/*.test.ts'],
         extension: ['.ts', '.tsx'],
         requireEnv: false,
         forceBuildInstrument: true,
