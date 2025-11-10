@@ -52,7 +52,7 @@ cd "$PROJECT_ROOT"
 docker compose -f docker-compose.e2e.yml down 2>/dev/null || true
 
 # Set PLAYWRIGHT_ARGS environment variable if provided
-export PLAYWRIGHT_ARGS="${PLAYWRIGHT_ARGS:-}"
+export PLAYWRIGHT_ARGS="${1:-}"
 
 # Run tests - start containers and capture Playwright logs
 docker compose -f docker-compose.e2e.yml up --build -d

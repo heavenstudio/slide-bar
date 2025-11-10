@@ -2,12 +2,12 @@
 
 ## Architecture
 
-- **Frontend**: React 18 + Vite + Tailwind CSS
+- **Frontend**: React 19 + Vite 7 + Tailwind CSS v4
 - **Backend**: Supabase (PostgreSQL + Auth + Storage + Realtime)
 - **Deployment**: Vercel (frontend) + Supabase Cloud (backend)
-- **Testing**: Vitest (integration) + Playwright (E2E)
+- **Testing**: Vitest 3 (unit/integration) + Playwright 1.56 (E2E)
 - **CI/CD**: GitHub Actions (tests) + Vercel (auto-deploy)
-- **Migration Status**: ✅ Phase 8 complete (Project structure flattened, monorepo removed, all tests consolidated)
+- **Migration Status**: ✅ All dependencies migrated to latest LTS/stable versions (Node 22.21.1 LTS)
 - **Production Status**: ✅ Live at https://slide-bar.vercel.app
 
 ## Folder Structure
@@ -68,7 +68,8 @@ slide-bar/
 - **Supabase Local**: Runs via Docker (`supabase start`), uses ports 54321-54324
 - **macOS ARM**: Requires `@rollup/rollup-darwin-arm64` dependency
 - **Platform-Specific Binaries**:
-  - **esbuild**: Requires `@esbuild/linux-arm64@0.21.5` for Docker E2E tests (macOS uses darwin-arm64)
+  - **esbuild**: Requires `@esbuild/linux-arm64@0.25.12` for Docker E2E tests (macOS uses darwin-arm64)
+  - **Tailwind v4**: Uses LightningCSS which requires platform-specific binaries (automatically handled by pnpm)
 
 ## Development Practices
 
