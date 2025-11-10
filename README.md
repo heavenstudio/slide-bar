@@ -540,6 +540,48 @@ supabase db push --include-all
 supabase migration list
 ```
 
+### Rollback de Migrations
+
+Se uma migration causar problemas em produção:
+
+**Opção 1: Criar migration de reversão (recomendado)**
+
+```bash
+# 1. Criar nova migration que reverte as mudanças
+supabase migration new revert_problematic_changes
+
+# 2. Editar o arquivo SQL para reverter as mudanças
+# Por exemplo: DROP TABLE, ALTER TABLE, etc.
+
+# 3. Testar localmente
+supabase db reset && supabase db push
+
+# 4. Fazer commit e push - workflow aplicará automaticamente
+git add supabase/migrations/
+git commit -m "revert: rollback problematic migration"
+git push
+```
+
+**Opção 2: Reparar histórico de migrations (emergência)**
+
+```bash
+# CUIDADO: Use apenas em emergências!
+# Isso marca migrations como não aplicadas sem reverter os dados
+
+# 1. Link com produção
+supabase link --project-ref YOUR_PROJECT_REF
+
+# 2. Verificar status
+supabase migration list
+
+# 3. Reparar (marcar migration como não aplicada)
+supabase migration repair <timestamp>_migration_name --status reverted
+
+# 4. Você ainda precisará reverter manualmente as mudanças no schema!
+```
+
+**Nota**: Sempre prefira criar uma migration de reversão ao invés de usar `migration repair`. O repair não reverte os dados, apenas o histórico.
+
 ---
 
 ## 📝 Licença
