@@ -15,7 +15,7 @@
  * 4. Image deletion (deleteImage with success and error cases)
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   demoLogin,
   getSession,
@@ -35,6 +35,10 @@ describe('Supabase API - Authentication', () => {
     await cleanDatabase();
   });
 
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   describe('demoLogin', () => {
     it('should successfully login with demo credentials', async () => {
       const result = await demoLogin();
@@ -50,32 +54,30 @@ describe('Supabase API - Authentication', () => {
     it('should throw error when login fails (invalid credentials)', async () => {
       // Mock the supabase auth to simulate login failure
       const { supabase } = await import('../../../src/lib/supabase');
-      const originalSignIn = supabase.auth.signInWithPassword;
 
-      // Temporarily mock the signIn to return an error
-      supabase.auth.signInWithPassword = vi
-        .fn()
-        .mockResolvedValue({ data: null, error: { message: 'Invalid credentials' } });
+      // Use vi.spyOn for cleaner mocking (auto-restored by vi.restoreAllMocks)
+      vi.spyOn(supabase.auth, 'signInWithPassword').mockResolvedValue({
+        data: { user: null, session: null },
+        error: {
+          message: 'Invalid credentials',
+          name: 'AuthError',
+          status: 401,
+        } as any,
+      });
 
       await expect(demoLogin()).rejects.toThrow('Invalid credentials');
-
-      // Restore original
-      supabase.auth.signInWithPassword = originalSignIn;
     });
 
     it('should throw error when no session is created', async () => {
       const { supabase } = await import('../../../src/lib/supabase');
-      const originalSignIn = supabase.auth.signInWithPassword;
 
-      // Mock to return data but no session
-      supabase.auth.signInWithPassword = vi
-        .fn()
-        .mockResolvedValue({ data: { session: null }, error: null });
+      // Use vi.spyOn for cleaner mocking (auto-restored by vi.restoreAllMocks)
+      vi.spyOn(supabase.auth, 'signInWithPassword').mockResolvedValue({
+        data: { user: null, session: null },
+        error: null,
+      } as any);
 
       await expect(demoLogin()).rejects.toThrow('Login failed: No session created');
-
-      // Restore
-      supabase.auth.signInWithPassword = originalSignIn;
     });
   });
 
@@ -118,15 +120,17 @@ describe('Supabase API - Authentication', () => {
 
     it('should throw error when sign out fails', async () => {
       const { supabase } = await import('../../../src/lib/supabase');
-      const originalSignOut = supabase.auth.signOut;
 
-      // Mock signOut to fail
-      supabase.auth.signOut = vi.fn().mockResolvedValue({ error: { message: 'Sign out failed' } });
+      // Use vi.spyOn for cleaner mocking (auto-restored by vi.restoreAllMocks)
+      vi.spyOn(supabase.auth, 'signOut').mockResolvedValue({
+        error: {
+          message: 'Sign out failed',
+          name: 'AuthError',
+          status: 500,
+        } as any,
+      });
 
       await expect(signOut()).rejects.toThrow('Sign out failed');
-
-      // Restore
-      supabase.auth.signOut = originalSignOut;
     });
   });
 });
@@ -134,6 +138,10 @@ describe('Supabase API - Authentication', () => {
 describe('Supabase API - Images', () => {
   beforeEach(async () => {
     await cleanDatabase();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   describe('getImages', () => {
@@ -166,19 +174,15 @@ describe('Supabase API - Images', () => {
 
     it('should throw error when database query fails', async () => {
       const { supabase } = await import('../../../src/lib/supabase');
-      const originalFrom = supabase.from;
 
-      // Mock the from method to simulate database error
-      supabase.from = vi.fn(() => ({
+      // Use vi.spyOn for cleaner mocking (auto-restored by vi.clearAllMocks)
+      vi.spyOn(supabase, 'from').mockReturnValue({
         select: vi.fn(() => ({
           order: vi.fn(() => Promise.resolve({ data: null, error: { message: 'Database error' } })),
         })),
-      })) as any;
+      } as any);
 
       await expect(getImages()).rejects.toThrow('Database error');
-
-      // Restore
-      supabase.from = originalFrom;
     });
   });
 });
@@ -186,6 +190,10 @@ describe('Supabase API - Images', () => {
 describe('Supabase API - Image Operations', () => {
   beforeEach(async () => {
     await cleanDatabase();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   describe('uploadImage', () => {
@@ -223,47 +231,36 @@ describe('Supabase API - Image Operations', () => {
       await demoLogin();
 
       const { supabase } = await import('../../../src/lib/supabase');
-      const originalStorage = supabase.storage;
 
-      // Mock storage to fail
-      supabase.storage = {
-        from: vi.fn(() => ({
-          upload: vi
-            .fn()
-            .mockResolvedValue({ data: null, error: { message: 'Storage upload failed' } }),
-        })),
-      } as any;
+      // Use vi.spyOn for storage mock (auto-restored by vi.clearAllMocks)
+      vi.spyOn(supabase.storage, 'from').mockReturnValue({
+        upload: vi
+          .fn()
+          .mockResolvedValue({ data: null, error: { message: 'Storage upload failed' } }),
+      } as any);
 
       const mockFile = createMockImageFile('test.jpg');
 
       await expect(uploadImage(mockFile)).rejects.toThrow('Storage upload failed');
-
-      // Restore
-      supabase.storage = originalStorage;
     });
 
     it('should throw error when user data fetch fails', async () => {
       await demoLogin();
 
       const { supabase } = await import('../../../src/lib/supabase');
-      const originalFrom = supabase.from;
-      const originalStorage = supabase.storage;
 
       // Mock successful storage upload
       const mockStorageData = createMockStorageData();
-      supabase.storage = {
-        from: vi.fn(() => ({
-          upload: vi.fn().mockResolvedValue({ data: mockStorageData, error: null }),
-          getPublicUrl: vi
-            .fn()
-            .mockReturnValue({ data: { publicUrl: 'http://example.com/test.jpg' } }),
-        })),
-      } as any;
+      vi.spyOn(supabase.storage, 'from').mockReturnValue({
+        upload: vi.fn().mockResolvedValue({ data: mockStorageData, error: null }),
+        getPublicUrl: vi
+          .fn()
+          .mockReturnValue({ data: { publicUrl: 'http://example.com/test.jpg' } }),
+      } as any);
 
       // Mock failed user data fetch
-      let _callCount = 0;
-      supabase.from = vi.fn((table) => {
-        _callCount++;
+      const originalFrom = supabase.from.bind(supabase);
+      vi.spyOn(supabase, 'from').mockImplementation((table) => {
         if (table === 'users') {
           return {
             select: vi.fn(() => ({
@@ -273,43 +270,34 @@ describe('Supabase API - Image Operations', () => {
                   .mockResolvedValue({ data: null, error: { message: 'User fetch failed' } }),
               })),
             })),
-          };
+          } as any;
         }
         // For other tables, use original
         return originalFrom(table);
-      }) as any;
+      });
 
       const mockFile = createMockImageFile('test.jpg');
 
       await expect(uploadImage(mockFile)).rejects.toThrow('Failed to get user organization');
-
-      // Restore
-      supabase.from = originalFrom;
-      supabase.storage = originalStorage;
     });
 
     it('should throw error when database insert fails', async () => {
       await demoLogin();
 
       const { supabase } = await import('../../../src/lib/supabase');
-      const originalFrom = supabase.from;
-      const originalStorage = supabase.storage;
 
       // Mock successful storage upload
       const mockStorageData = createMockStorageData();
-      supabase.storage = {
-        from: vi.fn(() => ({
-          upload: vi.fn().mockResolvedValue({ data: mockStorageData, error: null }),
-          getPublicUrl: vi
-            .fn()
-            .mockReturnValue({ data: { publicUrl: 'http://example.com/test.jpg' } }),
-        })),
-      } as any;
+      vi.spyOn(supabase.storage, 'from').mockReturnValue({
+        upload: vi.fn().mockResolvedValue({ data: mockStorageData, error: null }),
+        getPublicUrl: vi
+          .fn()
+          .mockReturnValue({ data: { publicUrl: 'http://example.com/test.jpg' } }),
+      } as any);
 
       // Mock database operations
-      let _callCount = 0;
-      supabase.from = vi.fn((table) => {
-        _callCount++;
+      const originalFrom = supabase.from.bind(supabase);
+      vi.spyOn(supabase, 'from').mockImplementation((table) => {
         if (table === 'users') {
           return {
             select: vi.fn(() => ({
@@ -320,7 +308,7 @@ describe('Supabase API - Image Operations', () => {
                 }),
               })),
             })),
-          };
+          } as any;
         } else if (table === 'images') {
           return {
             insert: vi.fn(() => ({
@@ -330,18 +318,14 @@ describe('Supabase API - Image Operations', () => {
                   .mockResolvedValue({ data: null, error: { message: 'Insert failed' } }),
               })),
             })),
-          };
+          } as any;
         }
         return originalFrom(table);
-      }) as any;
+      });
 
       const mockFile = createMockImageFile('test.jpg');
 
       await expect(uploadImage(mockFile)).rejects.toThrow('Insert failed');
-
-      // Restore
-      supabase.from = originalFrom;
-      supabase.storage = originalStorage;
     });
   });
 });
@@ -349,6 +333,10 @@ describe('Supabase API - Image Operations', () => {
 describe('Supabase API - Image Deletion', () => {
   beforeEach(async () => {
     await cleanDatabase();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   describe('deleteImage', () => {
@@ -382,19 +370,13 @@ describe('Supabase API - Image Deletion', () => {
       const uploadedImage = await uploadImage(mockFile);
 
       const { supabase } = await import('../../../src/lib/supabase');
-      const originalStorage = supabase.storage;
 
-      // Mock storage delete to fail
-      supabase.storage = {
-        from: vi.fn(() => ({
-          remove: vi.fn().mockResolvedValue({ error: { message: 'Storage delete failed' } }),
-        })),
-      } as any;
+      // Use vi.spyOn for storage mock (auto-restored by vi.clearAllMocks)
+      vi.spyOn(supabase.storage, 'from').mockReturnValue({
+        remove: vi.fn().mockResolvedValue({ error: { message: 'Storage delete failed' } }),
+      } as any);
 
       await expect(deleteImage(uploadedImage.id)).rejects.toThrow('Storage delete failed');
-
-      // Restore
-      supabase.storage = originalStorage;
     });
 
     it('should throw error when database deletion fails', async () => {
@@ -405,19 +387,15 @@ describe('Supabase API - Image Deletion', () => {
       const uploadedImage = await uploadImage(mockFile);
 
       const { supabase } = await import('../../../src/lib/supabase');
-      const originalFrom = supabase.from;
-      const originalStorage = supabase.storage;
 
       // Mock storage delete to succeed
-      supabase.storage = {
-        from: vi.fn(() => ({
-          remove: vi.fn().mockResolvedValue({ error: null }),
-        })),
-      } as any;
+      vi.spyOn(supabase.storage, 'from').mockReturnValue({
+        remove: vi.fn().mockResolvedValue({ error: null }),
+      } as any);
 
       // Mock database operations
       let callCount = 0;
-      supabase.from = vi.fn(() => {
+      vi.spyOn(supabase, 'from').mockImplementation(() => {
         callCount++;
         if (callCount === 1) {
           // First call: select (fetch image) - succeed
@@ -430,22 +408,18 @@ describe('Supabase API - Image Deletion', () => {
                 }),
               })),
             })),
-          };
+          } as any;
         } else {
           // Second call: delete - fail
           return {
             delete: vi.fn(() => ({
               eq: vi.fn().mockResolvedValue({ error: { message: 'Database delete failed' } }),
             })),
-          };
+          } as any;
         }
-      }) as any;
+      });
 
       await expect(deleteImage(uploadedImage.id)).rejects.toThrow('Database delete failed');
-
-      // Restore
-      supabase.from = originalFrom;
-      supabase.storage = originalStorage;
     });
   });
 });
