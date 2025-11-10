@@ -253,12 +253,21 @@ const storageData = createMockStorageData('uploads/image.jpg');
 
 ## PR Workflow
 
+**Pre-Commit Hook (Husky):**
+
+- Automatically runs on every commit:
+  1. Prettier formatting check
+  2. ESLint validation
+  3. TypeScript type checking
+  4. Full test coverage (unit + E2E)
+- Output is suppressed for speed, only shows pass/fail status
+- If any check fails, commit is blocked with helpful error message
+- To bypass (NOT recommended): `git commit --no-verify`
+
 **Before Creating PR:**
 
-1. Fix lint errors: `pnpm lint` (0 errors required)
-2. Format code: `pnpm format`
-3. Check types: `pnpm type-check` (0 errors required)
-4. Run full coverage: `pnpm coverage:all` (unit + E2E + merge)
+1. Pre-commit hook handles all checks automatically
+2. If hook is bypassed, manually run: `pnpm lint && pnpm format && pnpm type-check && pnpm coverage:all`
 
 **Automated Checks** (GitHub Actions - `.github/workflows/pr-checks.yml`):
 
