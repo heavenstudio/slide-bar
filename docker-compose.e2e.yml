@@ -4,10 +4,12 @@ services:
     build:
       context: .devcontainer
       dockerfile: Dockerfile
+    user: root
     working_dir: /workspace/slide-bar
     volumes:
       - .:/workspace/slide-bar
-    command: sh -c "pnpm vite --port 5174 --host"
+      - test_node_modules:/workspace/slide-bar/node_modules  # Separate volume for Linux node_modules
+    command: sh -c "chown -R node:node /workspace/slide-bar/node_modules && su node -c 'CI=true pnpm install && pnpm vite --port 5174 --host'"
     environment:
       - VITE_SUPABASE_URL=http://supabase_kong_slide-bar-test:8000
       - VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0
@@ -47,3 +49,7 @@ services:
 networks:
   supabase_network_slide-bar-test:
     external: true
+
+# Named volumes for Linux-specific dependencies
+volumes:
+  test_node_modules:
