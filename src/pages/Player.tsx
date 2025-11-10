@@ -60,12 +60,7 @@ interface SlideshowUIProps {
   isPaused: boolean;
 }
 
-function SlideshowUI({
-  currentImage,
-  currentIndex,
-  imagesCount,
-  isPaused,
-}: SlideshowUIProps) {
+function SlideshowUI({ currentImage, currentIndex, imagesCount, isPaused }: SlideshowUIProps) {
   return (
     <div className="fixed inset-0 bg-black">
       <img

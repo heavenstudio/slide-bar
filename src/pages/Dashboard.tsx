@@ -54,10 +54,7 @@ interface UploadSectionProps {
 /**
  * Upload section component
  */
-function UploadSection({
-  isAuthenticating,
-  onUploadSuccess,
-}: UploadSectionProps) {
+function UploadSection({ isAuthenticating, onUploadSuccess }: UploadSectionProps) {
   if (isAuthenticating) return null;
   return (
     <section className="mb-12">
