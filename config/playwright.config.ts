@@ -7,7 +7,7 @@ const __dirname = path.dirname(__filename);
 const projectRoot = path.resolve(__dirname, '..');
 
 export default defineConfig({
-  testDir: './tests/e2e/specs',
+  testDir: path.join(projectRoot, 'tests', 'e2e', 'specs'),
   testMatch: '**/*.spec.{js,ts}', // Support both .js and .ts files
   fullyParallel: false, // Run sequentially for E2E tests
   forbidOnly: !!process.env.CI,
@@ -19,11 +19,14 @@ export default defineConfig({
   globalTeardown: path.join(projectRoot, 'tests', 'e2e', 'support', 'global-teardown.ts'),
 
   reporter: [
-    ['html', { outputFolder: '.test-output/playwright-report', open: 'never' }], // Generate report but don't auto-serve (blocking)
+    [
+      'html',
+      { outputFolder: path.join(projectRoot, '.test-output', 'playwright-report'), open: 'never' },
+    ], // Generate report but don't auto-serve (blocking)
     ['list'],
   ],
 
-  outputDir: '.test-output/test-results',
+  outputDir: path.join(projectRoot, '.test-output', 'test-results'),
 
   use: {
     baseURL:
