@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
 import { act } from 'react';
-import type { Mock } from 'vitest';
 
 // Mock the Supabase API module
 vi.mock('../../../src/lib/supabaseApi', () => ({
@@ -75,7 +74,7 @@ describe('ImageUpload - File Selection', () => {
       size: 1024,
       path: 'uploads/test.jpg',
     });
-    (uploadImage as Mock).mockResolvedValue(mockImage);
+    vi.mocked(uploadImage).mockResolvedValue(mockImage);
 
     render(<ImageUpload />);
 
@@ -137,7 +136,7 @@ describe('ImageUpload - Drag and Drop', () => {
 
   it('should upload file when dropped', async () => {
     const mockImage = createMockImage();
-    (uploadImage as Mock).mockResolvedValue(mockImage);
+    vi.mocked(uploadImage).mockResolvedValue(mockImage);
 
     render(<ImageUpload />);
 
@@ -160,7 +159,7 @@ describe('ImageUpload - Drag and Drop', () => {
 
   it('should remove highlight after drop', async () => {
     const mockImage = createMockImage();
-    (uploadImage as Mock).mockResolvedValue(mockImage);
+    vi.mocked(uploadImage).mockResolvedValue(mockImage);
 
     render(<ImageUpload />);
 
@@ -252,7 +251,7 @@ describe('ImageUpload - Upload States', () => {
 
   it('should show uploading state', async () => {
     const mockImage = createMockImage();
-    (uploadImage as Mock).mockImplementation(
+    vi.mocked(uploadImage).mockImplementation(
       () => new Promise((resolve) => setTimeout(() => resolve(mockImage), 100))
     );
 
@@ -288,7 +287,7 @@ describe('ImageUpload - Upload States', () => {
 
   it('should disable file input during upload', async () => {
     const mockImage = createMockImage();
-    (uploadImage as Mock).mockImplementation(
+    vi.mocked(uploadImage).mockImplementation(
       () => new Promise((resolve) => setTimeout(() => resolve(mockImage), 100))
     );
 
@@ -320,7 +319,7 @@ describe('ImageUpload - Upload States', () => {
 
   it('should reset file input after successful upload', async () => {
     const mockImage = createMockImage();
-    (uploadImage as Mock).mockResolvedValue(mockImage);
+    vi.mocked(uploadImage).mockResolvedValue(mockImage);
 
     render(<ImageUpload />);
 
@@ -356,7 +355,7 @@ describe('ImageUpload - Error Handling', () => {
 
   it('should display error message when upload fails', async () => {
     const errorMessage = 'Network error occurred';
-    (uploadImage as Mock).mockRejectedValue(new Error(errorMessage));
+    vi.mocked(uploadImage).mockRejectedValue(new Error(errorMessage));
 
     render(<ImageUpload />);
 
@@ -378,9 +377,9 @@ describe('ImageUpload - Error Handling', () => {
   it('should clear previous error when new upload starts', async () => {
     const mockImage = createMockImage();
     // First upload fails
-    (uploadImage as Mock).mockRejectedValueOnce(new Error('First error'));
+    vi.mocked(uploadImage).mockRejectedValueOnce(new Error('First error'));
     // Second upload succeeds
-    (uploadImage as Mock).mockResolvedValueOnce(mockImage);
+    vi.mocked(uploadImage).mockResolvedValueOnce(mockImage);
 
     render(<ImageUpload />);
 
@@ -434,7 +433,7 @@ describe('ImageUpload - Success Callbacks', () => {
       created_at: '2025-11-09T00:00:00Z',
       updated_at: '2025-11-09T00:00:00Z',
     };
-    (uploadImage as Mock).mockResolvedValue(mockImageData);
+    vi.mocked(uploadImage).mockResolvedValue(mockImageData);
 
     const onUploadSuccess = vi.fn();
     render(<ImageUpload onUploadSuccess={onUploadSuccess} />);
@@ -456,7 +455,7 @@ describe('ImageUpload - Success Callbacks', () => {
 
   it('should work without onUploadSuccess callback', async () => {
     const mockImage = createMockImage();
-    (uploadImage as Mock).mockResolvedValue(mockImage);
+    vi.mocked(uploadImage).mockResolvedValue(mockImage);
 
     // No onUploadSuccess prop provided
     render(<ImageUpload />);
