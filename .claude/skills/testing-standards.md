@@ -12,7 +12,7 @@ Enforces strict testing standards to maintain high code quality and prevent unte
 
 ### Critical Blockers (Exit Code 1)
 
-- ❌ **Any `.jsx` file with 0% coverage** - Every component/page MUST have at least a render test
+- ❌ **Any `.tsx` file with 0% coverage** - Every component/page MUST have at least a render test
 - ❌ **Overall coverage below 85%** - Absolute minimum threshold
 
 ### Warnings (Exit Code 0)
@@ -24,7 +24,7 @@ Enforces strict testing standards to maintain high code quality and prevent unte
 
 | File Type                 | Minimum | Target | Enforcement                      |
 | ------------------------- | ------- | ------ | -------------------------------- |
-| **JSX files**             | 100%    | 100%   | ❌ Block if 0%, warn if < 100%   |
+| **TSX files**             | 100%    | 100%   | ❌ Block if 0%, warn if < 100%   |
 | **Business logic (lib/)** | 90%     | 95%    | ⚠️ Warn if below target          |
 | **Overall project**       | 85%     | 90%    | ❌ Block if < 85%, warn if < 90% |
 
@@ -34,7 +34,7 @@ Enforces strict testing standards to maintain high code quality and prevent unte
 
 **BDD for E2E Tests** - Use Given-When-Then syntax:
 
-```javascript
+```typescript
 /**
  * Scenario: User uploads an image
  *   Given I am authenticated and on the dashboard
@@ -56,7 +56,7 @@ test('should upload image to dashboard', async ({ page }) => {
 
 **TDD for Unit/Integration Tests** - Red-Green-Refactor cycle:
 
-```javascript
+```typescript
 // RED: Write failing test first
 it('should show error for invalid file type', () => {
   render(<ImageUpload />);
@@ -95,7 +95,7 @@ it('should show error for invalid file type', () => {
 
 **Example - Integration Test:**
 
-```javascript
+```typescript
 import { demoLogin, uploadImage } from '../../src/lib/supabaseApi';
 import { cleanDatabase } from '../helpers/supabase';
 
@@ -121,7 +121,7 @@ describe('ImageUpload Integration', () => {
 **Problem**: Module-level `vi.mock()` persists across test files, breaking unrelated tests
 **Solution**: Use `vi.spyOn()` + proper cleanup instead:
 
-```javascript
+```typescript
 // ❌ BAD - Pollutes other tests
 vi.mock('../../src/lib/api');
 
@@ -139,7 +139,7 @@ beforeEach(() => {
 **Problem**: Sequential test execution (`singleFork: true`) causes DOM elements to persist
 **Solution**: Always call `cleanup()` in `beforeEach`:
 
-```javascript
+```typescript
 import { cleanup } from '@testing-library/react';
 
 beforeEach(() => {
@@ -152,27 +152,26 @@ beforeEach(() => {
 **Problem**: Realtime events are unreliable in jsdom environment (timing issues, event propagation)
 **Solution**: Test Realtime functionality via E2E tests only, document in unit test comments:
 
-```javascript
+```typescript
 // Note: Realtime subscription testing is complex and flaky in unit test environment
 // The subscription setup is verified through:
 // 1. Component mounting (which sets up subscription)
-// 2. E2E tests (player.spec.js) which verify Realtime updates in real browser
+// 2. E2E tests (player.spec.ts) which verify Realtime updates in real browser
 ```
 
 ### 4. Coverage Report Accuracy
 
 **Problem**: Config files and scripts inflate/deflate coverage percentages
-**Solution**: Properly exclude non-source files in `vitest.config.js`:
+**Solution**: Properly exclude non-source files in `config/vitest.config.ts`:
 
-```javascript
+```typescript
 coverage: {
   provider: 'v8',
   reporter: ['text', 'json', 'json-summary', 'html'],
   exclude: [
     'node_modules/',
     'tests/',
-    '**/*.config.js',
-    '**/*.config.mjs',
+    '**/*.config.ts',
     'scripts/',
     'supabase/',
   ],
@@ -184,7 +183,7 @@ coverage: {
 **Problem**: When viewing an image that gets deleted, component shows blank screen
 **Solution**: Always add bounds checking when array length changes:
 
-```javascript
+```typescript
 setCurrentIndex((prevIndex) => {
   if (newImages.length === 0) return 0;
   if (prevIndex >= newImages.length) {
@@ -206,7 +205,7 @@ setCurrentIndex((prevIndex) => {
 
 **Solution**: Always wait for actual DOM state or events:
 
-```javascript
+```typescript
 // ❌ BAD - Arbitrary time-based wait
 await page.waitForTimeout(1000);
 await expect(page.locator('.result')).toBeVisible();
@@ -230,7 +229,7 @@ await page.waitForLoadState('networkidle');
 
 **Real Example from this codebase**:
 
-```javascript
+```typescript
 // ❌ BEFORE - Flaky timeout
 await confirmButton.click();
 await page.waitForTimeout(500); // Hope it deleted by now?
@@ -246,7 +245,7 @@ await expect(nextElement).toBeVisible({ timeout: 10000 });
 
 ## ✅ Mandatory Test Checklist
 
-### For Every Component/Page (.jsx files)
+### For Every Component/Page (.tsx files)
 
 - [ ] Basic render test (MINIMUM - prevents 0% coverage blocker)
 - [ ] All user interactions (clicks, typing, keyboard controls)
@@ -268,9 +267,9 @@ tests/
 ├── pages/                # Page tests
 ├── helpers/              # Test utilities (DB cleanup, mocks)
 ├── fixtures/             # Test data (images, etc.)
-├── *.test.js(x)          # Unit/integration (Vitest)
-├── *.spec.js             # E2E tests (Playwright)
-└── setup.js              # Test setup
+├── *.test.ts(x)          # Unit/integration (Vitest)
+├── *.spec.ts             # E2E tests (Playwright)
+└── setup.ts              # Test setup
 
 src/
 └── [mirror structure in tests/]
@@ -278,18 +277,18 @@ src/
 
 **Naming Convention:**
 
-- Unit tests: `[ComponentName].test.jsx`
-- E2E tests: `[feature-name].spec.js`
+- Unit tests: `[ComponentName].test.tsx`
+- E2E tests: `[feature-name].spec.ts`
 
 ## 🔍 Coverage Enforcement
 
-### Automated Script: `scripts/check-coverage.js`
+### Automated Script: `scripts/check-coverage.ts`
 
 Enforces thresholds by analyzing `coverage/coverage-summary.json`:
 
-```javascript
+```typescript
 // Critical violations (exit code 1):
-// - Any JSX file with 0% coverage
+// - Any TSX file with 0% coverage
 // - Overall coverage < 85%
 
 // Warnings (exit code 0):
@@ -304,7 +303,7 @@ Enforces thresholds by analyzing `coverage/coverage-summary.json`:
   run: pnpm test:coverage
 
 - name: Check coverage thresholds
-  run: node scripts/check-coverage.js
+  run: pnpm coverage:check
 ```
 
 ### Manual Check
@@ -322,9 +321,9 @@ cat coverage/coverage-summary.json | jq '.["src/pages/Dashboard.jsx"]'
 
 ## 🛠️ Testing Utilities
 
-### Available Test Helpers (`tests/helpers/supabase.js`)
+### Available Test Helpers (`tests/helpers/supabase.ts`)
 
-```javascript
+```typescript
 import {
   createServiceClient, // Service role client (bypasses RLS)
   cleanDatabase, // Delete all test data
@@ -347,7 +346,7 @@ describe('MyComponent', () => {
 
 **Async Operations:**
 
-```javascript
+```typescript
 it('should load data on mount', async () => {
   render(<DataComponent />);
   await waitFor(
@@ -361,7 +360,7 @@ it('should load data on mount', async () => {
 
 **Error States:**
 
-```javascript
+```typescript
 it('should display error on failure', async () => {
   vi.spyOn(api, 'fetchData').mockRejectedValue(new Error('Failed'));
   render(<DataComponent />);
@@ -386,7 +385,7 @@ it('should display error on failure', async () => {
 ## 📋 Pre-Commit Checklist
 
 - [ ] **All tests pass**: `pnpm test`
-- [ ] **No JSX files at 0% coverage**: `pnpm test:coverage`
+- [ ] **No TSX files at 0% coverage**: `pnpm test:coverage`
 - [ ] **Overall coverage ≥ 90%**: Check coverage report
 - [ ] **New code follows TDD**: Write test first (RED) → Implement (GREEN) → Refactor
 - [ ] **E2E tests use Given-When-Then**: Include GWT comments
@@ -401,7 +400,7 @@ it('should display error on failure', async () => {
 - **Problem**: Docker paths (`/workspace/slide-bar/`) vs local paths (`/Users/.../slide-bar/`) prevented nyc merge
 - **Solution**: Normalize BOTH top-level keys AND `.path` field inside coverage objects to relative paths
 - **Critical**: Must remove `inputSourceMap` to avoid source map errors after path changes
-- **Location**: `scripts/merge-coverage.js:normalizePaths()`
+- **Location**: `scripts/merge-coverage.ts:normalizePaths()`
 
 **Istanbul vs V8 Branch Tracking**:
 
@@ -413,8 +412,8 @@ it('should display error on failure', async () => {
 
 1. Vitest generates V8 coverage → `coverage/coverage-final.json`
 2. Playwright collects Istanbul coverage via `window.__coverage__` → `.nyc_output/playwright_coverage_*.json`
-3. `scripts/merge-coverage.js` converts V8 to Istanbul, normalizes paths, merges with nyc
-4. `scripts/check-coverage.js` displays both individual (Vitest) and combined reports
+3. `scripts/merge-coverage.ts` converts V8 to Istanbul, normalizes paths, merges with nyc
+4. `scripts/check-coverage.ts` displays both individual (Vitest) and combined reports
 
 ### 7. Running Single Tests for Faster Debugging
 
@@ -438,7 +437,7 @@ PLAYWRIGHT_ARGS="--grep 'should show empty state'" pnpm test:e2e:single
 PLAYWRIGHT_ARGS="--grep 'should show empty state|should show next image'" pnpm test:e2e:single
 
 # ✅ GOOD - Run specific unit test file
-pnpm test:single tests/pages/Player.test.jsx
+pnpm test:single tests/pages/Player.test.tsx
 
 # ✅ GOOD - Run specific unit test by name pattern
 pnpm test:single -t "should handle keyboard controls"
@@ -471,7 +470,7 @@ pnpm test  # Run all tests
 pnpm test
 
 # Run single unit test file
-pnpm test:single tests/pages/Player.test.jsx
+pnpm test:single tests/pages/Player.test.tsx
 
 # Run unit test by name pattern
 pnpm test:single -t "keyboard controls"
@@ -492,7 +491,7 @@ pnpm test:e2e:coverage
 pnpm coverage:merge
 
 # Check coverage thresholds (shows both individual + combined)
-node scripts/check-coverage.js
+pnpm coverage:check
 
 # View coverage reports
 open .test-output/coverage/index.html         # Vitest only
@@ -520,13 +519,13 @@ pnpm coverage:all
 
 - ✅ Hybrid BDD (E2E) + TDD (unit/integration)
 - ✅ Integration tests with real Supabase over mocks
-- ✅ 100% coverage required for all JSX files (warn if < 100%, block if 0%)
+- ✅ 100% coverage required for all TSX files (warn if < 100%, block if 0%)
 - ✅ Sequential test execution to avoid database race conditions
 - ✅ Proper cleanup between tests (`cleanup()` + `vi.clearAllMocks()`)
 
 **Enforcement:**
 
-- ❌ Block: Any JSX at 0%, Overall < 85%
+- ❌ Block: Any TSX at 0%, Overall < 85%
 - ⚠️ Warn: Overall < 90%, File below target
 
 **Philosophy:**
