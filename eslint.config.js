@@ -2,11 +2,28 @@ import js from '@eslint/js';
 import react from 'eslint-plugin-react';
 import reactHooks from 'eslint-plugin-react-hooks';
 import globals from 'globals';
+import tseslint from '@typescript-eslint/eslint-plugin';
+import tsparser from '@typescript-eslint/parser';
 
 export default [
   js.configs.recommended,
   {
+    // Block any .js/.jsx files (TypeScript-only codebase)
     files: ['**/*.{js,jsx}'],
+    ignores: ['eslint.config.js', 'postcss.config.js', 'dist/**'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: 'Program',
+          message:
+            'JavaScript files are not allowed. This is a TypeScript-only codebase. Please use .ts or .tsx files instead.',
+        },
+      ],
+    },
+  },
+  {
+    files: ['**/*.{ts,tsx}'],
     plugins: {
       react,
       'react-hooks': reactHooks,
@@ -73,15 +90,54 @@ export default [
     },
   },
   {
+    // TypeScript-specific configuration
+    files: ['**/*.{ts,tsx}'],
+    languageOptions: {
+      parser: tsparser,
+      parserOptions: {
+        ecmaVersion: 2022,
+        sourceType: 'module',
+        ecmaFeatures: {
+          jsx: true,
+        },
+      },
+    },
+    plugins: {
+      '@typescript-eslint': tseslint,
+    },
+    rules: {
+      // Disable base rules that are covered by TypeScript
+      'no-unused-vars': 'off',
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+        },
+      ],
+      // TypeScript handles these
+      'no-undef': 'off',
+      // Ban JSX.Element - React 19 best practice is to infer return types
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: 'TSTypeReference > Identifier[name="JSX"]',
+          message:
+            'Do not use JSX.Element or JSX namespace types. Let TypeScript infer component return types. This is React 19 best practice and avoids "Cannot find namespace JSX" errors.',
+        },
+      ],
+    },
+  },
+  {
     // Allow console in CLI scripts (they're meant for terminal output)
-    files: ['scripts/**/*.js'],
+    files: ['scripts/**/*.ts'],
     rules: {
       'no-console': 'off',
     },
   },
   {
     // Relax function length limit for test files (describe/it blocks can be long)
-    files: ['**/*.{test,spec}.{js,jsx}', '**/tests/**/*.{js,jsx}'],
+    files: ['**/*.{test,spec}.{ts,tsx}', '**/tests/**/*.{ts,tsx}'],
     rules: {
       'max-lines-per-function': ['warn', { max: 150, skipBlankLines: true, skipComments: true }],
     },
@@ -93,8 +149,9 @@ export default [
       'dist/**',
       'build/**',
       '.test-output/**',
-      '**/*.config.js',
-      '**/*.config.mjs',
+      'eslint.config.js',
+      'postcss.config.js',
+      '**/*.config.ts',
       '.pnpm-store/**',
     ],
   },

@@ -2,12 +2,13 @@
 
 ## Architecture
 
-- **Frontend**: React 19 + Vite 7 + Tailwind CSS v4
+- **Frontend**: React 19 + Vite 7 + TypeScript 5.9 (strict mode) + Tailwind CSS v4
 - **Backend**: Supabase (PostgreSQL + Auth + Storage + Realtime)
 - **Deployment**: Vercel (frontend) + Supabase Cloud (backend)
 - **Testing**: Vitest 3 (unit/integration) + Playwright 1.56 (E2E)
-- **CI/CD**: GitHub Actions (tests) + Vercel (auto-deploy)
+- **CI/CD**: GitHub Actions (lint + type-check + tests) + Vercel (auto-deploy)
 - **Migration Status**: ✅ All dependencies migrated to latest LTS/stable versions (Node 22.21.1 LTS)
+- **TypeScript Status**: ✅ Full migration complete with strict mode enabled
 - **Production Status**: ✅ Live at https://slide-bar.vercel.app
 
 ## Folder Structure
@@ -17,20 +18,21 @@ slide-bar/
 ├── docs/                 # Business/market documentation
 ├── scripts/              # Dev/test automation scripts
 ├── spec/                 # Feature specifications (spec-driven development)
-├── src/                  # React + Vite + Tailwind
-│   ├── components/       # React components
-│   ├── lib/              # Supabase API client, utilities
-│   └── pages/            # Page components
+├── src/                  # React + Vite + TypeScript + Tailwind
+│   ├── components/       # React components (.tsx)
+│   ├── lib/              # Supabase API client, utilities (.ts)
+│   ├── pages/            # Page components (.tsx)
+│   └── types/            # TypeScript types (supabase.ts auto-generated, database.ts helpers)
 ├── supabase/             # Supabase config, migrations, functions
 └── tests/                # All tests (unit + E2E + fixtures)
-    ├── config/           # Test configuration (setup.js for Vitest)
+    ├── config/           # Test configuration (setup.ts for Vitest)
     ├── e2e/
     │   ├── fixtures/     # Test assets (images)
-    │   ├── specs/        # E2E test files (*.spec.js)
+    │   ├── specs/        # E2E test files (*.spec.ts)
     │   └── support/      # E2E helpers (constants, fixtures, global-setup/teardown)
     ├── helpers/          # Shared test helpers (Supabase cleanup)
     └── unit/
-        ├── components/   # Component unit tests (includes App.test.jsx)
+        ├── components/   # Component unit tests (includes App.test.tsx)
         ├── lib/          # Library unit tests
         └── pages/        # Page unit tests
 ```
@@ -59,12 +61,30 @@ slide-bar/
 
 - `pnpm start` - Start dev servers (includes Docker database)
 - `pnpm stop` - Stop all dev servers
+- `pnpm type-check` - Run TypeScript compiler (no emit, strict mode)
 - `pnpm test` - Run all unit tests
 - `pnpm test:e2e` - Run E2E tests
 - `pnpm test:coverage` - Run tests with coverage
+- `pnpm lint` - Run ESLint
+- `pnpm format` - Format code with Prettier
 
 ## Critical Compatibility Notes
 
+- **TypeScript-Only Codebase**: ESLint blocks any .js/.jsx files except `eslint.config.js` and `postcss.config.js`
+  - All source code must be TypeScript (.ts/.tsx)
+  - All scripts must be TypeScript (run with `tsx`)
+  - Coverage checks validate TSX files (not JSX)
+- **React 19 JSX Transform**: NEVER use explicit `JSX.Element` return type annotations
+  - React 19's new JSX transform doesn't export JSX namespace globally
+  - Using `JSX.Element` causes "Cannot find namespace 'JSX'" errors in strict CI environments
+  - **Best practice**: Let TypeScript infer component return types automatically
+  - ESLint rule enforces this with `no-restricted-syntax` blocking JSX namespace usage
+  - Example: `function App() { return <div>...</div> }` NOT `function App(): JSX.Element`
+- **Vite Configuration** (`config/vite.config.ts`):
+  - `root: src/` - index.html location
+  - `envDir: projectRoot` - **CRITICAL:** Load .env from project root, not src/
+  - `publicDir: public/` - Static assets (favicon, etc.)
+  - Must use `--config config/vite.config.ts` flag in all scripts
 - **Supabase Local**: Runs via Docker (`supabase start`), uses ports 54321-54324
 - **macOS ARM**: Requires `@rollup/rollup-darwin-arm64` dependency
 - **Platform-Specific Binaries**:
@@ -130,11 +150,14 @@ What we're trying to achieve
 
 ### Quality Tools
 
-- ESLint v9 (flat config) - configured and passing
-- Prettier for formatting - configured
+- **TypeScript 5.9** with strict mode enabled - zero type errors
+- **Supabase Type Generation**: Auto-generated types from database schema (`src/types/supabase.ts`)
+- ESLint v9 (flat config with TypeScript support) - configured and passing
+- Prettier 3.6 for formatting - configured
 - Test coverage reporting configured (`pnpm coverage:all`)
 - 85 unit tests + 16 E2E tests = 101 total (all passing)
 - Coverage: ~97% lines, ~94% statements, ~77% branches, ~94% functions
+- Type check: `pnpm type-check` (runs in CI/CD)
 - Lint commands: `pnpm lint`, `pnpm lint:fix`
 - Format commands: `pnpm format`, `pnpm format:check`
 
@@ -169,47 +192,96 @@ When encountering ESLint warnings or errors:
 
 ### Test Architecture
 
-- **unit tests** in `tests/unit/**/*.test.{js,jsx}` calling real Supabase TEST instance (port 55321)
-- **E2E tests** in `tests/e2e/specs/*.spec.js`
+- **unit tests** in `tests/unit/**/*.test.{ts,tsx}` calling real Supabase TEST instance (port 55321)
+- **E2E tests** in `tests/e2e/specs/*.spec.ts`
 - **Isolated from dev**: Unit tests use TEST Supabase (port 55321), dev uses main Supabase (port 54321)
 - **Shared TEST instance**: Both unit and E2E tests use the same TEST instance (started by E2E script)
-- **Test helpers** in `tests/helpers/supabase.js`:
-  - `createServiceClient()` - Service role client bypassing RLS for cleanup
-  - `cleanDatabase()` - Delete all test data using service role
-  - `useSupabaseCleanup()` - Automatic cleanup after each test
-  - `createMockImageFile()` - Custom file-like objects for uploads
+
+### Test Helpers
+
+**`tests/helpers/supabase.ts`** - Supabase test utilities:
+
+- `createServiceClient()` - Service role client bypassing RLS for cleanup
+- `cleanDatabase()` - Delete all test data using service role
+- `useSupabaseCleanup()` - Automatic cleanup after each test
+- `createMockImageFile()` - Custom file-like objects for uploads
+
+**`tests/helpers/fixtures.ts`** - Mock data factories:
+
+- `createMockImage(overrides?)` - Single mock Image with sensible defaults
+- `createMockImages(count, baseOverrides?)` - Array of mock Images with unique IDs
+- `createMockPngImage(overrides?)` - Mock PNG image
+- `createMockImageWithSize(sizeInBytes, overrides?)` - Mock image with specific size
+- `createMockStorageData(path?)` - Mock Supabase storage upload response
+- `mockImages` - Predefined mock images for common scenarios
+
+**Usage examples**:
+
+```typescript
+// Simple usage
+const image = createMockImage();
+const images = createMockImages(3);
+
+// With overrides
+const largeImage = createMockImage({ size: 2000000, mime_type: 'image/png' });
+
+// For size formatting tests
+const testImage = createMockImageWithSize(1048576); // 1 MB
+
+// For storage upload tests
+const storageData = createMockStorageData('uploads/image.jpg');
+```
 
 ## Test Organization
 
 ### Unit/Integration Tests (Vitest)
 
-- **Location**: `tests/unit/**/*.test.{js,jsx}`
-- **Configuration**: `vitest.config.js` with `include: ['tests/unit/**/*.{test,spec}.{js,jsx}']`
+- **Location**: `tests/unit/**/*.test.{ts,tsx}` (all migrated to TypeScript)
+- **Configuration**: `vitest.config.ts` with `include: ['tests/unit/**/*.{test,spec}.{js,jsx,ts,tsx}']`
 - **CRITICAL**: Sequential execution via `pool: 'forks', singleFork: true` (prevents database race conditions)
 
 ### E2E Tests (Playwright)
 
-- **Location**: `tests/e2e/specs/*.spec.js`
-- **Configuration**: `playwright.config.mjs` with `testDir: './tests/e2e/specs'` and `testMatch: '**/*.spec.js'`
+- **Location**: `tests/e2e/specs/*.spec.ts` (all migrated to TypeScript)
+- **Configuration**: `playwright.config.ts` with `testDir: './tests/e2e/specs'` and `testMatch: '**/*.spec.{js,ts}'`
 - Tests run entirely inside Docker container (no port conflicts with dev servers)
 
 ### Combined Coverage
 
 - **Command**: `pnpm coverage:all` (runs unit + E2E + merge)
-- **Merge script**: `scripts/merge-coverage.js` - V8 + Istanbul → `.test-output/merged-coverage/`
+- **Merge script**: `scripts/merge-coverage.ts` - V8 + Istanbul → `.test-output/merged-coverage/`
 
 ## PR Workflow
 
+**Pre-Commit Hook (Husky):**
+
+- Automatically runs on every commit (fast checks only, ~30s):
+  1. Prettier formatting check
+  2. ESLint validation
+  3. TypeScript type checking
+  4. Unit tests only (85 tests)
+- Output is suppressed for speed, only shows pass/fail status
+- If any check fails, commit is blocked with helpful error message
+- To bypass (NOT recommended): `git commit --no-verify`
+
+**Pre-Push Hook (Husky):**
+
+- Automatically runs before push (thorough checks, ~2-3 min):
+  1. Full test coverage (unit + E2E + merge)
+  2. Coverage threshold validation
+- Ensures all code pushed to remote has complete test coverage
+- To bypass (NOT recommended): `git push --no-verify`
+
 **Before Creating PR:**
 
-1. Fix lint errors: `pnpm lint` (0 errors required)
-2. Format code: `pnpm format`
-3. Run full coverage: `pnpm coverage:all` (unit + E2E + merge)
+1. Hooks handle all checks automatically (pre-commit + pre-push)
+2. If hooks are bypassed, manually run: `pnpm lint && pnpm format && pnpm type-check && pnpm coverage:all`
 
 **Automated Checks** (GitHub Actions - `.github/workflows/pr-checks.yml`):
 
 - ESLint validation (must pass)
 - Prettier formatting check (must pass)
+- TypeScript type check (must pass, strict mode)
 - Unit tests (Vitest with Supabase local)
 - E2E tests (Playwright with Docker)
 - Combined coverage report
@@ -244,23 +316,36 @@ When encountering ESLint warnings or errors:
 
 ### Root Folder - Allowed Files Only
 
-Essential configuration files only:
+Essential files only (configs moved to `config/`):
 
-- `package.json`, `pnpm-lock.yaml` (no workspace config - flat structure)
-- `.gitignore`, `.prettierrc`, `eslint.config.js`
-- `playwright.config.mjs`, `vitest.config.js`, `vite.config.js`
-- `index.html`, `postcss.config.js`, `tailwind.config.js` (Vite/frontend configs)
-- `docker-compose.e2e.yml` (E2E test infrastructure)
-- `README.md` (single source of truth for user docs)
+- `package.json`, `pnpm-lock.yaml` - Package manager files
+- `.gitignore`, `.dockerignore` - Version control ignore files
+- `.nvmrc`, `.pnpmrc` - Tool configuration files
+- `.env*` files - Environment variables (required in root by Vite)
+- `README.md` - Single source of truth for user docs
+
+**Build/test configuration files in `config/` folder**:
+
+- Build tool configs: `vite.config.ts`, `vitest.config.ts`, `playwright.config.ts`
+- Infrastructure configs: `docker-compose.test.yml`
+
+**Tooling configuration files in root** (required for standard tooling/deployment):
+
+- `tsconfig.json` - Required in root for IDE TypeScript support
+- `eslint.config.js` - Required in root for IDE/editor integration (also blocks .js/.jsx files)
+- `.prettierrc`, `.prettierignore` - Required in root for IDE/editor integration
+- `postcss.config.js` - **CRITICAL:** Must stay in root for PostCSS/Vite (DO NOT move to config/)
+- `vercel.json` - Required in root by Vercel deployment platform
 
 **Everything else belongs in subdirectories**:
 
 - `.claude/` - AI assistant context
 - `.devcontainer/` - Docker development environment
 - `.github/` - CI/CD workflows
+- `config/` - All configuration files
 - `docs/` - Business/market documentation
 - `scripts/` - Automation scripts
 - `spec/` - Feature specifications
-- `src/` - Application code
+- `src/` - Application code (including index.html)
 - `supabase/` - Supabase configuration
 - `tests/` - All tests

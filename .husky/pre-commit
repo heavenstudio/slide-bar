@@ -1,0 +1,39 @@
+#!/bin/sh
+# Husky pre-commit hook - Fast quality checks before commit
+
+echo "🔍 Running pre-commit checks (fast)..."
+
+# 1. Format check
+echo "\n📝 Checking code formatting..."
+pnpm format:check > /dev/null 2>&1 || {
+  echo "❌ Formatting check failed. Run 'pnpm format' to fix."
+  exit 1
+}
+echo "✅ Formatting passed"
+
+# 2. Lint
+echo "\n🔧 Running ESLint..."
+pnpm lint > /dev/null 2>&1 || {
+  echo "❌ Linting failed. Fix errors or run 'pnpm lint:fix'."
+  exit 1
+}
+echo "✅ Linting passed"
+
+# 3. Type check
+echo "\n🔎 Running TypeScript type check..."
+pnpm type-check > /dev/null 2>&1 || {
+  echo "❌ Type checking failed. Fix TypeScript errors."
+  exit 1
+}
+echo "✅ Type checking passed"
+
+# 4. Run unit tests only (fast)
+echo "\n🧪 Running unit tests..."
+pnpm test > /dev/null 2>&1 || {
+  echo "❌ Unit tests failed. Run 'pnpm test' to see details."
+  exit 1
+}
+echo "✅ Unit tests passed"
+
+echo "\n✅ All pre-commit checks passed!"
+echo "💡 Full coverage (unit + E2E) will run on pre-push"

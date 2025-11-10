@@ -32,6 +32,9 @@ jobs:
       - name: Check Prettier formatting
         run: pnpm format:check
 
+      - name: Run TypeScript type check
+        run: pnpm type-check
+
   test-all:
     name: Tests (Unit + E2E)
     runs-on: ubuntu-latest
@@ -93,7 +96,7 @@ jobs:
 
       - name: Start frontend server with coverage instrumentation
         run: |
-          VITE_PORT=5174 nohup npx vite --port 5174 --host > /tmp/vite-test.log 2>&1 &
+          VITE_PORT=5174 nohup npx vite --config config/vite.config.ts --port 5174 --host > /tmp/vite-test.log 2>&1 &
           echo $! > /tmp/vite-test.pid
         env:
           E2E_COVERAGE: true
@@ -117,7 +120,7 @@ jobs:
           exit 1
 
       - name: Run E2E tests with coverage
-        run: VITE_PORT=5174 npx playwright test
+        run: VITE_PORT=5174 npx playwright test --config config/playwright.config.ts
         env:
           E2E_COVERAGE: true
           VITE_SUPABASE_URL: http://127.0.0.1:54321
@@ -125,10 +128,10 @@ jobs:
           SUPABASE_SERVICE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU
 
       - name: Merge coverage reports
-        run: node scripts/merge-coverage.js
+        run: pnpm coverage:merge
 
       - name: Check combined coverage thresholds
-        run: node scripts/check-coverage.js
+        run: pnpm coverage:check
 
       - name: Stop frontend server
         if: always()

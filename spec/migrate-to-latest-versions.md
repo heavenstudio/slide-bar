@@ -1,6 +1,6 @@
 # Migrate to Latest LTS/Stable Versions
 
-**Status**: 🟡 In Progress
+**Status**: ✅ Done
 **Started**: 2025-11-09
 **Branch**: `feat/migrate-to-latest-versions`
 **Approach**: Phased migration with TDD - update dependencies in stages, run tests after each phase
@@ -280,7 +280,7 @@ Migrate all packages and runtimes to their latest LTS/stable versions to ensure 
 - [x] Run build: `pnpm build` (15.85 kB CSS ✅)
 - [x] Run unit tests: `pnpm test` (85/85 passing ✅)
 - [x] Fix Docker permission issues for node_modules volume
-- [x] Update docker-compose.e2e.yml with root user and chown strategy
+- [x] Update docker-compose.test.yml with root user and chown strategy
 - [x] Add .dockerignore to exclude host node_modules
 - [x] Rebuild Docker images with Tailwind v4
 - [x] Run E2E tests: `pnpm test:e2e` (16/16 passing ✅)
@@ -337,7 +337,7 @@ Migrate all packages and runtimes to their latest LTS/stable versions to ensure 
 **Files reviewed**:
 
 - `.github/workflows/pr-checks.yml` ✅
-- `docker-compose.e2e.yml` ✅
+- `docker-compose.test.yml` ✅
 - `.devcontainer/Dockerfile` ✅
 
 **Current versions** (all updated to Node 22.21.1):

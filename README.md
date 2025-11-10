@@ -45,18 +45,22 @@ pnpm stop
 
 ## 📋 Comandos Disponíveis
 
-| Comando                     | Descrição                               |
-| --------------------------- | --------------------------------------- |
-| `pnpm start`                | Inicia frontend + Supabase local        |
-| `pnpm stop`                 | Para todos os servidores                |
-| `pnpm build`                | Compila frontend para produção          |
-| `pnpm test`                 | Executa testes unitários (85 testes)    |
-| `pnpm test:watch`           | Executa testes em modo watch            |
-| `pnpm test:coverage`        | Testes unitários com cobertura          |
-| `pnpm coverage:all`         | Cobertura completa (unit + E2E + merge) |
-| `pnpm test:e2e`             | Executa testes E2E (16 testes)          |
-| `pnpm test:e2e:ui`          | Executa testes E2E em modo UI           |
-| `pnpm test:e2e:show-report` | Visualiza último relatório de testes    |
+| Comando                     | Descrição                                         |
+| --------------------------- | ------------------------------------------------- |
+| `pnpm start`                | Inicia frontend + Supabase local (stack completo) |
+| `pnpm dev`                  | Inicia apenas frontend (requer Supabase rodando)  |
+| `pnpm stop`                 | Para todos os servidores                          |
+| `pnpm build`                | Compila frontend para produção                    |
+| `pnpm type-check`           | Verifica erros de tipo TypeScript                 |
+| `pnpm test`                 | Executa testes unitários (85 testes)              |
+| `pnpm test:watch`           | Executa testes em modo watch                      |
+| `pnpm test:coverage`        | Testes unitários com cobertura                    |
+| `pnpm coverage:all`         | Cobertura completa (unit + E2E + merge)           |
+| `pnpm test:e2e`             | Executa testes E2E (16 testes)                    |
+| `pnpm test:e2e:ui`          | Executa testes E2E em modo UI                     |
+| `pnpm test:e2e:show-report` | Visualiza último relatório de testes              |
+| `pnpm lint`                 | Verifica erros de ESLint                          |
+| `pnpm format`               | Formata código com Prettier                       |
 
 ---
 
@@ -85,21 +89,23 @@ pnpm stop
 
 ### Frontend
 
-- React 18 + Vite
-- React Router
-- Tailwind CSS
-- Vitest (testes)
+- React 19 + Vite 7 + **TypeScript**
+- React Router 7
+- Tailwind CSS v4
+- Vitest 3 (testes unitários)
+- Playwright 1.56 (testes E2E)
 
 ### Backend
 
 - **Supabase** (PostgreSQL + Auth + Storage + Realtime)
-- Supabase JavaScript Client
-- ~Node.js + Express (legacy, sendo removido)~
+- Supabase TypeScript Client com tipos auto-gerados
 
-### Testes
+### Testes e Qualidade
 
-- Vitest (testes unitários e de integração)
-- Playwright (testes E2E)
+- **TypeScript** com strict mode habilitado
+- **Vitest 3** (testes unitários e de integração)
+- **Playwright 1.56** (testes E2E)
+- **ESLint 9** + **Prettier 3.6** (linting e formatação)
 - 85 testes unitários + 16 testes E2E = 101 testes totais
 - ~97% de cobertura combinada
 
@@ -109,18 +115,30 @@ pnpm stop
 
 ```
 slide-bar/
+├── config/                # Configurações de build/teste
+│   ├── vite.config.ts     # Configuração Vite
+│   ├── vitest.config.ts   # Configuração Vitest (testes unitários)
+│   ├── playwright.config.ts # Configuração Playwright (E2E)
+│   └── docker-compose.test.yml # Infraestrutura de testes Docker
 ├── docs/                  # Documentação adicional
-├── scripts/               # Scripts dev/teste
-├── src/                   # Aplicação React
-│   ├── components/        # Componentes React
+├── scripts/               # Scripts dev/teste (TypeScript)
+│   ├── check-coverage.ts  # Validação de cobertura de testes
+│   └── merge-coverage.ts  # Mesclagem de cobertura Vitest+Playwright
+├── src/                   # Aplicação React + TypeScript
+│   ├── components/        # Componentes React (.tsx)
 │   ├── pages/             # Páginas (Dashboard, Player)
-│   └── lib/               # Cliente Supabase, utilitários
+│   ├── lib/               # Cliente Supabase, utilitários (.ts)
+│   └── types/             # Tipos TypeScript (database, supabase)
 ├── supabase/              # Configuração Supabase (migrations, functions)
-├── tests/                 # Todos os testes
+├── tests/                 # Todos os testes (.test.tsx, .spec.ts)
 │   ├── config/            # Configuração de testes
 │   ├── e2e/               # Testes E2E (specs/, fixtures/, support/)
 │   ├── helpers/           # Helpers compartilhados (limpeza DB)
 │   └── unit/              # Testes unitários (lib/, components/, pages/)
+├── tsconfig.json          # Configuração TypeScript (strict mode)
+├── eslint.config.js       # Configuração ESLint (bloqueia arquivos .js)
+├── postcss.config.js      # Configuração PostCSS/Tailwind
+└── vercel.json            # Configuração de deploy Vercel
 ```
 
 ---
@@ -318,11 +336,13 @@ pnpm install
 
 **Infraestrutura:**
 
+- ✅ **TypeScript** com strict mode e tipos auto-gerados do Supabase
+- ✅ **Configurações organizadas**: build/teste em `config/`, tooling na raiz
+- ✅ **Proteção de qualidade**: ESLint bloqueia arquivos JavaScript (.js/.jsx)
 - ✅ Supabase Auth (demo login: demo@example.com / demo-password-123)
 - ✅ Supabase Storage (armazenamento de imagens)
 - ✅ Supabase PostgreSQL (banco de dados)
 - ✅ Suporte multi-organização
-- 🔄 Migração Express → Supabase em andamento (ver `spec/migrate-to-supabase.md`)
 
 ---
 

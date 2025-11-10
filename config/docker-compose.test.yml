@@ -1,0 +1,57 @@
+name: slide-bar-test
+
+services:
+  # Test frontend server - connects to Supabase test instance
+  test-frontend:
+    build:
+      context: ../.devcontainer
+      dockerfile: Dockerfile
+    user: root
+    working_dir: /workspace/slide-bar
+    volumes:
+      - ..:/workspace/slide-bar
+      - test_node_modules:/workspace/slide-bar/node_modules # Separate volume for Linux node_modules
+    command: sh -c "chown -R node:node /workspace/slide-bar/node_modules && su node -c 'CI=true pnpm install && pnpm vite --config config/vite.config.ts --port 5174 --host'"
+    environment:
+      - VITE_SUPABASE_URL=http://supabase_kong_slide-bar-test:8000
+      - VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0
+      - NODE_ENV=test
+      - E2E_COVERAGE=${E2E_COVERAGE:-false}
+    networks:
+      - supabase_network_slide-bar-test
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:5174']
+      interval: 2s
+      timeout: 2s
+      retries: 15
+      start_period: 5s
+
+  # Playwright E2E tests
+  playwright:
+    build:
+      context: ../.devcontainer
+      dockerfile: Dockerfile
+    working_dir: /workspace/slide-bar
+    volumes:
+      - ..:/workspace/slide-bar
+    command: sh -c "npx playwright test --config config/playwright.config.ts ${PLAYWRIGHT_ARGS:-}"
+    environment:
+      - PLAYWRIGHT_BASE_URL=http://localhost:5174
+      - NODE_ENV=test
+      - E2E_COVERAGE=${E2E_COVERAGE:-false}
+      - VITE_SUPABASE_URL=http://supabase_kong_slide-bar-test:8000
+      - SUPABASE_SERVICE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU
+      - PLAYWRIGHT_ARGS=${PLAYWRIGHT_ARGS:-}
+    network_mode: 'service:test-frontend'
+    depends_on:
+      test-frontend:
+        condition: service_healthy
+
+# Connect to the existing Supabase test network
+networks:
+  supabase_network_slide-bar-test:
+    external: true
+
+# Named volumes for Linux-specific dependencies
+volumes:
+  test_node_modules:
