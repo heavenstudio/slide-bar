@@ -1,4 +1,5 @@
 import { test, expect } from '../support/fixtures.js';
+import type { Page } from '@playwright/test';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { TIMEOUTS } from '../support/constants.js';
@@ -16,7 +17,7 @@ const __dirname = path.dirname(__filename);
  */
 
 test.describe('Image Upload and Management', () => {
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page }: { page: Page }) => {
     // Clear localStorage before each test to ensure clean state
     await page.goto('/');
     await page.evaluate(() => localStorage.clear());
@@ -33,7 +34,7 @@ test.describe('Image Upload and Management', () => {
    *   Then I should see the dashboard header
    *   And I should be automatically logged in
    */
-  test('should display the dashboard and auto-login', async ({ page }) => {
+  test('should display the dashboard and auto-login', async ({ page }: { page: Page }) => {
     await page.goto('/');
 
     // Wait for dashboard to load
@@ -51,7 +52,7 @@ test.describe('Image Upload and Management', () => {
    *   Then I should see "Minhas Imagens (0)"
    *   And I should see the upload area
    */
-  test('should show empty state when no images exist', async ({ page }) => {
+  test('should show empty state when no images exist', async ({ page }: { page: Page }) => {
     await page.goto('/');
 
     // Wait for the images section
@@ -71,7 +72,7 @@ test.describe('Image Upload and Management', () => {
    *   And I should see it in the image grid
    *   And the upload area should be ready for another upload
    */
-  test('should upload an image successfully', async ({ page }) => {
+  test('should upload an image successfully', async ({ page }: { page: Page }) => {
     await page.goto('/');
 
     // Wait for page to be ready
@@ -108,7 +109,7 @@ test.describe('Image Upload and Management', () => {
    *   Then I should see an error message
    *   And the file should not be uploaded
    */
-  test('should reject invalid file types', async ({ page }) => {
+  test('should reject invalid file types', async ({ page }: { page: Page }) => {
     await page.goto('/');
 
     await page.waitForSelector('h1:has-text("Slide Bar")');
@@ -136,7 +137,7 @@ test.describe('Image Upload and Management', () => {
    *   Then the image should be removed from the grid
    *   And the image count should decrease
    */
-  test('should delete an image successfully', async ({ page }) => {
+  test('should delete an image successfully', async ({ page }: { page: Page }) => {
     await page.goto('/');
     await page.waitForSelector('h1:has-text("Slide Bar")');
     await page.waitForSelector('h2:has-text("Enviar Nova Imagem")');
@@ -169,7 +170,7 @@ test.describe('Image Upload and Management', () => {
 
     // Wait for the image to be removed from DOM
     await page.waitForFunction(
-      (expectedCount) => {
+      (expectedCount: number) => {
         const cards = document.querySelectorAll('[data-testid="image-card"]');
         return cards.length < expectedCount;
       },
@@ -191,7 +192,7 @@ test.describe('Image Upload and Management', () => {
    *   And each image should show a preview
    *   And each image should have a delete button
    */
-  test('should display uploaded images in grid', async ({ page }) => {
+  test('should display uploaded images in grid', async ({ page }: { page: Page }) => {
     // Upload multiple images
     await page.goto('/');
     await page.waitForSelector('h1:has-text("Slide Bar")');
@@ -230,7 +231,7 @@ test.describe('Image Upload and Management', () => {
    *   Then the image list should reload
    *   And I should see the loading state
    */
-  test('should reload images when refresh button is clicked', async ({ page }) => {
+  test('should reload images when refresh button is clicked', async ({ page }: { page: Page }) => {
     await page.goto('/');
     await page.waitForSelector('h1:has-text("Slide Bar")');
 

@@ -1,5 +1,23 @@
 import { useState } from 'react';
 import { deleteImage } from '../../lib/api';
+import type { Image } from '../../types/database';
+
+interface ImageGridProps {
+  images: Image[];
+  onImageDeleted?: (imageId: string) => void;
+}
+
+interface DeleteButtonProps {
+  imageId: string;
+  isDeleting: boolean;
+  onDelete: (imageId: string) => void;
+}
+
+interface ImageCardProps {
+  image: Image;
+  onDelete: (imageId: string) => void;
+  isDeleting: boolean;
+}
 
 /**
  * Empty state component when no images exist
@@ -28,7 +46,7 @@ function EmptyState() {
 /**
  * Delete button component for image card
  */
-function DeleteButton({ imageId, isDeleting, onDelete }) {
+function DeleteButton({ imageId, isDeleting, onDelete }: DeleteButtonProps) {
   return (
     <button
       onClick={() => onDelete(imageId)}
@@ -64,7 +82,7 @@ function DeleteButton({ imageId, isDeleting, onDelete }) {
 /**
  * Individual image card component
  */
-function ImageCard({ image, onDelete, isDeleting }) {
+function ImageCard({ image, onDelete, isDeleting }: ImageCardProps) {
   return (
     <div
       key={image.id}
@@ -96,10 +114,10 @@ function ImageCard({ image, onDelete, isDeleting }) {
  * Image Grid Component
  * Displays uploaded images in a grid with preview
  */
-export default function ImageGrid({ images, onImageDeleted }) {
-  const [deletingId, setDeletingId] = useState(null);
+export default function ImageGrid({ images, onImageDeleted }: ImageGridProps) {
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const handleDelete = async (imageId) => {
+  const handleDelete = async (imageId: string): Promise<void> => {
     if (!window.confirm('Tem certeza que deseja deletar esta imagem?')) {
       return;
     }
@@ -112,7 +130,8 @@ export default function ImageGrid({ images, onImageDeleted }) {
         onImageDeleted(imageId);
       }
     } catch (error) {
-      alert('Erro ao deletar imagem: ' + error.message);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      alert('Erro ao deletar imagem: ' + errorMessage);
     } finally {
       setDeletingId(null);
     }
@@ -141,7 +160,7 @@ export default function ImageGrid({ images, onImageDeleted }) {
 /**
  * Format file size in human-readable format
  */
-function formatFileSize(bytes) {
+function formatFileSize(bytes: number): string {
   if (bytes === 0) return '0 Bytes';
 
   const k = 1024;

@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
 import { act } from 'react';
+import type { Mock } from 'vitest';
 
 // Mock the Supabase API module
 vi.mock('../../../src/lib/supabaseApi', () => ({
@@ -9,6 +10,7 @@ vi.mock('../../../src/lib/supabaseApi', () => ({
 
 import ImageUpload from '../../../src/components/upload/ImageUpload';
 import { uploadImage } from '../../../src/lib/supabaseApi';
+import type { Image } from '../../../src/types/database';
 
 /**
  * ImageUpload Component Tests
@@ -42,7 +44,7 @@ describe('ImageUpload - Basic Rendering', () => {
   it('should accept only JPEG and PNG files', () => {
     render(<ImageUpload />);
 
-    const fileInput = screen.getByTestId('file-input');
+    const fileInput = screen.getByTestId('file-input') as HTMLInputElement;
 
     expect(fileInput).toHaveAttribute('accept', 'image/jpeg,image/jpg,image/png');
   });
@@ -57,21 +59,33 @@ describe('ImageUpload - File Selection', () => {
   it('should open file selector when clicked', () => {
     render(<ImageUpload />);
 
-    const fileInput = screen.getByTestId('file-input');
+    const fileInput = screen.getByTestId('file-input') as HTMLInputElement;
     const clickSpy = vi.spyOn(fileInput, 'click');
 
     const uploadArea = screen.getByText(/Clique para selecionar/i).closest('div');
-    fireEvent.click(uploadArea);
+    fireEvent.click(uploadArea!);
 
     expect(clickSpy).toHaveBeenCalled();
   });
 
   it('should upload file when selected via file input', async () => {
-    uploadImage.mockResolvedValue({ id: '1', url: '/test.jpg' });
+    const mockImage: Image = {
+      id: '1',
+      url: '/test.jpg',
+      filename: 'test.jpg',
+      original_name: 'test.jpg',
+      mime_type: 'image/jpeg',
+      size: 1024,
+      path: 'uploads/test.jpg',
+      organization_id: 'org-1',
+      created_at: '2025-11-09T00:00:00Z',
+      updated_at: '2025-11-09T00:00:00Z',
+    };
+    (uploadImage as Mock).mockResolvedValue(mockImage);
 
     render(<ImageUpload />);
 
-    const fileInput = screen.getByTestId('file-input');
+    const fileInput = screen.getByTestId('file-input') as HTMLInputElement;
     const file = new File(['dummy content'], 'test.jpg', { type: 'image/jpeg' });
 
     Object.defineProperty(fileInput, 'files', {
@@ -103,7 +117,7 @@ describe('ImageUpload - Drag and Drop', () => {
     expect(uploadArea).not.toHaveClass('bg-blue-50');
 
     // Drag over
-    fireEvent.dragOver(uploadArea);
+    fireEvent.dragOver(uploadArea!);
 
     // Should have dragging styles
     expect(uploadArea).toHaveClass('border-blue-500');
@@ -116,11 +130,11 @@ describe('ImageUpload - Drag and Drop', () => {
     const uploadArea = screen.getByText(/Clique para selecionar/i).closest('div');
 
     // Drag over first
-    fireEvent.dragOver(uploadArea);
+    fireEvent.dragOver(uploadArea!);
     expect(uploadArea).toHaveClass('border-blue-500');
 
     // Drag leave
-    fireEvent.dragLeave(uploadArea);
+    fireEvent.dragLeave(uploadArea!);
 
     // Should remove dragging styles
     expect(uploadArea).not.toHaveClass('border-blue-500');
@@ -128,7 +142,19 @@ describe('ImageUpload - Drag and Drop', () => {
   });
 
   it('should upload file when dropped', async () => {
-    uploadImage.mockResolvedValue({ id: '1', url: '/test.jpg' });
+    const mockImage: Image = {
+      id: '1',
+      url: '/test.jpg',
+      filename: 'test.jpg',
+      original_name: 'test.jpg',
+      mime_type: 'image/jpeg',
+      size: 1024,
+      path: 'uploads/test.jpg',
+      organization_id: 'org-1',
+      created_at: '2025-11-09T00:00:00Z',
+      updated_at: '2025-11-09T00:00:00Z',
+    };
+    (uploadImage as Mock).mockResolvedValue(mockImage);
 
     render(<ImageUpload />);
 
@@ -142,7 +168,7 @@ describe('ImageUpload - Drag and Drop', () => {
       },
     };
 
-    fireEvent.drop(uploadArea, dropEvent);
+    fireEvent.drop(uploadArea!, dropEvent);
 
     await waitFor(() => {
       expect(uploadImage).toHaveBeenCalledWith(file);
@@ -150,7 +176,19 @@ describe('ImageUpload - Drag and Drop', () => {
   });
 
   it('should remove highlight after drop', async () => {
-    uploadImage.mockResolvedValue({ id: '1', url: '/test.jpg' });
+    const mockImage: Image = {
+      id: '1',
+      url: '/test.jpg',
+      filename: 'test.jpg',
+      original_name: 'test.jpg',
+      mime_type: 'image/jpeg',
+      size: 1024,
+      path: 'uploads/test.jpg',
+      organization_id: 'org-1',
+      created_at: '2025-11-09T00:00:00Z',
+      updated_at: '2025-11-09T00:00:00Z',
+    };
+    (uploadImage as Mock).mockResolvedValue(mockImage);
 
     render(<ImageUpload />);
 
@@ -158,7 +196,7 @@ describe('ImageUpload - Drag and Drop', () => {
     const file = new File(['dummy content'], 'test.jpg', { type: 'image/jpeg' });
 
     // Drag over first
-    fireEvent.dragOver(uploadArea);
+    fireEvent.dragOver(uploadArea!);
     expect(uploadArea).toHaveClass('border-blue-500');
 
     // Drop file - wrapping in act() to handle async state updates
@@ -170,7 +208,7 @@ describe('ImageUpload - Drag and Drop', () => {
     };
 
     await act(async () => {
-      fireEvent.drop(uploadArea, dropEvent);
+      fireEvent.drop(uploadArea!, dropEvent);
     });
 
     // Should remove dragging styles immediately after drop
@@ -192,7 +230,7 @@ describe('ImageUpload - File Validation', () => {
   it('should show error for invalid file type', async () => {
     render(<ImageUpload />);
 
-    const fileInput = screen.getByTestId('file-input');
+    const fileInput = screen.getByTestId('file-input') as HTMLInputElement;
     const file = new File(['dummy content'], 'test.txt', { type: 'text/plain' });
 
     Object.defineProperty(fileInput, 'files', {
@@ -213,7 +251,7 @@ describe('ImageUpload - File Validation', () => {
   it('should show error for file too large', async () => {
     render(<ImageUpload />);
 
-    const fileInput = screen.getByTestId('file-input');
+    const fileInput = screen.getByTestId('file-input') as HTMLInputElement;
     // Create a file larger than 10MB (10 * 1024 * 1024 bytes)
     const largeContent = 'x'.repeat(11 * 1024 * 1024);
     const file = new File([largeContent], 'large.jpg', { type: 'image/jpeg' });
@@ -241,13 +279,25 @@ describe('ImageUpload - Upload States', () => {
   });
 
   it('should show uploading state', async () => {
-    uploadImage.mockImplementation(
-      () => new Promise((resolve) => setTimeout(() => resolve({ id: '1', url: '/test.jpg' }), 100))
+    const mockImage: Image = {
+      id: '1',
+      url: '/test.jpg',
+      filename: 'test.jpg',
+      original_name: 'test.jpg',
+      mime_type: 'image/jpeg',
+      size: 1024,
+      path: 'uploads/test.jpg',
+      organization_id: 'org-1',
+      created_at: '2025-11-09T00:00:00Z',
+      updated_at: '2025-11-09T00:00:00Z',
+    };
+    (uploadImage as Mock).mockImplementation(
+      () => new Promise((resolve) => setTimeout(() => resolve(mockImage), 100))
     );
 
     render(<ImageUpload />);
 
-    const fileInput = screen.getByTestId('file-input');
+    const fileInput = screen.getByTestId('file-input') as HTMLInputElement;
     const file = new File(['dummy content'], 'test.jpg', { type: 'image/jpeg' });
 
     Object.defineProperty(fileInput, 'files', {
@@ -276,13 +326,25 @@ describe('ImageUpload - Upload States', () => {
   });
 
   it('should disable file input during upload', async () => {
-    uploadImage.mockImplementation(
-      () => new Promise((resolve) => setTimeout(() => resolve({ id: '1', url: '/test.jpg' }), 100))
+    const mockImage: Image = {
+      id: '1',
+      url: '/test.jpg',
+      filename: 'test.jpg',
+      original_name: 'test.jpg',
+      mime_type: 'image/jpeg',
+      size: 1024,
+      path: 'uploads/test.jpg',
+      organization_id: 'org-1',
+      created_at: '2025-11-09T00:00:00Z',
+      updated_at: '2025-11-09T00:00:00Z',
+    };
+    (uploadImage as Mock).mockImplementation(
+      () => new Promise((resolve) => setTimeout(() => resolve(mockImage), 100))
     );
 
     render(<ImageUpload />);
 
-    const fileInput = screen.getByTestId('file-input');
+    const fileInput = screen.getByTestId('file-input') as HTMLInputElement;
     const file = new File(['dummy content'], 'test.jpg', { type: 'image/jpeg' });
 
     Object.defineProperty(fileInput, 'files', {
@@ -307,11 +369,23 @@ describe('ImageUpload - Upload States', () => {
   });
 
   it('should reset file input after successful upload', async () => {
-    uploadImage.mockResolvedValue({ id: '1', url: '/test.jpg' });
+    const mockImage: Image = {
+      id: '1',
+      url: '/test.jpg',
+      filename: 'test.jpg',
+      original_name: 'test.jpg',
+      mime_type: 'image/jpeg',
+      size: 1024,
+      path: 'uploads/test.jpg',
+      organization_id: 'org-1',
+      created_at: '2025-11-09T00:00:00Z',
+      updated_at: '2025-11-09T00:00:00Z',
+    };
+    (uploadImage as Mock).mockResolvedValue(mockImage);
 
     render(<ImageUpload />);
 
-    const fileInput = screen.getByTestId('file-input');
+    const fileInput = screen.getByTestId('file-input') as HTMLInputElement;
     const file = new File(['dummy content'], 'test.jpg', { type: 'image/jpeg' });
 
     Object.defineProperty(fileInput, 'files', {
@@ -343,11 +417,11 @@ describe('ImageUpload - Error Handling', () => {
 
   it('should display error message when upload fails', async () => {
     const errorMessage = 'Network error occurred';
-    uploadImage.mockRejectedValue(new Error(errorMessage));
+    (uploadImage as Mock).mockRejectedValue(new Error(errorMessage));
 
     render(<ImageUpload />);
 
-    const fileInput = screen.getByTestId('file-input');
+    const fileInput = screen.getByTestId('file-input') as HTMLInputElement;
     const file = new File(['dummy content'], 'test.jpg', { type: 'image/jpeg' });
 
     Object.defineProperty(fileInput, 'files', {
@@ -363,14 +437,26 @@ describe('ImageUpload - Error Handling', () => {
   });
 
   it('should clear previous error when new upload starts', async () => {
+    const mockImage: Image = {
+      id: '1',
+      url: '/test.jpg',
+      filename: 'test.jpg',
+      original_name: 'test.jpg',
+      mime_type: 'image/jpeg',
+      size: 1024,
+      path: 'uploads/test.jpg',
+      organization_id: 'org-1',
+      created_at: '2025-11-09T00:00:00Z',
+      updated_at: '2025-11-09T00:00:00Z',
+    };
     // First upload fails
-    uploadImage.mockRejectedValueOnce(new Error('First error'));
+    (uploadImage as Mock).mockRejectedValueOnce(new Error('First error'));
     // Second upload succeeds
-    uploadImage.mockResolvedValueOnce({ id: '1', url: '/test.jpg' });
+    (uploadImage as Mock).mockResolvedValueOnce(mockImage);
 
     render(<ImageUpload />);
 
-    const fileInput = screen.getByTestId('file-input');
+    const fileInput = screen.getByTestId('file-input') as HTMLInputElement;
     const file1 = new File(['content1'], 'test1.jpg', { type: 'image/jpeg' });
 
     Object.defineProperty(fileInput, 'files', {
@@ -408,13 +494,24 @@ describe('ImageUpload - Success Callbacks', () => {
   });
 
   it('should call onUploadSuccess callback after successful upload', async () => {
-    const mockImageData = { id: '1', url: '/test.jpg', filename: 'test.jpg' };
-    uploadImage.mockResolvedValue(mockImageData);
+    const mockImageData: Image = {
+      id: '1',
+      url: '/test.jpg',
+      filename: 'test.jpg',
+      original_name: 'test.jpg',
+      mime_type: 'image/jpeg',
+      size: 1024,
+      path: 'uploads/test.jpg',
+      organization_id: 'org-1',
+      created_at: '2025-11-09T00:00:00Z',
+      updated_at: '2025-11-09T00:00:00Z',
+    };
+    (uploadImage as Mock).mockResolvedValue(mockImageData);
 
     const onUploadSuccess = vi.fn();
     render(<ImageUpload onUploadSuccess={onUploadSuccess} />);
 
-    const fileInput = screen.getByTestId('file-input');
+    const fileInput = screen.getByTestId('file-input') as HTMLInputElement;
     const file = new File(['dummy content'], 'test.jpg', { type: 'image/jpeg' });
 
     Object.defineProperty(fileInput, 'files', {
@@ -430,12 +527,24 @@ describe('ImageUpload - Success Callbacks', () => {
   });
 
   it('should work without onUploadSuccess callback', async () => {
-    uploadImage.mockResolvedValue({ id: '1', url: '/test.jpg' });
+    const mockImage: Image = {
+      id: '1',
+      url: '/test.jpg',
+      filename: 'test.jpg',
+      original_name: 'test.jpg',
+      mime_type: 'image/jpeg',
+      size: 1024,
+      path: 'uploads/test.jpg',
+      organization_id: 'org-1',
+      created_at: '2025-11-09T00:00:00Z',
+      updated_at: '2025-11-09T00:00:00Z',
+    };
+    (uploadImage as Mock).mockResolvedValue(mockImage);
 
     // No onUploadSuccess prop provided
     render(<ImageUpload />);
 
-    const fileInput = screen.getByTestId('file-input');
+    const fileInput = screen.getByTestId('file-input') as HTMLInputElement;
     const file = new File(['dummy content'], 'test.jpg', { type: 'image/jpeg' });
 
     Object.defineProperty(fileInput, 'files', {

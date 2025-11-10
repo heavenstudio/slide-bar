@@ -2,11 +2,13 @@ import js from '@eslint/js';
 import react from 'eslint-plugin-react';
 import reactHooks from 'eslint-plugin-react-hooks';
 import globals from 'globals';
+import tseslint from '@typescript-eslint/eslint-plugin';
+import tsparser from '@typescript-eslint/parser';
 
 export default [
   js.configs.recommended,
   {
-    files: ['**/*.{js,jsx}'],
+    files: ['**/*.{js,jsx,ts,tsx}'],
     plugins: {
       react,
       'react-hooks': reactHooks,
@@ -73,15 +75,45 @@ export default [
     },
   },
   {
+    // TypeScript-specific configuration
+    files: ['**/*.{ts,tsx}'],
+    languageOptions: {
+      parser: tsparser,
+      parserOptions: {
+        ecmaVersion: 2022,
+        sourceType: 'module',
+        ecmaFeatures: {
+          jsx: true,
+        },
+      },
+    },
+    plugins: {
+      '@typescript-eslint': tseslint,
+    },
+    rules: {
+      // Disable base rules that are covered by TypeScript
+      'no-unused-vars': 'off',
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+        },
+      ],
+      // TypeScript handles these
+      'no-undef': 'off',
+    },
+  },
+  {
     // Allow console in CLI scripts (they're meant for terminal output)
-    files: ['scripts/**/*.js'],
+    files: ['scripts/**/*.{js,ts}'],
     rules: {
       'no-console': 'off',
     },
   },
   {
     // Relax function length limit for test files (describe/it blocks can be long)
-    files: ['**/*.{test,spec}.{js,jsx}', '**/tests/**/*.{js,jsx}'],
+    files: ['**/*.{test,spec}.{js,jsx,ts,tsx}', '**/tests/**/*.{js,jsx,ts,tsx}'],
     rules: {
       'max-lines-per-function': ['warn', { max: 150, skipBlankLines: true, skipComments: true }],
     },
@@ -95,6 +127,7 @@ export default [
       '.test-output/**',
       '**/*.config.js',
       '**/*.config.mjs',
+      '**/*.config.ts',
       '.pnpm-store/**',
     ],
   },

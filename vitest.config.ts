@@ -6,9 +6,9 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'jsdom',
-    setupFiles: './tests/config/setup.js',
-    include: ['tests/unit/**/*.{test,spec}.{js,jsx}'],
-    exclude: ['node_modules', 'tests/e2e/**/*.spec.js'],
+    setupFiles: './tests/config/setup.ts',
+    include: ['tests/unit/**/*.{test,spec}.{js,jsx,ts,tsx}'],
+    exclude: ['node_modules', 'tests/e2e/**/*.spec.{js,ts}'],
     // Run tests sequentially to avoid database conflicts in integration tests
     pool: 'forks',
     poolOptions: {
@@ -20,7 +20,7 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'json', 'json-summary', 'html'],
       reportsDirectory: './.test-output/coverage',
-      include: ['src/**/*.{js,jsx}'],
+      include: ['src/**/*.{js,jsx,ts,tsx}'],
     },
     env: {
       // Supabase environment configuration

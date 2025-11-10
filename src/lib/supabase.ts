@@ -5,7 +5,8 @@
  * Supports both local development and production environments.
  */
 
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { Database } from '../types/supabase';
 
 // Get Supabase configuration from environment variables
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -23,9 +24,8 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 /**
  * Supabase client instance
- * @type {import('@supabase/supabase-js').SupabaseClient}
  */
-export const supabase = createClient(url, key, {
+export const supabase: SupabaseClient<Database> = createClient<Database>(url, key, {
   auth: {
     // Auto-refresh tokens
     autoRefreshToken: true,

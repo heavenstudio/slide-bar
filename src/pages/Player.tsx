@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
+import type { Image } from '../types/database';
+import type { RealtimeChannel } from '@supabase/supabase-js';
 
 /**
  * Loading state component
  */
-function LoadingState() {
+function LoadingState(): JSX.Element {
   return (
     <div className="fixed inset-0 bg-black flex items-center justify-center">
       <div className="text-center">
@@ -18,7 +20,11 @@ function LoadingState() {
 /**
  * Error state component
  */
-function ErrorState({ error }) {
+interface ErrorStateProps {
+  error: string;
+}
+
+function ErrorState({ error }: ErrorStateProps): JSX.Element {
   return (
     <div className="fixed inset-0 bg-black flex items-center justify-center">
       <div className="text-center text-white">
@@ -32,7 +38,7 @@ function ErrorState({ error }) {
 /**
  * Empty state component
  */
-function EmptyState() {
+function EmptyState(): JSX.Element {
   return (
     <div className="fixed inset-0 bg-black flex items-center justify-center">
       <div className="text-center text-white">
@@ -47,7 +53,19 @@ function EmptyState() {
 /**
  * Slideshow UI with overlays
  */
-function SlideshowUI({ currentImage, currentIndex, imagesCount, isPaused }) {
+interface SlideshowUIProps {
+  currentImage: Image;
+  currentIndex: number;
+  imagesCount: number;
+  isPaused: boolean;
+}
+
+function SlideshowUI({
+  currentImage,
+  currentIndex,
+  imagesCount,
+  isPaused,
+}: SlideshowUIProps): JSX.Element {
   return (
     <div className="fixed inset-0 bg-black">
       <img
@@ -81,10 +99,18 @@ function SlideshowUI({ currentImage, currentIndex, imagesCount, isPaused }) {
 /**
  * Custom hook for loading images with realtime subscription
  */
-function useImageLoader(setCurrentIndex) {
-  const [images, setImages] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
+interface UseImageLoaderReturn {
+  images: Image[];
+  isLoading: boolean;
+  error: string | null;
+}
+
+function useImageLoader(
+  setCurrentIndex: React.Dispatch<React.SetStateAction<number>>
+): UseImageLoaderReturn {
+  const [images, setImages] = useState<Image[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
   const loadImages = useCallback(async () => {
     try {
@@ -101,7 +127,7 @@ function useImageLoader(setCurrentIndex) {
         newImages.length === 0 ? 0 : prev >= newImages.length ? newImages.length - 1 : prev
       );
     } catch (err) {
-      setError(err.message);
+      setError((err as Error).message);
     } finally {
       setIsLoading(false);
     }
@@ -109,14 +135,16 @@ function useImageLoader(setCurrentIndex) {
 
   useEffect(() => {
     loadImages();
-    const channel = supabase
+    const channel: RealtimeChannel = supabase
       .channel('images-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'images' }, (payload) => {
         console.warn('Realtime event received:', payload.eventType);
         loadImages();
       })
       .subscribe();
-    return () => supabase.removeChannel(channel);
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [loadImages]);
 
   return { images, isLoading, error };
@@ -125,9 +153,13 @@ function useImageLoader(setCurrentIndex) {
 /**
  * Custom hook for keyboard controls
  */
-function useKeyboardControls(imagesLength, setIsPaused, setCurrentIndex) {
+function useKeyboardControls(
+  imagesLength: number,
+  setIsPaused: React.Dispatch<React.SetStateAction<boolean>>,
+  setCurrentIndex: React.Dispatch<React.SetStateAction<number>>
+): void {
   useEffect(() => {
-    const handleKeyPress = (e) => {
+    const handleKeyPress = (e: KeyboardEvent): void => {
       if (e.key === ' ') setIsPaused((prev) => !prev);
       if (e.key === 'ArrowRight') setCurrentIndex((prev) => (prev + 1) % imagesLength);
       if (e.key === 'ArrowLeft')
@@ -142,16 +174,16 @@ function useKeyboardControls(imagesLength, setIsPaused, setCurrentIndex) {
  * Player Page
  * Public-facing fullscreen slideshow player for displaying images on TV/monitors
  */
-export default function Player() {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
-  const [slideDuration] = useState(5000);
+export default function Player(): JSX.Element {
+  const [currentIndex, setCurrentIndex] = useState<number>(0);
+  const [isPaused, setIsPaused] = useState<boolean>(false);
+  const [slideDuration] = useState<number>(5000);
 
   const { images, isLoading, error } = useImageLoader(setCurrentIndex);
 
   useEffect(() => {
     if (images.length === 0 || isPaused) return;
-    const timer = setInterval(
+    const timer: NodeJS.Timeout = setInterval(
       () => setCurrentIndex((prev) => (prev + 1) % images.length),
       slideDuration
     );

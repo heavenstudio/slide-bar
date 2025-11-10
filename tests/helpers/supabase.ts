@@ -3,8 +3,9 @@
  * Utilities for integration testing with real Supabase instance
  */
 
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { afterEach } from 'vitest';
+import { Database } from '../../src/types/supabase';
 
 // Supabase TEST configuration (port 55321 - isolated from dev on 54321)
 // Uses the same test instance as E2E tests
@@ -17,8 +18,8 @@ const SUPABASE_SERVICE_KEY =
  * Create a Supabase client with service role (bypasses RLS)
  * Used for test cleanup and setup
  */
-export function createServiceClient() {
-  return createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
+export function createServiceClient(): SupabaseClient<Database> {
+  return createClient<Database>(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,
@@ -30,7 +31,7 @@ export function createServiceClient() {
  * Clean test database by deleting all test data
  * Uses service role to bypass RLS policies
  */
-export async function cleanDatabase() {
+export async function cleanDatabase(): Promise<void> {
   const supabase = createServiceClient();
 
   try {
@@ -56,7 +57,8 @@ export async function cleanDatabase() {
       }
     }
   } catch (error) {
-    console.error('Database cleanup error:', error.message);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Database cleanup error:', errorMessage);
   }
 }
 
@@ -64,10 +66,24 @@ export async function cleanDatabase() {
  * Setup automatic database cleanup after each test
  * Call this in test files that need database cleanup
  */
-export function setupSupabaseCleanup() {
+export function setupSupabaseCleanup(): void {
   afterEach(async () => {
     await cleanDatabase();
   });
+}
+
+/**
+ * Mock image file interface for testing
+ * This matches the structure we create in createMockImageFile
+ */
+export interface MockImageFile {
+  name: string;
+  type: string;
+  size: number;
+  arrayBuffer: () => Promise<ArrayBuffer>;
+  slice: (start?: number, end?: number) => Uint8Array;
+  stream: () => ReadableStream<Uint8Array>;
+  [Symbol.toStringTag]: string;
 }
 
 /**
@@ -75,7 +91,10 @@ export function setupSupabaseCleanup() {
  * Creates an ArrayBuffer with image/jpeg MIME type
  * This works around jsdom's Blob/File API limitations
  */
-export function createMockImageFile(filename = 'test.jpg', content = 'test image content') {
+export function createMockImageFile(
+  filename = 'test.jpg',
+  content = 'test image content'
+): MockImageFile {
   // Convert string to Uint8Array (binary data)
   const encoder = new TextEncoder();
   const data = encoder.encode(content);
@@ -88,11 +107,11 @@ export function createMockImageFile(filename = 'test.jpg', content = 'test image
     size: data.length,
     arrayBuffer: async () => data.buffer,
     // For compatibility with code that reads the file as blob
-    slice: (start, end) => data.slice(start, end),
+    slice: (start?: number, end?: number) => data.slice(start, end),
     // For compatibility with Supabase client's stream() usage
     stream: () => {
       // Return a ReadableStream-like object
-      return new ReadableStream({
+      return new ReadableStream<Uint8Array>({
         start(controller) {
           controller.enqueue(data);
           controller.close();
@@ -101,6 +120,6 @@ export function createMockImageFile(filename = 'test.jpg', content = 'test image
     },
     // Expose the raw data for Supabase upload
     [Symbol.toStringTag]: 'File',
-    ...data,
+    ...Object.fromEntries(Object.entries(data)),
   };
 }

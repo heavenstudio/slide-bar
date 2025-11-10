@@ -1,4 +1,5 @@
 import { test, expect } from '../support/fixtures.js';
+import type { Page, BrowserContext } from '@playwright/test';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { TIMEOUTS } from '../support/constants.js';
@@ -18,7 +19,7 @@ const __dirname = path.dirname(__filename);
 /**
  * Helper: Upload image via dashboard
  */
-async function uploadTestImage(page, testImagePath) {
+async function uploadTestImage(page: Page, testImagePath: string): Promise<void> {
   await page.goto('/');
   await page.waitForSelector('h1:has-text("Slide Bar")');
   await page.waitForSelector('h2:has-text("Enviar Nova Imagem")');
@@ -30,7 +31,11 @@ async function uploadTestImage(page, testImagePath) {
 /**
  * Helper: Upload multiple images
  */
-async function uploadMultipleImages(page, testImagePath, count) {
+async function uploadMultipleImages(
+  page: Page,
+  testImagePath: string,
+  count: number
+): Promise<void> {
   await page.goto('/');
   await page.waitForSelector('h1:has-text("Slide Bar")');
   await page.waitForSelector('h2:has-text("Enviar Nova Imagem")');
@@ -39,7 +44,7 @@ async function uploadMultipleImages(page, testImagePath, count) {
   for (let i = 0; i < count; i++) {
     await fileInput.setInputFiles(testImagePath);
     await page.waitForFunction(
-      (expectedCount) =>
+      (expectedCount: number) =>
         document.querySelectorAll('[data-testid="image-card"]').length === expectedCount,
       i + 1,
       { timeout: TIMEOUTS.SELECTOR }
@@ -52,7 +57,7 @@ test.describe('Player Slideshow', () => {
     /**
      * Scenario: Player shows empty state when no images exist
      */
-    test('should show empty state when no images uploaded', async ({ page }) => {
+    test('should show empty state when no images uploaded', async ({ page }: { page: Page }) => {
       await page.goto('/player');
       await page.waitForLoadState('networkidle');
       await expect(page.locator('text=Nenhuma imagem disponível')).toBeVisible();
@@ -61,7 +66,7 @@ test.describe('Player Slideshow', () => {
     /**
      * Scenario: Player is accessible without authentication
      */
-    test('should work without authentication', async ({ page }) => {
+    test('should work without authentication', async ({ page }: { page: Page }) => {
       await page.goto('/');
       await page.evaluate(() => {
         localStorage.clear();
@@ -75,7 +80,7 @@ test.describe('Player Slideshow', () => {
     /**
      * Scenario: Dashboard has link to player
      */
-    test('should have player link in dashboard', async ({ page }) => {
+    test('should have player link in dashboard', async ({ page }: { page: Page }) => {
       await page.goto('/');
       await page.waitForSelector('h1:has-text("Slide Bar")');
       const playerButton = page.locator('a:has-text("Abrir Player")');
@@ -91,7 +96,11 @@ test.describe('Player Slideshow', () => {
     /**
      * Scenario: Player shows progress indicator
      */
-    test('should show progress indicator with multiple images', async ({ page }) => {
+    test('should show progress indicator with multiple images', async ({
+      page,
+    }: {
+      page: Page;
+    }) => {
       const testImagePath = path.join(__dirname, '../fixtures/test-image.jpg');
       await uploadMultipleImages(page, testImagePath, 2);
       await page.goto('/player');
@@ -102,7 +111,7 @@ test.describe('Player Slideshow', () => {
     /**
      * Scenario: Player displays when images exist
      */
-    test('should display images in fullscreen slideshow', async ({ page }) => {
+    test('should display images in fullscreen slideshow', async ({ page }: { page: Page }) => {
       const testImagePath = path.join(__dirname, '../fixtures/test-image.jpg');
       await uploadTestImage(page, testImagePath);
       await page.goto('/player');
@@ -116,7 +125,7 @@ test.describe('Player Slideshow', () => {
     /**
      * Scenario: Player shows keyboard controls
      */
-    test('should display keyboard controls hint', async ({ page }) => {
+    test('should display keyboard controls hint', async ({ page }: { page: Page }) => {
       const testImagePath = path.join(__dirname, '../fixtures/test-image.jpg');
       await uploadTestImage(page, testImagePath);
       await page.goto('/player');
@@ -129,7 +138,13 @@ test.describe('Player Slideshow', () => {
     /**
      * Scenario: Player receives real-time updates when images are uploaded
      */
-    test('should update in real-time when new images are uploaded', async ({ page, context }) => {
+    test('should update in real-time when new images are uploaded', async ({
+      page,
+      context,
+    }: {
+      page: Page;
+      context: BrowserContext;
+    }) => {
       await page.goto('/player');
       await page.waitForLoadState('networkidle');
       await expect(page.locator('text=Nenhuma imagem disponível')).toBeVisible();
@@ -146,7 +161,13 @@ test.describe('Player Slideshow', () => {
     /**
      * Scenario: Player shows empty state when last image is deleted
      */
-    test('should show empty state when last image is deleted', async ({ page, context }) => {
+    test('should show empty state when last image is deleted', async ({
+      page,
+      context,
+    }: {
+      page: Page;
+      context: BrowserContext;
+    }) => {
       const testImagePath = path.join(__dirname, '../fixtures/test-image.jpg');
       await uploadTestImage(page, testImagePath);
 
@@ -182,7 +203,13 @@ test.describe('Player Slideshow', () => {
     /**
      * Scenario: Player shows next image when current image is deleted
      */
-    test('should show next image when current image is deleted', async ({ page, context }) => {
+    test('should show next image when current image is deleted', async ({
+      page,
+      context,
+    }: {
+      page: Page;
+      context: BrowserContext;
+    }) => {
       const testImagePath = path.join(__dirname, '../fixtures/test-image.jpg');
       await uploadMultipleImages(page, testImagePath, 2);
 

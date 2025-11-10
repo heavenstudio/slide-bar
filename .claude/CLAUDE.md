@@ -2,12 +2,13 @@
 
 ## Architecture
 
-- **Frontend**: React 19 + Vite 7 + Tailwind CSS v4
+- **Frontend**: React 19 + Vite 7 + TypeScript 5.9 (strict mode) + Tailwind CSS v4
 - **Backend**: Supabase (PostgreSQL + Auth + Storage + Realtime)
 - **Deployment**: Vercel (frontend) + Supabase Cloud (backend)
 - **Testing**: Vitest 3 (unit/integration) + Playwright 1.56 (E2E)
-- **CI/CD**: GitHub Actions (tests) + Vercel (auto-deploy)
+- **CI/CD**: GitHub Actions (lint + type-check + tests) + Vercel (auto-deploy)
 - **Migration Status**: ✅ All dependencies migrated to latest LTS/stable versions (Node 22.21.1 LTS)
+- **TypeScript Status**: ✅ Full migration complete with strict mode enabled
 - **Production Status**: ✅ Live at https://slide-bar.vercel.app
 
 ## Folder Structure
@@ -17,10 +18,11 @@ slide-bar/
 ├── docs/                 # Business/market documentation
 ├── scripts/              # Dev/test automation scripts
 ├── spec/                 # Feature specifications (spec-driven development)
-├── src/                  # React + Vite + Tailwind
-│   ├── components/       # React components
-│   ├── lib/              # Supabase API client, utilities
-│   └── pages/            # Page components
+├── src/                  # React + Vite + TypeScript + Tailwind
+│   ├── components/       # React components (.tsx)
+│   ├── lib/              # Supabase API client, utilities (.ts)
+│   ├── pages/            # Page components (.tsx)
+│   └── types/            # TypeScript types (supabase.ts auto-generated, database.ts helpers)
 ├── supabase/             # Supabase config, migrations, functions
 └── tests/                # All tests (unit + E2E + fixtures)
     ├── config/           # Test configuration (setup.js for Vitest)
@@ -59,9 +61,12 @@ slide-bar/
 
 - `pnpm start` - Start dev servers (includes Docker database)
 - `pnpm stop` - Stop all dev servers
+- `pnpm type-check` - Run TypeScript compiler (no emit, strict mode)
 - `pnpm test` - Run all unit tests
 - `pnpm test:e2e` - Run E2E tests
 - `pnpm test:coverage` - Run tests with coverage
+- `pnpm lint` - Run ESLint
+- `pnpm format` - Format code with Prettier
 
 ## Critical Compatibility Notes
 
@@ -130,11 +135,14 @@ What we're trying to achieve
 
 ### Quality Tools
 
-- ESLint v9 (flat config) - configured and passing
-- Prettier for formatting - configured
+- **TypeScript 5.9** with strict mode enabled - zero type errors
+- **Supabase Type Generation**: Auto-generated types from database schema (`src/types/supabase.ts`)
+- ESLint v9 (flat config with TypeScript support) - configured and passing
+- Prettier 3.6 for formatting - configured
 - Test coverage reporting configured (`pnpm coverage:all`)
 - 85 unit tests + 16 E2E tests = 101 total (all passing)
 - Coverage: ~97% lines, ~94% statements, ~77% branches, ~94% functions
+- Type check: `pnpm type-check` (runs in CI/CD)
 - Lint commands: `pnpm lint`, `pnpm lint:fix`
 - Format commands: `pnpm format`, `pnpm format:check`
 
@@ -183,14 +191,14 @@ When encountering ESLint warnings or errors:
 
 ### Unit/Integration Tests (Vitest)
 
-- **Location**: `tests/unit/**/*.test.{js,jsx}`
-- **Configuration**: `vitest.config.js` with `include: ['tests/unit/**/*.{test,spec}.{js,jsx}']`
+- **Location**: `tests/unit/**/*.test.{ts,tsx}` (all migrated to TypeScript)
+- **Configuration**: `vitest.config.ts` with `include: ['tests/unit/**/*.{test,spec}.{js,jsx,ts,tsx}']`
 - **CRITICAL**: Sequential execution via `pool: 'forks', singleFork: true` (prevents database race conditions)
 
 ### E2E Tests (Playwright)
 
-- **Location**: `tests/e2e/specs/*.spec.js`
-- **Configuration**: `playwright.config.mjs` with `testDir: './tests/e2e/specs'` and `testMatch: '**/*.spec.js'`
+- **Location**: `tests/e2e/specs/*.spec.ts` (all migrated to TypeScript)
+- **Configuration**: `playwright.config.ts` with `testDir: './tests/e2e/specs'` and `testMatch: '**/*.spec.{js,ts}'`
 - Tests run entirely inside Docker container (no port conflicts with dev servers)
 
 ### Combined Coverage
@@ -204,12 +212,14 @@ When encountering ESLint warnings or errors:
 
 1. Fix lint errors: `pnpm lint` (0 errors required)
 2. Format code: `pnpm format`
-3. Run full coverage: `pnpm coverage:all` (unit + E2E + merge)
+3. Check types: `pnpm type-check` (0 errors required)
+4. Run full coverage: `pnpm coverage:all` (unit + E2E + merge)
 
 **Automated Checks** (GitHub Actions - `.github/workflows/pr-checks.yml`):
 
 - ESLint validation (must pass)
 - Prettier formatting check (must pass)
+- TypeScript type check (must pass, strict mode)
 - Unit tests (Vitest with Supabase local)
 - E2E tests (Playwright with Docker)
 - Combined coverage report
@@ -248,7 +258,8 @@ Essential configuration files only:
 
 - `package.json`, `pnpm-lock.yaml` (no workspace config - flat structure)
 - `.gitignore`, `.prettierrc`, `eslint.config.js`
-- `playwright.config.mjs`, `vitest.config.js`, `vite.config.js`
+- `tsconfig.json` (TypeScript configuration with strict mode)
+- `playwright.config.ts`, `vitest.config.ts`, `vite.config.ts` (all TypeScript)
 - `index.html`, `postcss.config.js`, `tailwind.config.js` (Vite/frontend configs)
 - `docker-compose.e2e.yml` (E2E test infrastructure)
 - `README.md` (single source of truth for user docs)

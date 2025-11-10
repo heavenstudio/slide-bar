@@ -1,8 +1,8 @@
 /* eslint-disable react-hooks/rules-of-hooks */
-import { test as base } from '@playwright/test';
+import { test as base, type BrowserContext } from '@playwright/test';
 import { createClient } from '@supabase/supabase-js';
-import fs from 'fs';
-import path from 'path';
+import * as fs from 'fs';
+import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 
 /**
@@ -27,7 +27,7 @@ const SUPABASE_SERVICE_KEY =
  * Clean test database by deleting all test data
  * Uses Supabase service role to bypass RLS policies
  */
-async function cleanDatabase() {
+async function cleanDatabase(): Promise<void> {
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
     auth: {
       autoRefreshToken: false,
@@ -59,15 +59,31 @@ async function cleanDatabase() {
     }
   } catch (error) {
     // Log but don't fail - tests should handle edge cases
-    console.error('Database cleanup error:', error.message);
+    const message = error instanceof Error ? error.message : String(error);
+    console.error('Database cleanup error:', message);
   }
+}
+
+/**
+ * Declare window interface extensions for Istanbul coverage
+ */
+declare global {
+  interface Window {
+    __coverage__?: Record<string, unknown>;
+    collectIstanbulCoverage?: (coverageJSON: string) => void;
+  }
+}
+
+interface TestFixtures {
+  context: BrowserContext;
+  cleanDb: void;
 }
 
 /**
  * Extended test with database cleanup and coverage collection fixtures
  *
  * Usage in tests:
- *   import { test, expect } from './fixtures.js';
+ *   import { test, expect } from './fixtures.ts';
  *
  *   test('my test', async ({ page, context }) => {
  *     // Database is automatically cleaned after this test
@@ -76,7 +92,7 @@ async function cleanDatabase() {
  *
  * The cleanDb and coverageContext fixtures run automatically (auto: true)
  */
-export const test = base.extend({
+export const test = base.extend<TestFixtures>({
   // Coverage collection context
   context: async ({ context }, use) => {
     // Only collect coverage if E2E_COVERAGE is enabled
@@ -95,7 +111,7 @@ export const test = base.extend({
       await fs.promises.mkdir(coverageDir, { recursive: true });
 
       // Expose function to save coverage data
-      await context.exposeFunction('collectIstanbulCoverage', (coverageJSON) => {
+      await context.exposeFunction('collectIstanbulCoverage', (coverageJSON: string) => {
         if (coverageJSON) {
           const coveragePath = path.join(coverageDir, `playwright_coverage_${uuidv4()}.json`);
           fs.writeFileSync(coveragePath, coverageJSON);

@@ -2,11 +2,12 @@ import { useState, useEffect } from 'react';
 import ImageUpload from '../components/upload/ImageUpload';
 import ImageGrid from '../components/upload/ImageGrid';
 import { getImages, demoLogin } from '../lib/api';
+import { Image } from '../types/database';
 
 /**
  * Dashboard header with title and player link
  */
-function DashboardHeader() {
+function DashboardHeader(): JSX.Element {
   return (
     <header className="bg-white shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -45,10 +46,18 @@ function DashboardHeader() {
   );
 }
 
+interface UploadSectionProps {
+  isAuthenticating: boolean;
+  onUploadSuccess: (image: Image) => void;
+}
+
 /**
  * Upload section component
  */
-function UploadSection({ isAuthenticating, onUploadSuccess }) {
+function UploadSection({
+  isAuthenticating,
+  onUploadSuccess,
+}: UploadSectionProps): JSX.Element | null {
   if (isAuthenticating) return null;
   return (
     <section className="mb-12">
@@ -58,10 +67,24 @@ function UploadSection({ isAuthenticating, onUploadSuccess }) {
   );
 }
 
+interface ImagesSectionProps {
+  images: Image[];
+  isLoading: boolean;
+  error: string | null;
+  onRefresh: () => void;
+  onImageDeleted: (id: string) => void;
+}
+
 /**
  * Images section with grid and controls
  */
-function ImagesSection({ images, isLoading, error, onRefresh, onImageDeleted }) {
+function ImagesSection({
+  images,
+  isLoading,
+  error,
+  onRefresh,
+  onImageDeleted,
+}: ImagesSectionProps): JSX.Element {
   return (
     <section>
       <div className="flex justify-between items-center mb-4">
@@ -91,31 +114,41 @@ function ImagesSection({ images, isLoading, error, onRefresh, onImageDeleted }) 
   );
 }
 
+interface UseImageLoaderReturn {
+  images: Image[];
+  setImages: React.Dispatch<React.SetStateAction<Image[]>>;
+  isLoading: boolean;
+  isAuthenticating: boolean;
+  error: string | null;
+  loadImages: () => Promise<void>;
+}
+
 /**
  * Custom hook for loading images with authentication
  */
-function useImageLoader() {
-  const [images, setImages] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isAuthenticating, setIsAuthenticating] = useState(true);
-  const [error, setError] = useState(null);
+function useImageLoader(): UseImageLoaderReturn {
+  const [images, setImages] = useState<Image[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isAuthenticating, setIsAuthenticating] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const loadImages = async () => {
+  const loadImages = async (): Promise<void> => {
     try {
       setIsLoading(true);
       setError(null);
       const data = await getImages();
       setImages(data.images || []);
     } catch (err) {
-      const authError = err.message.includes('Authentication') || err.message.includes('token');
-      setError(authError ? 'Erro de autenticação. Por favor, faça login novamente.' : err.message);
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      const authError = errorMessage.includes('Authentication') || errorMessage.includes('token');
+      setError(authError ? 'Erro de autenticação. Por favor, faça login novamente.' : errorMessage);
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    const init = async () => {
+    const init = async (): Promise<void> => {
       try {
         setIsLoading(true);
         setIsAuthenticating(true);
@@ -124,7 +157,8 @@ function useImageLoader() {
         setIsAuthenticating(false);
         await loadImages();
       } catch (err) {
-        setError('Erro ao inicializar: ' + err.message);
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        setError('Erro ao inicializar: ' + errorMessage);
         setIsLoading(false);
         setIsAuthenticating(false);
       }
@@ -139,11 +173,12 @@ function useImageLoader() {
  * Dashboard Page
  * Main page for managing uploaded images
  */
-export default function Dashboard() {
+export default function Dashboard(): JSX.Element {
   const { images, setImages, isLoading, isAuthenticating, error, loadImages } = useImageLoader();
 
-  const handleUpload = (img) => setImages((prev) => [img, ...prev]);
-  const handleDelete = (id) => setImages((prev) => prev.filter((img) => img.id !== id));
+  const handleUpload = (img: Image): void => setImages((prev) => [img, ...prev]);
+  const handleDelete = (id: string): void =>
+    setImages((prev) => prev.filter((img) => img.id !== id));
 
   return (
     <div className="min-h-screen bg-gray-50">

@@ -32,6 +32,9 @@ jobs:
       - name: Check Prettier formatting
         run: pnpm format:check
 
+      - name: Run TypeScript type check
+        run: pnpm type-check
+
   test-all:
     name: Tests (Unit + E2E)
     runs-on: ubuntu-latest

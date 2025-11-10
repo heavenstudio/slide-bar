@@ -1,5 +1,28 @@
 import { useState, useRef } from 'react';
 import { uploadImage } from '../../lib/supabaseApi';
+import type { Image } from '../../types/database';
+
+/**
+ * Component Props Interfaces
+ */
+interface ImageUploadProps {
+  onUploadSuccess?: (imageData: Image) => void;
+}
+
+interface ErrorMessageProps {
+  error: string | null;
+}
+
+interface UploadAreaProps {
+  isDragging: boolean;
+  isUploading: boolean;
+  onDrop: (e: React.DragEvent<HTMLDivElement>) => void;
+  onDragOver: (e: React.DragEvent<HTMLDivElement>) => void;
+  onDragLeave: () => void;
+  onClick: () => void;
+  fileInputRef: React.RefObject<HTMLInputElement | null>;
+  onFileSelect: (e: React.ChangeEvent<HTMLInputElement>) => void;
+}
 
 /**
  * Upload area content when uploading
@@ -44,7 +67,7 @@ function IdleState() {
 /**
  * Error message display
  */
-function ErrorMessage({ error }) {
+function ErrorMessage({ error }: ErrorMessageProps) {
   if (!error) return null;
   return (
     <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
@@ -56,7 +79,7 @@ function ErrorMessage({ error }) {
 /**
  * Validates image file type and size
  */
-function validateFile(file) {
+function validateFile(file: File): boolean {
   const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
   const maxSize = 10 * 1024 * 1024; // 10MB
 
@@ -74,11 +97,14 @@ function validateFile(file) {
 /**
  * Custom hook for file upload logic
  */
-function useFileUpload(onUploadSuccess, fileInputRef) {
+function useFileUpload(
+  onUploadSuccess: ((imageData: Image) => void) | undefined,
+  fileInputRef: React.RefObject<HTMLInputElement | null>
+) {
   const [isUploading, setIsUploading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleFileUpload = async (file) => {
+  const handleFileUpload = async (file: File): Promise<void> => {
     try {
       setError(null);
       setIsUploading(true);
@@ -87,7 +113,7 @@ function useFileUpload(onUploadSuccess, fileInputRef) {
       if (onUploadSuccess) onUploadSuccess(imageData);
       if (fileInputRef.current) fileInputRef.current.value = '';
     } catch (err) {
-      setError(err.message);
+      setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setIsUploading(false);
     }
@@ -108,7 +134,7 @@ function UploadArea({
   onClick,
   fileInputRef,
   onFileSelect,
-}) {
+}: UploadAreaProps) {
   return (
     <div
       onClick={onClick}
@@ -140,25 +166,25 @@ function UploadArea({
  * Image Upload Component
  * Allows users to upload images via drag-and-drop or file selection
  */
-export default function ImageUpload({ onUploadSuccess }) {
+export default function ImageUpload({ onUploadSuccess }: ImageUploadProps) {
   const [isDragging, setIsDragging] = useState(false);
-  const fileInputRef = useRef(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { isUploading, error, handleFileUpload } = useFileUpload(onUploadSuccess, fileInputRef);
 
-  const handleDrop = (e) => {
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>): void => {
     e.preventDefault();
     setIsDragging(false);
     const files = Array.from(e.dataTransfer.files);
     if (files.length > 0) handleFileUpload(files[0]);
   };
 
-  const handleDragOver = (e) => {
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>): void => {
     e.preventDefault();
     setIsDragging(true);
   };
 
-  const handleFileSelect = (e) => {
-    const files = Array.from(e.target.files);
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>): void => {
+    const files = Array.from(e.target.files || []);
     if (files.length > 0) handleFileUpload(files[0]);
   };
 

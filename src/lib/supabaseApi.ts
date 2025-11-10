@@ -1,11 +1,10 @@
 /**
  * Supabase API Service
- * Handles communication with Supabase directly (no Express backend)
- *
- * This is the new implementation that will replace the Express-based API
+ * Handles all backend communication through Supabase
  */
 
-import { supabase } from './supabase.js';
+import { supabase } from './supabase';
+import { Image } from '../types/database';
 
 /**
  * Demo login credentials
@@ -15,10 +14,43 @@ const DEMO_EMAIL = 'demo@example.com';
 const DEMO_PASSWORD = 'demo-password-123';
 
 /**
- * Perform demo login using Supabase Auth
- * @returns {Promise<Object>} User data and token
+ * Login response type
  */
-export const demoLogin = async () => {
+export interface LoginResponse {
+  token: string;
+  user: {
+    id: string;
+    email: string | undefined;
+  };
+}
+
+/**
+ * Images response type
+ */
+export interface ImagesResponse {
+  images: Image[];
+}
+
+/**
+ * Deletion response type
+ */
+export interface DeletionResponse {
+  success: boolean;
+}
+
+/**
+ * File-like object interface (supports both File and mock objects in tests)
+ */
+export interface FileUpload {
+  name?: string;
+  type?: string;
+  size?: number;
+}
+
+/**
+ * Perform demo login using Supabase Auth
+ */
+export const demoLogin = async (): Promise<LoginResponse> => {
   const { data, error } = await supabase.auth.signInWithPassword({
     email: DEMO_EMAIL,
     password: DEMO_PASSWORD,
@@ -43,7 +75,6 @@ export const demoLogin = async () => {
 
 /**
  * Get current session
- * @returns {Promise<Object|null>} Current session or null
  */
 export const getSession = async () => {
   const {
@@ -55,7 +86,7 @@ export const getSession = async () => {
 /**
  * Sign out current user
  */
-export const signOut = async () => {
+export const signOut = async (): Promise<void> => {
   const { error } = await supabase.auth.signOut();
   if (error) {
     throw new Error(error.message);
@@ -64,9 +95,8 @@ export const signOut = async () => {
 
 /**
  * Get all images from Supabase
- * @returns {Promise<Object>} Object with images array
  */
-export const getImages = async () => {
+export const getImages = async (): Promise<ImagesResponse> => {
   const { data, error } = await supabase
     .from('images')
     .select('*')
@@ -81,22 +111,19 @@ export const getImages = async () => {
 
 /**
  * Upload an image to Supabase Storage and create database record
- * @param {File} file - Image file to upload
- * @returns {Promise<Object>} Uploaded image data
  */
-export const uploadImage = async (file) => {
+export const uploadImage = async (file: FileUpload): Promise<Image> => {
   // Generate unique filename
   // Support both File and Blob objects (Blob used in tests to work around jsdom limitations)
   const fileName = file.name || 'image.jpg';
   const fileId = crypto.randomUUID();
-  const _fileExt = fileName.split('.').pop();
   const filePath = `${fileId}/${fileName}`;
 
   // Upload to Supabase Storage
   // Explicitly pass contentType to work around jsdom File API limitations in tests
   const { data: storageData, error: storageError } = await supabase.storage
     .from('images')
-    .upload(filePath, file, {
+    .upload(filePath, file as File, {
       contentType: file.type || 'image/jpeg',
     });
 
@@ -128,6 +155,10 @@ export const uploadImage = async (file) => {
     throw new Error(`Failed to get user organization: ${userError.message}`);
   }
 
+  if (!userData) {
+    throw new Error('User organization not found');
+  }
+
   // Create database record
   const { data: imageData, error: dbError } = await supabase
     .from('images')
@@ -152,10 +183,8 @@ export const uploadImage = async (file) => {
 
 /**
  * Delete an image from Supabase Storage and database
- * @param {string} imageId - Image ID to delete
- * @returns {Promise<Object>} Deletion response
  */
-export const deleteImage = async (imageId) => {
+export const deleteImage = async (imageId: string): Promise<DeletionResponse> => {
   // First, get the image to find its storage path
   const { data: image, error: fetchError } = await supabase
     .from('images')

@@ -18,17 +18,17 @@ export const TIMEOUTS = {
 
   // Page loads
   PAGE_LOAD: 30000, // Full page load timeout
-};
+} as const;
 
 export const WAIT_TIMES = {
   // Debounce/throttle waits
   SHORT: 100, // Short wait for UI updates
   MEDIUM: 500, // Medium wait for animations
   LONG: 1000, // Long wait for complex operations
-};
+} as const;
 
 export const RETRY = {
   // Retry configuration for flaky operations
   MAX_ATTEMPTS: 3,
   DELAY: 1000, // Delay between retries
-};
+} as const;
