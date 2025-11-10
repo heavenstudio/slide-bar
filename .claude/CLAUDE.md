@@ -255,19 +255,27 @@ const storageData = createMockStorageData('uploads/image.jpg');
 
 **Pre-Commit Hook (Husky):**
 
-- Automatically runs on every commit:
+- Automatically runs on every commit (fast checks only, ~30s):
   1. Prettier formatting check
   2. ESLint validation
   3. TypeScript type checking
-  4. Full test coverage (unit + E2E)
+  4. Unit tests only (85 tests)
 - Output is suppressed for speed, only shows pass/fail status
 - If any check fails, commit is blocked with helpful error message
 - To bypass (NOT recommended): `git commit --no-verify`
 
+**Pre-Push Hook (Husky):**
+
+- Automatically runs before push (thorough checks, ~2-3 min):
+  1. Full test coverage (unit + E2E + merge)
+  2. Coverage threshold validation
+- Ensures all code pushed to remote has complete test coverage
+- To bypass (NOT recommended): `git push --no-verify`
+
 **Before Creating PR:**
 
-1. Pre-commit hook handles all checks automatically
-2. If hook is bypassed, manually run: `pnpm lint && pnpm format && pnpm type-check && pnpm coverage:all`
+1. Hooks handle all checks automatically (pre-commit + pre-push)
+2. If hooks are bypassed, manually run: `pnpm lint && pnpm format && pnpm type-check && pnpm coverage:all`
 
 **Automated Checks** (GitHub Actions - `.github/workflows/pr-checks.yml`):
 

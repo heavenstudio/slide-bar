@@ -1,0 +1,14 @@
+#!/bin/sh
+# Husky pre-push hook - Thorough coverage check before push
+
+echo "🔍 Running pre-push checks (thorough)..."
+
+# Run full test coverage (unit + E2E + merge)
+echo "\n🧪 Running full test coverage (this may take 2-3 minutes)..."
+pnpm coverage:all > /dev/null 2>&1 || {
+  echo "❌ Coverage check failed. Run 'pnpm coverage:all' to see details."
+  exit 1
+}
+echo "✅ Full coverage passed"
+
+echo "\n✅ All pre-push checks passed! Ready to push."

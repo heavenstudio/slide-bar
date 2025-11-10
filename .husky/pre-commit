@@ -1,7 +1,7 @@
 #!/bin/sh
-# Husky pre-commit hook - Run all quality checks before commit
+# Husky pre-commit hook - Fast quality checks before commit
 
-echo "🔍 Running pre-commit checks..."
+echo "🔍 Running pre-commit checks (fast)..."
 
 # 1. Format check
 echo "\n📝 Checking code formatting..."
@@ -27,12 +27,13 @@ pnpm type-check > /dev/null 2>&1 || {
 }
 echo "✅ Type checking passed"
 
-# 4. Run tests with coverage
-echo "\n🧪 Running tests with coverage (this may take a minute)..."
-pnpm coverage:all > /dev/null 2>&1 || {
-  echo "❌ Tests or coverage check failed. Run 'pnpm coverage:all' to see details."
+# 4. Run unit tests only (fast)
+echo "\n🧪 Running unit tests..."
+pnpm test > /dev/null 2>&1 || {
+  echo "❌ Unit tests failed. Run 'pnpm test' to see details."
   exit 1
 }
-echo "✅ Tests and coverage passed"
+echo "✅ Unit tests passed"
 
 echo "\n✅ All pre-commit checks passed!"
+echo "💡 Full coverage (unit + E2E) will run on pre-push"
