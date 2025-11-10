@@ -546,3 +546,21 @@ pool: 'forks',           // Each file in separate fork
 1. **fileParallelism vs singleFork**: Use `fileParallelism: false` instead of `singleFork: true` in Vitest v4 for sequential execution with proper isolation
 2. **Test isolation is critical**: Module-level mocks require proper process isolation to prevent leakage
 3. **Configuration over code**: The entire migration was solved with a single config change - no test modifications needed!
+4. **vi.restoreAllMocks() IS necessary**: Even with proper isolation, spy cleanup is critical within test files to prevent leakage between tests in the same describe block
+5. **React act() warnings**: Suppress in test setup (`tests/config/setup.ts`) rather than wrapping every state update - async operations completing after cleanup are expected in test environments
+6. **Optimization trap**: Don't add unnecessary changes like `testTimeout` increases or extra `waitFor()` calls - test with minimal changes to verify what's actually needed
+
+### What We Learned NOT To Do
+
+1. ❌ **Don't add testTimeout without verifying it's needed** - Tests ran fine with default timeout after proper isolation
+2. ❌ **Don't add extra waitFor() calls "just in case"** - If warnings are suppressed properly, these are unnecessary
+3. ❌ **Don't assume vi.restoreAllMocks() is optional** - It's required for spy cleanup between tests in the same file
+4. ❌ **Don't try to fix act() warnings by making tests wait longer** - The proper fix is to suppress them in setup.ts since they're expected behavior
+
+### Migration Challenges Overcome
+
+1. **Initial attempt**: 81/85 tests passing - spy leakage between test files
+2. **Hypothesis**: Needed to remove vi.restoreAllMocks() or change cleanup order → Both wrong
+3. **Solution discovery**: Found `fileParallelism: false` is the v4 replacement for `singleFork: true`
+4. **Result**: All 85 tests passing with ONE config line change
+5. **Cleanup**: Removed unnecessary changes (testTimeout, extra waitFor calls) while keeping essential ones (vi.restoreAllMocks, act() suppression)

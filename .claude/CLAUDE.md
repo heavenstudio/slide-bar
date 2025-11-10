@@ -5,7 +5,7 @@
 - **Frontend**: React 19 + Vite 7 + TypeScript 5.9 (strict mode) + Tailwind CSS v4
 - **Backend**: Supabase (PostgreSQL + Auth + Storage + Realtime)
 - **Deployment**: Vercel (frontend) + Supabase Cloud (backend)
-- **Testing**: Vitest 3 (unit/integration) + Playwright 1.56 (E2E)
+- **Testing**: Vitest 4.0.8 (unit/integration) + Playwright 1.56 (E2E)
 - **CI/CD**: GitHub Actions (lint + type-check + tests) + Vercel (auto-deploy)
 - **Migration Status**: ✅ All dependencies migrated to latest LTS/stable versions (Node 22.21.1 LTS)
 - **TypeScript Status**: ✅ Full migration complete with strict mode enabled
@@ -197,6 +197,18 @@ When encountering ESLint warnings or errors:
 - **Isolated from dev**: Unit tests use TEST Supabase (port 55321), dev uses main Supabase (port 54321)
 - **Shared TEST instance**: Both unit and E2E tests use the same TEST instance (started by E2E script)
 
+### Test Configuration & Warning Suppression
+
+**`tests/config/setup.ts`** - Global test setup:
+
+- Imports `@testing-library/jest-dom` for DOM matchers
+- **Suppresses expected test warnings**:
+  - **GoTrueClient multiple instances**: Expected when creating fresh Supabase instances per test
+  - **React act() warnings**: Expected when async operations (Supabase calls) complete after test cleanup
+- **Why suppress instead of fix**: These warnings indicate expected behavior in test environments, not actual issues
+  - act() warnings happen because components are unmounted during cleanup while async operations are still pending
+  - Wrapping every state update in act() or adding extra waitFor() calls is unnecessary and makes tests harder to maintain
+
 ### Test Helpers
 
 **`tests/helpers/supabase.ts`** - Supabase test utilities:
@@ -238,7 +250,9 @@ const storageData = createMockStorageData('uploads/image.jpg');
 
 - **Location**: `tests/unit/**/*.test.{ts,tsx}` (all migrated to TypeScript)
 - **Configuration**: `vitest.config.ts` with `include: ['tests/unit/**/*.{test,spec}.{js,jsx,ts,tsx}']`
-- **CRITICAL**: Sequential execution via `pool: 'forks', singleFork: true` (prevents database race conditions)
+- **CRITICAL**: Sequential execution via `fileParallelism: false` + `pool: 'forks'` (prevents database race conditions + ensures test isolation)
+  - **Vitest v4 change**: Replaced `singleFork: true` with `fileParallelism: false` - each test file runs in its own fork sequentially
+  - **Why it matters**: Module-level mocks (like `vi.mock()`) leak between files without proper process isolation
 
 ### E2E Tests (Playwright)
 
