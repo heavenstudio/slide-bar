@@ -3,11 +3,14 @@ node_modules/
 .pnp
 .pnp.js
 .pnpm-store/
+patches/
+pnpm-workspace.yaml
 
 # Testing
 .test-output/
 .nyc_output/
 *.lcov
+coverage/
 
 # Production
 dist/
