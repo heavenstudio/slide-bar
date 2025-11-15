@@ -159,6 +159,15 @@ export const uploadImage = async (file: FileUpload): Promise<Image> => {
     throw new Error('User organization not found');
   }
 
+  // Get organization settings for default duration
+  const { data: orgSettings } = await supabase
+    .from('organization_settings')
+    .select('default_slide_duration')
+    .eq('organization_id', userData.organization_id)
+    .maybeSingle();
+
+  const displayDuration = orgSettings?.default_slide_duration || 5000;
+
   // Create database record
   const { data: imageData, error: dbError } = await supabase
     .from('images')
@@ -170,6 +179,7 @@ export const uploadImage = async (file: FileUpload): Promise<Image> => {
       path: storageData.path,
       url: publicUrl,
       organization_id: userData.organization_id,
+      display_duration: displayDuration,
     })
     .select()
     .single();
