@@ -448,6 +448,48 @@ describe('ImageGrid - Duration Editing', () => {
     });
   });
 
+  it('should save duration when Enter key is pressed', async () => {
+    updateImageDurationSpy.mockResolvedValue({ success: true });
+    const mockOnImageUpdated = vi.fn();
+    const mockImages = [createMockImage({ id: 'test-id' })];
+
+    render(<ImageGrid images={mockImages} onImageUpdated={mockOnImageUpdated} />);
+
+    // Enter edit mode
+    fireEvent.click(screen.getByText(/⏱/));
+
+    // Change value
+    const input = screen.getByDisplayValue('5');
+    fireEvent.change(input, { target: { value: '8.5' } });
+
+    // Press Enter
+    fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' });
+
+    await waitFor(() => {
+      expect(updateImageDurationSpy).toHaveBeenCalledWith('test-id', 8500);
+      expect(mockOnImageUpdated).toHaveBeenCalledWith('test-id', 8500);
+    });
+  });
+
+  it('should cancel editing when Escape key is pressed', () => {
+    const mockImages = [createMockImage({ display_duration: 5000 })];
+    render(<ImageGrid images={mockImages} />);
+
+    // Enter edit mode
+    fireEvent.click(screen.getByText(/⏱/));
+
+    // Change value
+    const input = screen.getByDisplayValue('5');
+    fireEvent.change(input, { target: { value: '10.0' } });
+
+    // Press Escape
+    fireEvent.keyDown(input, { key: 'Escape', code: 'Escape' });
+
+    // Should exit edit mode and revert to original display
+    expect(screen.getByText('⏱ 5.0s')).toBeInTheDocument();
+    expect(screen.queryByDisplayValue('10.0')).not.toBeInTheDocument();
+  });
+
   it('should disable inputs while saving duration', async () => {
     let resolveSave: (value: { success: boolean }) => void;
     const savePromise = new Promise<{ success: boolean }>((resolve) => {
@@ -859,5 +901,53 @@ describe('ImageGrid - Batch Duration Editor', () => {
     });
 
     resolveSave!({ success: true });
+  });
+
+  it('should save batch duration when Enter key is pressed', async () => {
+    updateImageDurationSpy.mockResolvedValue({ success: true });
+    const mockImages = createMockImages(2);
+
+    render(<ImageGrid images={mockImages} />);
+
+    // Select all
+    const selectAllButton = screen.getByText('Selecionar Todas');
+    fireEvent.click(selectAllButton);
+
+    // Open batch editor
+    const batchEditButton = screen.getByText('Definir Duração em Lote');
+    fireEvent.click(batchEditButton);
+
+    // Change value
+    const input = screen.getByDisplayValue('5.0');
+    fireEvent.change(input, { target: { value: '9.5' } });
+
+    // Press Enter
+    fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' });
+
+    await waitFor(() => {
+      expect(updateImageDurationSpy).toHaveBeenCalled();
+      expect(window.alert).toHaveBeenCalledWith('Duração atualizada para 2 imagens');
+    });
+  });
+
+  it('should close batch editor when Escape key is pressed', () => {
+    const mockImages = createMockImages(2);
+    render(<ImageGrid images={mockImages} />);
+
+    const checkbox = screen.getAllByRole('checkbox')[0];
+    fireEvent.click(checkbox);
+
+    const batchEditButton = screen.getByText('Definir Duração em Lote');
+    fireEvent.click(batchEditButton);
+
+    // Modal should be visible
+    expect(screen.getByText(/Definir Duração para/)).toBeInTheDocument();
+
+    const input = screen.getByDisplayValue('5.0');
+    // Press Escape
+    fireEvent.keyDown(input, { key: 'Escape', code: 'Escape' });
+
+    // Modal should be closed
+    expect(screen.queryByText(/Definir Duração para/)).not.toBeInTheDocument();
   });
 });

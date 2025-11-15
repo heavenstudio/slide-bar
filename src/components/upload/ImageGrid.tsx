@@ -126,6 +126,16 @@ function ImageCard({
     setIsEditing(false);
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSave();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      handleCancel();
+    }
+  };
+
   return (
     <div
       key={image.id}
@@ -169,6 +179,7 @@ function ImageCard({
               min="0.1"
               value={durationSeconds}
               onChange={(e) => setDurationSeconds(e.target.value)}
+              onKeyDown={handleKeyDown}
               className="w-14 px-1 py-0.5 text-xs border border-gray-300 rounded"
               disabled={isSaving}
               autoFocus
@@ -296,6 +307,16 @@ export default function ImageGrid({ images, onImageDeleted, onImageUpdated }: Im
     }
   };
 
+  const handleBatchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleBatchSave();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      setShowBatchEditor(false);
+    }
+  };
+
   if (!images || images.length === 0) {
     return <EmptyState />;
   }
@@ -349,6 +370,7 @@ export default function ImageGrid({ images, onImageDeleted, onImageUpdated }: Im
                 min="0.1"
                 value={batchDuration}
                 onChange={(e) => setBatchDuration(e.target.value)}
+                onKeyDown={handleBatchKeyDown}
                 className="flex-1 px-3 py-2 border border-gray-300 rounded"
                 disabled={isBatchSaving}
                 autoFocus
