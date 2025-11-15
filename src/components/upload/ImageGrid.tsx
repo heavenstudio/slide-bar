@@ -103,6 +103,7 @@ function ImageCard({ image, onDelete, isDeleting }: ImageCardProps) {
           {image.original_name}
         </p>
         <p className="text-xs text-gray-400">{formatFileSize(image.size)}</p>
+        <p className="text-xs text-gray-500">⏱ {(image.display_duration / 1000).toFixed(1)}s</p>
       </div>
 
       <DeleteButton imageId={image.id} isDeleting={isDeleting} onDelete={onDelete} />
