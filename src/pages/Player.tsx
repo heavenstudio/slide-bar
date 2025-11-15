@@ -172,18 +172,20 @@ function useKeyboardControls(
 export default function Player() {
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [isPaused, setIsPaused] = useState<boolean>(false);
-  const [slideDuration] = useState<number>(5000);
 
   const { images, isLoading, error } = useImageLoader(setCurrentIndex);
+
+  // Get current image's display duration, fallback to 5000ms if not set
+  const currentDuration = images[currentIndex]?.display_duration ?? 5000;
 
   useEffect(() => {
     if (images.length === 0 || isPaused) return;
     const timer: NodeJS.Timeout = setInterval(
       () => setCurrentIndex((prev) => (prev + 1) % images.length),
-      slideDuration
+      currentDuration
     );
     return () => clearInterval(timer);
-  }, [images.length, isPaused, slideDuration]);
+  }, [images.length, isPaused, currentDuration, currentIndex]);
 
   useKeyboardControls(images.length, setIsPaused, setCurrentIndex);
 
