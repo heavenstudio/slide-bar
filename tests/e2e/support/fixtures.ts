@@ -46,6 +46,16 @@ async function cleanDatabase(): Promise<void> {
       console.error('Failed to delete images:', imagesError.message);
     }
 
+    // Delete all organization settings
+    const { error: settingsError } = await supabase
+      .from('organization_settings')
+      .delete()
+      .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all rows
+
+    if (settingsError) {
+      console.error('Failed to delete organization_settings:', settingsError.message);
+    }
+
     // Clean up storage bucket (in case trigger didn't work)
     const { data: objects, error: listError } = await supabase.storage.from('images').list();
 

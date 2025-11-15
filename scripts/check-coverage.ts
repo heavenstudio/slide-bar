@@ -25,13 +25,13 @@ const __dirname = dirname(__filename);
 const THRESHOLDS = {
   // Critical blockers (exit code 1)
   OVERALL_MIN: 85, // Absolute minimum - blocks if below
-  TSX_MIN: 100, // All TSX files must have 100% coverage
+  TSX_MIN: 90, // Individual TSX files must have at least 90% - blocks if below
+  LIB_MIN: 85, // Individual lib files must have at least 85% - blocks if below
 
-  // Targets (warnings if below)
+  // Targets (warnings if below, but doesn't block)
   OVERALL_TARGET: 90,
-  PAGES_TARGET: 95,
-  COMPONENTS_TARGET: 100,
-  LIB_TARGET: 95,
+  TSX_TARGET: 100, // Goal for TSX files
+  LIB_TARGET: 95, // Goal for lib files
 };
 
 // Files to exclude from TSX coverage checks (entry points)
@@ -167,12 +167,21 @@ function checkTSXFileCoverage(
       threshold: THRESHOLDS.TSX_MIN,
     });
   } else if (fileData.lines.pct < THRESHOLDS.TSX_MIN) {
+    violations.critical.push({
+      type: 'TSX_BELOW_MIN',
+      file: filePath,
+      message: `TSX file has ${fileData.lines.pct.toFixed(2)}% coverage (minimum: ${THRESHOLDS.TSX_MIN}%)`,
+      current: fileData.lines.pct,
+      threshold: THRESHOLDS.TSX_MIN,
+      uncoveredLines: fileData.lines.total - fileData.lines.covered,
+    });
+  } else if (fileData.lines.pct < THRESHOLDS.TSX_TARGET) {
     violations.warnings.push({
       type: 'TSX_BELOW_TARGET',
       file: filePath,
-      message: `TSX file has ${fileData.lines.pct.toFixed(2)}% coverage (target: ${THRESHOLDS.TSX_MIN}%)`,
+      message: `TSX file has ${fileData.lines.pct.toFixed(2)}% coverage (target: ${THRESHOLDS.TSX_TARGET}%)`,
       current: fileData.lines.pct,
-      threshold: THRESHOLDS.TSX_MIN,
+      threshold: THRESHOLDS.TSX_TARGET,
       uncoveredLines: fileData.lines.total - fileData.lines.covered,
     });
   }
@@ -196,14 +205,24 @@ function analyzeCoverage(coverage: CoverageSummary): Violations {
       checkTSXFileCoverage(filePath, fileData, violations);
     }
 
-    if (filePath.includes('/lib/') && fileData.lines.pct < THRESHOLDS.LIB_TARGET) {
-      violations.warnings.push({
-        type: 'LIB_BELOW_TARGET',
-        file: filePath,
-        message: `Lib file has ${fileData.lines.pct.toFixed(2)}% coverage (target: ${THRESHOLDS.LIB_TARGET}%)`,
-        current: fileData.lines.pct,
-        threshold: THRESHOLDS.LIB_TARGET,
-      });
+    if (filePath.includes('/lib/')) {
+      if (fileData.lines.pct < THRESHOLDS.LIB_MIN) {
+        violations.critical.push({
+          type: 'LIB_BELOW_MIN',
+          file: filePath,
+          message: `Lib file has ${fileData.lines.pct.toFixed(2)}% coverage (minimum: ${THRESHOLDS.LIB_MIN}%)`,
+          current: fileData.lines.pct,
+          threshold: THRESHOLDS.LIB_MIN,
+        });
+      } else if (fileData.lines.pct < THRESHOLDS.LIB_TARGET) {
+        violations.warnings.push({
+          type: 'LIB_BELOW_TARGET',
+          file: filePath,
+          message: `Lib file has ${fileData.lines.pct.toFixed(2)}% coverage (target: ${THRESHOLDS.LIB_TARGET}%)`,
+          current: fileData.lines.pct,
+          threshold: THRESHOLDS.LIB_TARGET,
+        });
+      }
     }
   }
 
@@ -236,9 +255,9 @@ function printViolations(violations: Violations): boolean {
     console.error('⛔ Build BLOCKED - Fix critical violations above');
   }
 
-  // Print warnings
-  if (violations.warnings.length > 0) {
-    console.warn('\n⚠️  WARNINGS (Build Passes)\n');
+  // Print warnings (only if no critical violations)
+  if (!hasIssues && violations.warnings.length > 0) {
+    console.warn('\n⚠️  WARNINGS (Targets Not Met)\n');
     console.warn('='.repeat(60));
 
     for (const warning of violations.warnings) {
@@ -255,7 +274,7 @@ function printViolations(violations: Violations): boolean {
     }
 
     console.warn('\n' + '='.repeat(60));
-    console.warn('⚠️  Build PASSES with warnings - Consider adding tests');
+    console.warn('✅ Build PASSES with warnings - Consider adding tests to meet targets');
   }
 
   // Print success message
