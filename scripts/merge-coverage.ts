@@ -171,13 +171,49 @@ function mergeCoverage(): boolean {
     // Create merged-coverage directory structure
     const mergedDir = join(projectRoot, '.test-output/merged-coverage');
     const mergedNycOutput = join(mergedDir, '.nyc_output');
-    mkdirSync(mergedNycOutput, { recursive: true });
+    const tempE2EDir = join(projectRoot, '.test-output/temp-e2e');
+    const tempFinalDir = join(projectRoot, '.test-output/temp-final');
 
-    // Merge all coverage files using nyc into .nyc_output subdirectory
-    execSync(`npx nyc merge .nyc_output ${join(mergedNycOutput, 'coverage.json')}`, {
+    mkdirSync(mergedNycOutput, { recursive: true });
+    mkdirSync(tempE2EDir, { recursive: true });
+    mkdirSync(tempFinalDir, { recursive: true });
+
+    // Step 1: Merge all Playwright E2E coverage files together first
+    const playwrightFiles = coverageFiles.filter((f) => f.startsWith('playwright_'));
+    const vitestFile = coverageFiles.find((f) => f.startsWith('vitest_'));
+
+    if (playwrightFiles.length > 0) {
+      console.log(`\n📦 Step 1: Merging ${playwrightFiles.length} E2E coverage files...`);
+
+      // Copy playwright files to temp directory
+      playwrightFiles.forEach((file) => {
+        execSync(`cp ${join(nycOutput, file)} ${tempE2EDir}/`, { cwd: projectRoot });
+      });
+
+      // Merge E2E files
+      execSync(`npx nyc merge ${tempE2EDir} ${join(tempFinalDir, 'e2e_merged.json')}`, {
+        cwd: projectRoot,
+        stdio: 'pipe',
+      });
+      console.log('✅ E2E coverage files merged');
+    }
+
+    // Step 2: Merge the consolidated E2E coverage with Vitest coverage
+    console.log('\n📦 Step 2: Merging E2E + Vitest coverage...');
+
+    // Copy vitest coverage to final temp directory
+    if (vitestFile) {
+      execSync(`cp ${join(nycOutput, vitestFile)} ${tempFinalDir}/`, { cwd: projectRoot });
+    }
+
+    // Merge E2E + Vitest
+    execSync(`npx nyc merge ${tempFinalDir} ${join(mergedNycOutput, 'coverage.json')}`, {
       cwd: projectRoot,
       stdio: 'inherit',
     });
+
+    // Clean up temp directories
+    execSync(`rm -rf ${tempE2EDir} ${tempFinalDir}`, { cwd: projectRoot });
 
     // Generate reports from merged coverage - exclude non-src paths
     execSync(

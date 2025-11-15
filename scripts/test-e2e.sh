@@ -48,6 +48,12 @@ docker exec supabase_kong_slide-bar-test curl -s -X POST \
 echo "🧪 Running E2E tests with unified Docker Compose..."
 cd "$PROJECT_ROOT"
 
+# Clean up old Playwright coverage files to start fresh
+if [ "$E2E_COVERAGE" = "true" ]; then
+  echo "🧹 Cleaning old E2E coverage files..."
+  rm -f .nyc_output/playwright_coverage_*.json 2>/dev/null || true
+fi
+
 # Stop any existing test containers
 docker compose -f config/docker-compose.test.yml down 2>/dev/null || true
 

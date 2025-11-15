@@ -288,3 +288,576 @@ describe('ImageGrid - Delete Error Handling', () => {
     // Should not throw error when callback is not provided
   });
 });
+
+describe('ImageGrid - Duration Editing', () => {
+  beforeEach(() => {
+    cleanup();
+    vi.clearAllMocks();
+    global.window.confirm = vi.fn(() => true);
+    global.window.alert = vi.fn();
+  });
+
+  const updateImageDurationSpy = vi.spyOn(api, 'updateImageDuration');
+
+  it('should display current duration for each image', () => {
+    const mockImages = [createMockImage({ display_duration: 5000 })];
+    render(<ImageGrid images={mockImages} />);
+
+    expect(screen.getByText('⏱ 5.0s')).toBeInTheDocument();
+  });
+
+  it('should enter edit mode when duration button clicked', () => {
+    const mockImages = [createMockImage()];
+    render(<ImageGrid images={mockImages} />);
+
+    const durationButton = screen.getByText(/⏱/);
+    fireEvent.click(durationButton);
+
+    expect(screen.getByDisplayValue('5')).toBeInTheDocument(); // default duration (toString removes .0)
+  });
+
+  it('should allow changing duration value', () => {
+    const mockImages = [createMockImage()];
+    render(<ImageGrid images={mockImages} />);
+
+    const durationButton = screen.getByText(/⏱/);
+    fireEvent.click(durationButton);
+
+    const input = screen.getByDisplayValue('5') as HTMLInputElement;
+    fireEvent.change(input, { target: { value: '7.5' } });
+
+    expect(input.value).toBe('7.5');
+  });
+
+  it('should save duration when save button clicked', async () => {
+    updateImageDurationSpy.mockResolvedValue({ success: true });
+    const mockOnImageUpdated = vi.fn();
+    const mockImages = [createMockImage({ id: 'test-id' })];
+
+    render(<ImageGrid images={mockImages} onImageUpdated={mockOnImageUpdated} />);
+
+    // Enter edit mode
+    fireEvent.click(screen.getByText(/⏱/));
+
+    // Change value
+    const input = screen.getByDisplayValue('5');
+    fireEvent.change(input, { target: { value: '7.5' } });
+
+    // Click save
+    const saveButton = screen.getByTitle('Salvar');
+    fireEvent.click(saveButton);
+
+    await waitFor(() => {
+      expect(updateImageDurationSpy).toHaveBeenCalledWith('test-id', 7500);
+      expect(mockOnImageUpdated).toHaveBeenCalledWith('test-id', 7500);
+    });
+  });
+
+  it('should cancel editing when cancel button clicked', () => {
+    const mockImages = [createMockImage({ display_duration: 5000 })];
+    render(<ImageGrid images={mockImages} />);
+
+    // Enter edit mode
+    fireEvent.click(screen.getByText(/⏱/));
+
+    // Change value
+    const input = screen.getByDisplayValue('5');
+    fireEvent.change(input, { target: { value: '10.0' } });
+
+    // Click cancel
+    const cancelButton = screen.getByTitle('Cancelar');
+    fireEvent.click(cancelButton);
+
+    // Should exit edit mode and revert to original display
+    expect(screen.getByText('⏱ 5.0s')).toBeInTheDocument();
+    expect(screen.queryByDisplayValue('10.0')).not.toBeInTheDocument();
+  });
+
+  it('should show alert for invalid duration (zero)', async () => {
+    const mockImages = [createMockImage()];
+    render(<ImageGrid images={mockImages} />);
+
+    fireEvent.click(screen.getByText(/⏱/));
+
+    const input = screen.getByDisplayValue('5');
+    fireEvent.change(input, { target: { value: '0' } });
+
+    const saveButton = screen.getByTitle('Salvar');
+    fireEvent.click(saveButton);
+
+    await waitFor(() => {
+      expect(window.alert).toHaveBeenCalledWith(
+        'Por favor, insira uma duração válida (maior que 0)'
+      );
+    });
+  });
+
+  it('should show alert for invalid duration (negative)', async () => {
+    const mockImages = [createMockImage()];
+    render(<ImageGrid images={mockImages} />);
+
+    fireEvent.click(screen.getByText(/⏱/));
+
+    const input = screen.getByDisplayValue('5');
+    fireEvent.change(input, { target: { value: '-1' } });
+
+    const saveButton = screen.getByTitle('Salvar');
+    fireEvent.click(saveButton);
+
+    await waitFor(() => {
+      expect(window.alert).toHaveBeenCalledWith(
+        'Por favor, insira uma duração válida (maior que 0)'
+      );
+    });
+  });
+
+  it('should show alert for invalid duration (NaN)', async () => {
+    const mockImages = [createMockImage()];
+    render(<ImageGrid images={mockImages} />);
+
+    fireEvent.click(screen.getByText(/⏱/));
+
+    const input = screen.getByDisplayValue('5');
+    fireEvent.change(input, { target: { value: 'abc' } });
+
+    const saveButton = screen.getByTitle('Salvar');
+    fireEvent.click(saveButton);
+
+    await waitFor(() => {
+      expect(window.alert).toHaveBeenCalledWith(
+        'Por favor, insira uma duração válida (maior que 0)'
+      );
+    });
+  });
+
+  it('should show error alert when duration update fails', async () => {
+    updateImageDurationSpy.mockRejectedValue(new Error('Update failed'));
+    const mockImages = [createMockImage()];
+
+    render(<ImageGrid images={mockImages} />);
+
+    fireEvent.click(screen.getByText(/⏱/));
+    const input = screen.getByDisplayValue('5');
+    fireEvent.change(input, { target: { value: '7.5' } });
+
+    const saveButton = screen.getByTitle('Salvar');
+    fireEvent.click(saveButton);
+
+    await waitFor(() => {
+      expect(window.alert).toHaveBeenCalledWith('Erro ao atualizar duração: Update failed');
+    });
+  });
+
+  it('should disable inputs while saving duration', async () => {
+    let resolveSave: (value: { success: boolean }) => void;
+    const savePromise = new Promise<{ success: boolean }>((resolve) => {
+      resolveSave = resolve;
+    });
+    updateImageDurationSpy.mockReturnValue(savePromise);
+
+    const mockImages = [createMockImage()];
+    render(<ImageGrid images={mockImages} />);
+
+    fireEvent.click(screen.getByText(/⏱/));
+    const input = screen.getByDisplayValue('5') as HTMLInputElement;
+    fireEvent.change(input, { target: { value: '7.5' } });
+
+    const saveButton = screen.getByTitle('Salvar') as HTMLButtonElement;
+    const cancelButton = screen.getByTitle('Cancelar') as HTMLButtonElement;
+    fireEvent.click(saveButton);
+
+    await waitFor(() => {
+      expect(input.disabled).toBe(true);
+      expect(saveButton.disabled).toBe(true);
+      expect(cancelButton.disabled).toBe(true);
+    });
+
+    resolveSave!({ success: true });
+  });
+
+  it('should work without onImageUpdated callback', async () => {
+    updateImageDurationSpy.mockResolvedValue({ success: true });
+    const mockImages = [createMockImage()];
+
+    // No onImageUpdated callback provided
+    render(<ImageGrid images={mockImages} />);
+
+    fireEvent.click(screen.getByText(/⏱/));
+    const input = screen.getByDisplayValue('5');
+    fireEvent.change(input, { target: { value: '7.5' } });
+
+    const saveButton = screen.getByTitle('Salvar');
+    fireEvent.click(saveButton);
+
+    await waitFor(() => {
+      expect(updateImageDurationSpy).toHaveBeenCalled();
+    });
+    // Should not throw error
+  });
+});
+
+describe('ImageGrid - Selection Functionality', () => {
+  beforeEach(() => {
+    cleanup();
+    vi.clearAllMocks();
+    global.window.confirm = vi.fn(() => true);
+    global.window.alert = vi.fn();
+  });
+
+  it('should render selection checkboxes for each image', () => {
+    const mockImages = createMockImages(3);
+    render(<ImageGrid images={mockImages} />);
+
+    const checkboxes = screen.getAllByRole('checkbox');
+    expect(checkboxes).toHaveLength(3);
+  });
+
+  it('should select image when checkbox clicked', () => {
+    const mockImages = createMockImages(2);
+    render(<ImageGrid images={mockImages} />);
+
+    const checkboxes = screen.getAllByRole('checkbox');
+    fireEvent.click(checkboxes[0]);
+
+    expect(checkboxes[0]).toBeChecked();
+    expect(checkboxes[1]).not.toBeChecked();
+  });
+
+  it('should deselect image when checkbox clicked again', () => {
+    const mockImages = createMockImages(1);
+    render(<ImageGrid images={mockImages} />);
+
+    const checkbox = screen.getByRole('checkbox');
+
+    // Select
+    fireEvent.click(checkbox);
+    expect(checkbox).toBeChecked();
+
+    // Deselect
+    fireEvent.click(checkbox);
+    expect(checkbox).not.toBeChecked();
+  });
+
+  it('should select all images when "Selecionar Todas" clicked', () => {
+    const mockImages = createMockImages(3);
+    render(<ImageGrid images={mockImages} />);
+
+    const selectAllButton = screen.getByText('Selecionar Todas');
+    fireEvent.click(selectAllButton);
+
+    const checkboxes = screen.getAllByRole('checkbox');
+    checkboxes.forEach((checkbox) => {
+      expect(checkbox).toBeChecked();
+    });
+  });
+
+  it('should deselect all images when "Desmarcar Todas" clicked', () => {
+    const mockImages = createMockImages(3);
+    render(<ImageGrid images={mockImages} />);
+
+    // First select all
+    const selectAllButton = screen.getByText('Selecionar Todas');
+    fireEvent.click(selectAllButton);
+
+    // Then deselect all
+    const deselectAllButton = screen.getByText('Desmarcar Todas');
+    fireEvent.click(deselectAllButton);
+
+    const checkboxes = screen.getAllByRole('checkbox');
+    checkboxes.forEach((checkbox) => {
+      expect(checkbox).not.toBeChecked();
+    });
+  });
+
+  it('should show selected count', () => {
+    const mockImages = createMockImages(3);
+    render(<ImageGrid images={mockImages} />);
+
+    const checkboxes = screen.getAllByRole('checkbox');
+    fireEvent.click(checkboxes[0]);
+    fireEvent.click(checkboxes[1]);
+
+    expect(screen.getByText('2 selecionadas')).toBeInTheDocument();
+  });
+
+  it('should show batch edit button when images selected', () => {
+    const mockImages = createMockImages(2);
+    render(<ImageGrid images={mockImages} />);
+
+    const checkbox = screen.getAllByRole('checkbox')[0];
+    fireEvent.click(checkbox);
+
+    expect(screen.getByText('Definir Duração em Lote')).toBeInTheDocument();
+  });
+
+  it('should disable "Desmarcar Todas" when no images selected', () => {
+    const mockImages = createMockImages(2);
+    render(<ImageGrid images={mockImages} />);
+
+    const deselectAllButton = screen.getByText('Desmarcar Todas') as HTMLButtonElement;
+    expect(deselectAllButton.disabled).toBe(true);
+  });
+
+  it('should add selected class to selected images', () => {
+    const mockImages = createMockImages(2);
+    render(<ImageGrid images={mockImages} />);
+
+    const checkbox = screen.getAllByRole('checkbox')[0];
+    const imageCard = screen.getAllByTestId('image-card')[0];
+
+    // Initially not selected
+    expect(imageCard.className).not.toContain('border-blue-500');
+
+    // Select image
+    fireEvent.click(checkbox);
+    expect(imageCard.className).toContain('border-blue-500');
+  });
+});
+
+describe('ImageGrid - Batch Duration Editor', () => {
+  beforeEach(() => {
+    cleanup();
+    vi.clearAllMocks();
+    global.window.confirm = vi.fn(() => true);
+    global.window.alert = vi.fn();
+  });
+
+  const updateImageDurationSpy = vi.spyOn(api, 'updateImageDuration');
+
+  it('should open batch editor modal when batch edit button clicked', () => {
+    const mockImages = createMockImages(2);
+    render(<ImageGrid images={mockImages} />);
+
+    // Select an image
+    const checkbox = screen.getAllByRole('checkbox')[0];
+    fireEvent.click(checkbox);
+
+    // Click batch edit button
+    const batchEditButton = screen.getByText('Definir Duração em Lote');
+    fireEvent.click(batchEditButton);
+
+    expect(screen.getByText(/Definir Duração para 1 Imagens/)).toBeInTheDocument();
+  });
+
+  it('should show correct count in batch editor modal', () => {
+    const mockImages = createMockImages(3);
+    render(<ImageGrid images={mockImages} />);
+
+    // Select all images
+    const selectAllButton = screen.getByText('Selecionar Todas');
+    fireEvent.click(selectAllButton);
+
+    // Open batch editor
+    const batchEditButton = screen.getByText('Definir Duração em Lote');
+    fireEvent.click(batchEditButton);
+
+    expect(screen.getByText(/Definir Duração para 3 Imagens/)).toBeInTheDocument();
+  });
+
+  it('should allow changing batch duration value', () => {
+    const mockImages = createMockImages(2);
+    render(<ImageGrid images={mockImages} />);
+
+    const checkbox = screen.getAllByRole('checkbox')[0];
+    fireEvent.click(checkbox);
+
+    const batchEditButton = screen.getByText('Definir Duração em Lote');
+    fireEvent.click(batchEditButton);
+
+    const input = screen.getByDisplayValue('5.0') as HTMLInputElement;
+    fireEvent.change(input, { target: { value: '10.5' } });
+
+    expect(input.value).toBe('10.5');
+  });
+
+  it('should save batch duration for all selected images', async () => {
+    updateImageDurationSpy.mockResolvedValue({ success: true });
+    const mockOnImageUpdated = vi.fn();
+    const mockImages = createMockImages(2);
+
+    render(<ImageGrid images={mockImages} onImageUpdated={mockOnImageUpdated} />);
+
+    // Select all images
+    const selectAllButton = screen.getByText('Selecionar Todas');
+    fireEvent.click(selectAllButton);
+
+    // Open batch editor
+    const batchEditButton = screen.getByText('Definir Duração em Lote');
+    fireEvent.click(batchEditButton);
+
+    // Change duration
+    const input = screen.getByDisplayValue('5.0');
+    fireEvent.change(input, { target: { value: '8.0' } });
+
+    // Save
+    const saveButton = screen.getByText('Salvar');
+    fireEvent.click(saveButton);
+
+    await waitFor(() => {
+      expect(updateImageDurationSpy).toHaveBeenCalledTimes(2);
+      expect(mockOnImageUpdated).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  it('should close modal and show success alert after batch save', async () => {
+    updateImageDurationSpy.mockResolvedValue({ success: true });
+    const mockImages = createMockImages(2);
+
+    render(<ImageGrid images={mockImages} />);
+
+    // Select all
+    const selectAllButton = screen.getByText('Selecionar Todas');
+    fireEvent.click(selectAllButton);
+
+    // Open batch editor
+    const batchEditButton = screen.getByText('Definir Duração em Lote');
+    fireEvent.click(batchEditButton);
+
+    // Save
+    const saveButton = screen.getByText('Salvar');
+    fireEvent.click(saveButton);
+
+    await waitFor(() => {
+      expect(window.alert).toHaveBeenCalledWith('Duração atualizada para 2 imagens');
+      expect(screen.queryByText(/Definir Duração para/)).not.toBeInTheDocument();
+    });
+  });
+
+  it('should clear selection after batch save', async () => {
+    updateImageDurationSpy.mockResolvedValue({ success: true });
+    const mockImages = createMockImages(2);
+
+    render(<ImageGrid images={mockImages} />);
+
+    // Select all
+    const selectAllButton = screen.getByText('Selecionar Todas');
+    fireEvent.click(selectAllButton);
+
+    // Open batch editor
+    const batchEditButton = screen.getByText('Definir Duração em Lote');
+    fireEvent.click(batchEditButton);
+
+    // Save
+    const saveButton = screen.getByText('Salvar');
+    fireEvent.click(saveButton);
+
+    await waitFor(() => {
+      const checkboxes = screen.getAllByRole('checkbox');
+      checkboxes.forEach((cb) => expect(cb).not.toBeChecked());
+    });
+  });
+
+  it('should close batch editor when cancel clicked', () => {
+    const mockImages = createMockImages(2);
+    render(<ImageGrid images={mockImages} />);
+
+    const checkbox = screen.getAllByRole('checkbox')[0];
+    fireEvent.click(checkbox);
+
+    const batchEditButton = screen.getByText('Definir Duração em Lote');
+    fireEvent.click(batchEditButton);
+
+    const cancelButton = screen.getByText('Cancelar');
+    fireEvent.click(cancelButton);
+
+    expect(screen.queryByText(/Definir Duração para/)).not.toBeInTheDocument();
+  });
+
+  it('should show alert for invalid batch duration (zero)', async () => {
+    const mockImages = createMockImages(2);
+    render(<ImageGrid images={mockImages} />);
+
+    const checkbox = screen.getAllByRole('checkbox')[0];
+    fireEvent.click(checkbox);
+
+    const batchEditButton = screen.getByText('Definir Duração em Lote');
+    fireEvent.click(batchEditButton);
+
+    const input = screen.getByDisplayValue('5.0');
+    fireEvent.change(input, { target: { value: '0' } });
+
+    const saveButton = screen.getByText('Salvar');
+    fireEvent.click(saveButton);
+
+    await waitFor(() => {
+      expect(window.alert).toHaveBeenCalledWith(
+        'Por favor, insira uma duração válida (maior que 0)'
+      );
+    });
+  });
+
+  it('should show alert for invalid batch duration (negative)', async () => {
+    const mockImages = createMockImages(2);
+    render(<ImageGrid images={mockImages} />);
+
+    const checkbox = screen.getAllByRole('checkbox')[0];
+    fireEvent.click(checkbox);
+
+    const batchEditButton = screen.getByText('Definir Duração em Lote');
+    fireEvent.click(batchEditButton);
+
+    const input = screen.getByDisplayValue('5.0');
+    fireEvent.change(input, { target: { value: '-5' } });
+
+    const saveButton = screen.getByText('Salvar');
+    fireEvent.click(saveButton);
+
+    await waitFor(() => {
+      expect(window.alert).toHaveBeenCalledWith(
+        'Por favor, insira uma duração válida (maior que 0)'
+      );
+    });
+  });
+
+  it('should show error alert when batch update fails', async () => {
+    updateImageDurationSpy.mockRejectedValue(new Error('Batch update failed'));
+    const mockImages = createMockImages(2);
+
+    render(<ImageGrid images={mockImages} />);
+
+    const checkbox = screen.getAllByRole('checkbox')[0];
+    fireEvent.click(checkbox);
+
+    const batchEditButton = screen.getByText('Definir Duração em Lote');
+    fireEvent.click(batchEditButton);
+
+    const saveButton = screen.getByText('Salvar');
+    fireEvent.click(saveButton);
+
+    await waitFor(() => {
+      expect(window.alert).toHaveBeenCalledWith('Erro ao atualizar durações: Batch update failed');
+    });
+  });
+
+  it('should disable inputs while batch saving', async () => {
+    let resolveSave: (value: { success: boolean }) => void;
+    const savePromise = new Promise<{ success: boolean }>((resolve) => {
+      resolveSave = resolve;
+    });
+    updateImageDurationSpy.mockReturnValue(savePromise);
+
+    const mockImages = createMockImages(2);
+    render(<ImageGrid images={mockImages} />);
+
+    const checkbox = screen.getAllByRole('checkbox')[0];
+    fireEvent.click(checkbox);
+
+    const batchEditButton = screen.getByText('Definir Duração em Lote');
+    fireEvent.click(batchEditButton);
+
+    const input = screen.getByDisplayValue('5.0') as HTMLInputElement;
+    const saveButton = screen.getByText('Salvar') as HTMLButtonElement;
+    const cancelButton = screen.getByText('Cancelar') as HTMLButtonElement;
+
+    fireEvent.click(saveButton);
+
+    await waitFor(() => {
+      expect(input.disabled).toBe(true);
+      expect(saveButton.disabled).toBe(true);
+      expect(cancelButton.disabled).toBe(true);
+      expect(saveButton.textContent).toBe('Salvando...');
+    });
+
+    resolveSave!({ success: true });
+  });
+});
