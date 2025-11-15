@@ -41,6 +41,11 @@
     "node": ">=22.21.1",
     "pnpm": ">=10.20.0"
   },
+  "pnpm": {
+    "patchedDependencies": {
+      "vite-plugin-istanbul@7.2.1": "patches/vite-plugin-istanbul.patch"
+    }
+  },
   "dependencies": {
     "@supabase/supabase-js": "^2.80.0",
     "react": "^19.2.0",

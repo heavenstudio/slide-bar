@@ -5,7 +5,7 @@ settings:
   excludeLinksFromLockfile: false
 
 patchedDependencies:
-  vite-plugin-istanbul:
+  vite-plugin-istanbul@7.2.1:
     hash: 352f4c842fb884020588f177ba7250deb03f7fb5f36563b07ef1f5da909be803
     path: patches/vite-plugin-istanbul.patch
 
