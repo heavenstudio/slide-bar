@@ -238,3 +238,102 @@ export const updateImageDuration = async (
 
   return { success: true };
 };
+
+/**
+ * Organization settings type
+ */
+export interface OrganizationSettings {
+  id: string;
+  organization_id: string;
+  default_slide_duration: number;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * Get organization settings for the current user's organization
+ */
+export const getOrganizationSettings = async (): Promise<OrganizationSettings | null> => {
+  // Get current user's organization_id
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error('User not authenticated');
+  }
+
+  const { data: userData, error: userError } = await supabase
+    .from('users')
+    .select('organization_id')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  if (userError) {
+    throw new Error(`Failed to get user organization: ${userError.message}`);
+  }
+
+  if (!userData) {
+    throw new Error('User organization not found');
+  }
+
+  // Get organization settings
+  const { data, error } = await supabase
+    .from('organization_settings')
+    .select('*')
+    .eq('organization_id', userData.organization_id)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data;
+};
+
+/**
+ * Update organization settings (creates if doesn't exist)
+ */
+export const updateOrganizationSettings = async (
+  defaultSlideDuration: number
+): Promise<UpdateResponse> => {
+  // Get current user's organization_id
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error('User not authenticated');
+  }
+
+  const { data: userData, error: userError } = await supabase
+    .from('users')
+    .select('organization_id')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  if (userError) {
+    throw new Error(`Failed to get user organization: ${userError.message}`);
+  }
+
+  if (!userData) {
+    throw new Error('User organization not found');
+  }
+
+  // Upsert organization settings
+  const { error } = await supabase.from('organization_settings').upsert(
+    {
+      organization_id: userData.organization_id,
+      default_slide_duration: defaultSlideDuration,
+    },
+    {
+      onConflict: 'organization_id',
+    }
+  );
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return { success: true };
+};
