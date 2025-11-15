@@ -1,0 +1,15 @@
+{
+  "all": true,
+  "include": ["src/**/*.{ts,tsx}"],
+  "exclude": ["node_modules", "tests", "**/*.spec.{ts,tsx}", "**/*.test.{ts,tsx}"],
+  "extension": [".ts", ".tsx"],
+  "reporter": ["text", "json", "json-summary", "html"],
+  "temp-dir": ".nyc_output",
+  "report-dir": ".test-output/merged-coverage",
+  "instrument": true,
+  "sourceMap": true,
+  "produce-source-map": true,
+  "compact": false,
+  "esModules": true,
+  "autoWrap": false
+}

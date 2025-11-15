@@ -3,6 +3,7 @@ import { render, screen, waitFor, cleanup, fireEvent } from '@testing-library/re
 import Player from '../../../src/pages/Player';
 import { setupSupabaseCleanup, cleanDatabase, createMockImageFile } from '../../helpers/supabase';
 import { demoLogin, uploadImage } from '../../../src/lib/supabaseApi';
+import * as timers from '../../../src/lib/timers';
 
 // Setup automatic database cleanup after each test
 setupSupabaseCleanup();
@@ -352,22 +353,54 @@ describe('Player - Pause/Resume', () => {
     });
   });
 
-  // ======================
-  // 7. Auto-Advance Tests
-  // ======================
+  it('should execute progress and slideshow timers', async () => {
+    await demoLogin();
+    const mockFile1 = createMockImageFile('image1.jpg');
+    const mockFile2 = createMockImageFile('image2.jpg');
+    await uploadImage(mockFile1);
+    await uploadImage(mockFile2);
 
-  // Note: Auto-advance testing with fake timers is complex with Realtime subscriptions
-  // This functionality is verified through E2E tests
-  // Coverage: Lines 64-72 are covered by the pause/resume tests which prevent auto-advance
+    // Mock the timer functions to capture callbacks
+    const callbacks: Array<() => void> = [];
+    const mockCreateInterval = vi.spyOn(timers, 'createInterval').mockImplementation((cb) => {
+      callbacks.push(cb);
+      return 123 as unknown as NodeJS.Timeout; // Mock timer ID
+    });
+    const mockClearInterval = vi.spyOn(timers, 'clearIntervalTimer').mockImplementation(() => {});
 
-  // ======================
-  // 8. Realtime Updates Tests
-  // ======================
+    render(<Player />);
 
-  // Note: Realtime subscription testing is complex and flaky in unit test environment
-  // The subscription setup and event handling (lines 44-60) are verified through:
-  // 1. The loadImages function being called which sets up the subscription
-  // 2. E2E tests (player.spec.js) which verify Realtime updates work in real browser
-  // 3. The index bounds checking fix (lines 36-43) prevents blank screens during updates
-  // Coverage: Basic subscription setup is covered by component rendering tests above
+    // Wait for images to load
+    await waitFor(
+      () => {
+        expect(screen.getByText('1 / 2')).toBeInTheDocument();
+      },
+      { timeout: 3000 }
+    );
+
+    // Verify timers were created (progress bar + slideshow)
+    expect(mockCreateInterval).toHaveBeenCalled();
+    expect(callbacks.length).toBeGreaterThanOrEqual(2);
+
+    // Execute progress bar callback (covers lines 199-201)
+    const progressCallback = callbacks[0];
+    progressCallback();
+
+    // Progress bar should have updated
+    const progressBar = document.querySelector('.h-full.bg-blue-500');
+    expect(progressBar).toBeInTheDocument();
+
+    // Execute slideshow callback (covers line 211)
+    const slideshowCallback = callbacks[1];
+    slideshowCallback();
+
+    // Should advance to next image
+    await waitFor(() => {
+      expect(screen.getByText('2 / 2')).toBeInTheDocument();
+    });
+
+    // Cleanup
+    mockCreateInterval.mockRestore();
+    mockClearInterval.mockRestore();
+  });
 });

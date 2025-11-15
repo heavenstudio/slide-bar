@@ -4,14 +4,13 @@
  * Coverage Enforcement Script
  * Enforces testing standards defined in .claude/skills/testing-standards.md
  *
- * Shows coverage from:
- * 1. Vitest unit/integration tests (individual)
- * 2. Playwright E2E tests (individual, if available)
- * 3. Combined coverage (if merged)
+ * Checks coverage from two separate targets:
+ * 1. Vitest unit/integration tests - REQUIRED, enforces thresholds
+ * 2. Playwright E2E tests - OPTIONAL, informational only
  *
  * Exit codes:
- * - 0: All coverage thresholds met
- * - 1: Critical violations (blocks build)
+ * - 0: Unit test coverage thresholds met
+ * - 1: Critical violations in unit tests (blocks build)
  */
 
 import { readFileSync, existsSync } from 'fs';
@@ -23,10 +22,14 @@ const __dirname = dirname(__filename);
 
 // Coverage thresholds from testing-standards.md
 const THRESHOLDS = {
-  // Critical blockers (exit code 1)
-  OVERALL_MIN: 85, // Absolute minimum - blocks if below
-  TSX_MIN: 90, // Individual TSX files must have at least 90% - blocks if below
-  LIB_MIN: 85, // Individual lib files must have at least 85% - blocks if below
+  // Unit test thresholds (detailed coverage including edge cases)
+  UNIT_OVERALL_MIN: 85, // Absolute minimum - blocks if below
+  UNIT_TSX_MIN: 90, // Individual TSX files must have at least 90% - blocks if below
+  UNIT_LIB_MIN: 85, // Individual lib files must have at least 85% - blocks if below
+
+  // E2E test thresholds (happy path coverage for major features)
+  E2E_OVERALL_MIN: 60, // Minimum overall E2E coverage - blocks if below
+  E2E_PAGE_MIN: 70, // Pages must be well-covered (user-facing) - blocks if below
 
   // Targets (warnings if below, but doesn't block)
   OVERALL_TARGET: 90,
@@ -97,22 +100,22 @@ function loadCoverageData(coveragePath: string, label: string): CoverageReport |
 function loadAllCoverageReports(): Record<string, CoverageReport> {
   const reports: Record<string, CoverageReport> = {};
 
-  // Vitest coverage (unit/integration tests)
+  // Vitest coverage (unit/integration tests) - REQUIRED
   const vitestPath = join(__dirname, '../.test-output/coverage/coverage-summary.json');
-  const vitestCoverage = loadCoverageData(vitestPath, 'Vitest');
+  const vitestCoverage = loadCoverageData(vitestPath, 'Unit Tests (Vitest)');
   if (vitestCoverage) {
     reports.vitest = vitestCoverage;
   }
 
-  // Merged coverage (Vitest + Playwright)
-  const mergedPath = join(__dirname, '../.test-output/merged-coverage/coverage-summary.json');
-  const mergedCoverage = loadCoverageData(mergedPath, 'Combined');
-  if (mergedCoverage) {
-    reports.merged = mergedCoverage;
+  // E2E coverage (Playwright) - OPTIONAL
+  const e2ePath = join(__dirname, '../.test-output/e2e-coverage/coverage-summary.json');
+  const e2eCoverage = loadCoverageData(e2ePath, 'E2E Tests (Playwright)');
+  if (e2eCoverage) {
+    reports.e2e = e2eCoverage;
   }
 
-  if (Object.keys(reports).length === 0) {
-    console.error('❌ ERROR: No coverage reports found');
+  if (!reports.vitest) {
+    console.error('❌ ERROR: No unit test coverage found');
     console.error('   Run `pnpm test:coverage` first');
     process.exit(1);
   }
@@ -128,15 +131,15 @@ function isExcludedTSX(filePath: string): boolean {
 }
 
 /**
- * Check overall coverage thresholds
+ * Check overall unit test coverage thresholds
  */
-function checkOverallCoverage(total: FileCoverage, violations: Violations): void {
-  if (total.lines.pct < THRESHOLDS.OVERALL_MIN) {
+function checkUnitOverallCoverage(total: FileCoverage, violations: Violations): void {
+  if (total.lines.pct < THRESHOLDS.UNIT_OVERALL_MIN) {
     violations.critical.push({
-      type: 'OVERALL_MIN',
-      message: `Overall coverage ${total.lines.pct.toFixed(2)}% is below minimum ${THRESHOLDS.OVERALL_MIN}%`,
+      type: 'UNIT_OVERALL_MIN',
+      message: `Overall unit test coverage ${total.lines.pct.toFixed(2)}% is below minimum ${THRESHOLDS.UNIT_OVERALL_MIN}%`,
       current: total.lines.pct,
-      threshold: THRESHOLDS.OVERALL_MIN,
+      threshold: THRESHOLDS.UNIT_OVERALL_MIN,
     });
   }
 
@@ -151,9 +154,23 @@ function checkOverallCoverage(total: FileCoverage, violations: Violations): void
 }
 
 /**
- * Check TSX file coverage
+ * Check overall E2E coverage thresholds
  */
-function checkTSXFileCoverage(
+function checkE2EOverallCoverage(total: FileCoverage, violations: Violations): void {
+  if (total.lines.pct < THRESHOLDS.E2E_OVERALL_MIN) {
+    violations.critical.push({
+      type: 'E2E_OVERALL_MIN',
+      message: `E2E coverage ${total.lines.pct.toFixed(2)}% is below minimum ${THRESHOLDS.E2E_OVERALL_MIN}% - major features must have happy path coverage`,
+      current: total.lines.pct,
+      threshold: THRESHOLDS.E2E_OVERALL_MIN,
+    });
+  }
+}
+
+/**
+ * Check TSX file coverage for unit tests
+ */
+function checkUnitTSXFileCoverage(
   filePath: string,
   fileData: FileCoverage,
   violations: Violations
@@ -164,15 +181,15 @@ function checkTSXFileCoverage(
       file: filePath,
       message: `TSX file has 0% coverage - MUST have at least a render test`,
       current: 0,
-      threshold: THRESHOLDS.TSX_MIN,
+      threshold: THRESHOLDS.UNIT_TSX_MIN,
     });
-  } else if (fileData.lines.pct < THRESHOLDS.TSX_MIN) {
+  } else if (fileData.lines.pct < THRESHOLDS.UNIT_TSX_MIN) {
     violations.critical.push({
       type: 'TSX_BELOW_MIN',
       file: filePath,
-      message: `TSX file has ${fileData.lines.pct.toFixed(2)}% coverage (minimum: ${THRESHOLDS.TSX_MIN}%)`,
+      message: `TSX file has ${fileData.lines.pct.toFixed(2)}% coverage (minimum: ${THRESHOLDS.UNIT_TSX_MIN}%)`,
       current: fileData.lines.pct,
-      threshold: THRESHOLDS.TSX_MIN,
+      threshold: THRESHOLDS.UNIT_TSX_MIN,
       uncoveredLines: fileData.lines.total - fileData.lines.covered,
     });
   } else if (fileData.lines.pct < THRESHOLDS.TSX_TARGET) {
@@ -188,12 +205,32 @@ function checkTSXFileCoverage(
 }
 
 /**
- * Analyze coverage and return violations
+ * Check page coverage for E2E tests (happy path focus)
  */
-function analyzeCoverage(coverage: CoverageSummary): Violations {
+function checkE2EPageCoverage(
+  filePath: string,
+  fileData: FileCoverage,
+  violations: Violations
+): void {
+  if (fileData.lines.pct < THRESHOLDS.E2E_PAGE_MIN) {
+    violations.critical.push({
+      type: 'E2E_PAGE_BELOW_MIN',
+      file: filePath,
+      message: `Page has ${fileData.lines.pct.toFixed(2)}% E2E coverage (minimum: ${THRESHOLDS.E2E_PAGE_MIN}%) - major user flows must be tested`,
+      current: fileData.lines.pct,
+      threshold: THRESHOLDS.E2E_PAGE_MIN,
+      uncoveredLines: fileData.lines.total - fileData.lines.covered,
+    });
+  }
+}
+
+/**
+ * Analyze unit test coverage and return violations
+ */
+function analyzeUnitCoverage(coverage: CoverageSummary): Violations {
   const violations: Violations = { critical: [], warnings: [] };
 
-  checkOverallCoverage(coverage.total, violations);
+  checkUnitOverallCoverage(coverage.total, violations);
 
   for (const [filePath, fileData] of Object.entries(coverage)) {
     if (filePath === 'total') continue;
@@ -202,17 +239,17 @@ function analyzeCoverage(coverage: CoverageSummary): Violations {
     const isExcluded = isExcludedTSX(filePath);
 
     if (isTSX && !isExcluded) {
-      checkTSXFileCoverage(filePath, fileData, violations);
+      checkUnitTSXFileCoverage(filePath, fileData, violations);
     }
 
     if (filePath.includes('/lib/')) {
-      if (fileData.lines.pct < THRESHOLDS.LIB_MIN) {
+      if (fileData.lines.pct < THRESHOLDS.UNIT_LIB_MIN) {
         violations.critical.push({
           type: 'LIB_BELOW_MIN',
           file: filePath,
-          message: `Lib file has ${fileData.lines.pct.toFixed(2)}% coverage (minimum: ${THRESHOLDS.LIB_MIN}%)`,
+          message: `Lib file has ${fileData.lines.pct.toFixed(2)}% coverage (minimum: ${THRESHOLDS.UNIT_LIB_MIN}%)`,
           current: fileData.lines.pct,
-          threshold: THRESHOLDS.LIB_MIN,
+          threshold: THRESHOLDS.UNIT_LIB_MIN,
         });
       } else if (fileData.lines.pct < THRESHOLDS.LIB_TARGET) {
         violations.warnings.push({
@@ -223,6 +260,26 @@ function analyzeCoverage(coverage: CoverageSummary): Violations {
           threshold: THRESHOLDS.LIB_TARGET,
         });
       }
+    }
+  }
+
+  return violations;
+}
+
+/**
+ * Analyze E2E coverage and return violations
+ */
+function analyzeE2ECoverage(coverage: CoverageSummary): Violations {
+  const violations: Violations = { critical: [], warnings: [] };
+
+  checkE2EOverallCoverage(coverage.total, violations);
+
+  for (const [filePath, fileData] of Object.entries(coverage)) {
+    if (filePath === 'total') continue;
+
+    // Focus on pages (user-facing features) for E2E
+    if (filePath.includes('/pages/')) {
+      checkE2EPageCoverage(filePath, fileData, violations);
     }
   }
 
@@ -314,26 +371,36 @@ function main(): void {
 
   const reports = loadAllCoverageReports();
 
-  // Show individual coverage reports
-  if (reports.vitest) {
-    printCoverageSummary('Vitest (Unit/Integration)', reports.vitest.data.total);
+  // Show both coverage reports
+  printCoverageSummary(reports.vitest.label, reports.vitest.data.total);
+
+  if (reports.e2e) {
+    printCoverageSummary(reports.e2e.label, reports.e2e.data.total);
   }
 
-  if (reports.merged) {
-    printCoverageSummary('Combined (Vitest + Playwright)', reports.merged.data.total);
+  console.log('\n' + '='.repeat(60));
+
+  // Check unit test coverage
+  console.log('\n📋 Checking Unit Test Coverage (detailed edge cases)...\n');
+  const unitViolations = analyzeUnitCoverage(reports.vitest.data);
+  const hasUnitErrors = printViolations(unitViolations);
+
+  // Check E2E coverage if available
+  let hasE2EErrors = false;
+  if (reports.e2e) {
+    console.log('\n📋 Checking E2E Coverage (happy path flows)...\n');
+    const e2eViolations = analyzeE2ECoverage(reports.e2e.data);
+    hasE2EErrors = printViolations(e2eViolations);
+  } else {
+    console.error('\n❌ ERROR: No E2E coverage found - major features must have happy path tests');
+    console.error('   Run `pnpm test:e2e:coverage` first');
+    process.exit(1);
   }
 
-  // Analyze coverage based on what's available
-  // Use merged coverage if available, otherwise use Vitest
-  const coverageToCheck = reports.merged || reports.vitest;
-  console.log(`\n✅ Enforcing thresholds on: ${coverageToCheck.label} coverage\n`);
-
-  const violations = analyzeCoverage(coverageToCheck.data);
-  const hasErrors = printViolations(violations);
-
-  if (hasErrors) {
+  // Exit with error if any critical violations
+  if (hasUnitErrors || hasE2EErrors) {
     process.exit(1); // Critical violations
-  } else if (violations.warnings.length > 0) {
+  } else if (unitViolations.warnings.length > 0) {
     process.exit(0); // Warnings only - pass with warnings
   } else {
     process.exit(0); // All good

@@ -79,7 +79,7 @@ async function cleanDatabase(): Promise<void> {
  */
 declare global {
   interface Window {
-    __coverage__?: Record<string, unknown>;
+    __VITEST_COVERAGE__?: Record<string, unknown>;
     collectIstanbulCoverage?: (coverageJSON: string) => void;
   }
 }
@@ -110,8 +110,8 @@ export const test = base.extend<TestFixtures>({
       // Inject script to expose coverage data
       await context.addInitScript(() => {
         window.addEventListener('beforeunload', () => {
-          if (window.__coverage__) {
-            window.collectIstanbulCoverage?.(JSON.stringify(window.__coverage__));
+          if (window.__VITEST_COVERAGE__) {
+            window.collectIstanbulCoverage?.(JSON.stringify(window.__VITEST_COVERAGE__));
           }
         });
       });
@@ -134,7 +134,7 @@ export const test = base.extend<TestFixtures>({
       for (const page of context.pages()) {
         try {
           await page.evaluate(() =>
-            window.collectIstanbulCoverage?.(JSON.stringify(window.__coverage__))
+            window.collectIstanbulCoverage?.(JSON.stringify(window.__VITEST_COVERAGE__))
           );
         } catch {
           // Ignore errors - page might be closed

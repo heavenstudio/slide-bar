@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
+import { createInterval, clearIntervalTimer } from '../lib/timers';
 import type { Image } from '../types/database';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 
@@ -70,12 +71,14 @@ function SlideshowUI({
 }: SlideshowUIProps) {
   return (
     <div className="fixed inset-0 bg-black">
-      <img
-        key={currentImage.id}
-        src={currentImage.url}
-        alt={currentImage.filename}
-        className="w-full h-full object-contain"
-      />
+      {currentImage && (
+        <img
+          key={currentImage.id}
+          src={currentImage.url}
+          alt={currentImage.filename}
+          className="w-full h-full object-contain"
+        />
+      )}
       <div className="absolute bottom-0 left-0 right-0 h-1 bg-white bg-opacity-20">
         <div
           className="h-full bg-blue-500 transition-all duration-100"
@@ -193,23 +196,23 @@ export default function Player() {
     setProgress(0); // Reset progress when image changes or unpauses
     const startTime = Date.now();
 
-    const progressTimer = setInterval(() => {
+    const progressTimer = createInterval(() => {
       const elapsed = Date.now() - startTime;
       const newProgress = Math.min((elapsed / currentDuration) * 100, 100);
       setProgress(newProgress);
     }, 50);
 
-    return () => clearInterval(progressTimer);
+    return () => clearIntervalTimer(progressTimer);
   }, [currentIndex, isPaused, currentDuration, images.length]);
 
   // Main slideshow timer - advances to next image
   useEffect(() => {
     if (images.length === 0 || isPaused) return;
-    const timer: NodeJS.Timeout = setInterval(
+    const timer: NodeJS.Timeout = createInterval(
       () => setCurrentIndex((prev) => (prev + 1) % images.length),
       currentDuration
     );
-    return () => clearInterval(timer);
+    return () => clearIntervalTimer(timer);
   }, [images.length, isPaused, currentDuration, currentIndex]);
 
   useKeyboardControls(images.length, setIsPaused, setCurrentIndex);

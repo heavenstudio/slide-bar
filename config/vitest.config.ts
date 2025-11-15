@@ -14,10 +14,11 @@ export default defineConfig({
     // v4: Use forks pool for proper test file isolation (prevents module mock leakage)
     pool: 'forks',
     coverage: {
-      provider: 'v8',
+      provider: 'istanbul',
       reporter: ['text', 'json', 'json-summary', 'html'],
       reportsDirectory: './.test-output/coverage',
       include: ['src/**/*.{ts,tsx}'],
+      exclude: ['node_modules', 'tests'],
     },
     env: {
       // Supabase environment configuration
