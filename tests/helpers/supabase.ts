@@ -45,6 +45,28 @@ export async function cleanDatabase(): Promise<void> {
       console.error('Failed to delete images:', imagesError.message);
     }
 
+    // Delete all organization_settings (if table exists)
+    const { error: settingsError } = await supabase
+      .from('organization_settings')
+      .delete()
+      .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all rows
+
+    if (settingsError && settingsError.code !== '42P01') {
+      // Ignore "table does not exist" error (42P01)
+      console.error('Failed to delete organization_settings:', settingsError.message);
+    }
+
+    // Delete all organizations (will cascade delete settings and images)
+    // Only delete organizations that were created during tests (not the demo org)
+    const { error: orgsError } = await supabase
+      .from('organizations')
+      .delete()
+      .neq('name', 'Demo Organization'); // Keep demo org
+
+    if (orgsError) {
+      console.error('Failed to delete organizations:', orgsError.message);
+    }
+
     // Clean up storage bucket (in case trigger didn't work)
     const { data: objects, error: listError } = await supabase.storage.from('images').list();
 
