@@ -106,10 +106,14 @@ describe('Player - Basic Rendering', () => {
 
     await waitFor(
       () => {
-        const progressBar = document.querySelector('.h-full.bg-white');
+        const progressBar = document.querySelector('.h-full.bg-blue-500');
         expect(progressBar).toBeInTheDocument();
-        // First slide: 50% width (1/2)
-        expect(progressBar).toHaveStyle({ width: '50%' });
+        // Progress bar should show percentage between 0-100% based on elapsed time
+        const width = progressBar?.getAttribute('style')?.match(/width:\s*(\d+\.?\d*)%/)?.[1];
+        expect(width).toBeDefined();
+        const widthNum = parseFloat(width!);
+        expect(widthNum).toBeGreaterThanOrEqual(0);
+        expect(widthNum).toBeLessThanOrEqual(100);
       },
       { timeout: 3000 }
     );

@@ -58,9 +58,16 @@ interface SlideshowUIProps {
   currentIndex: number;
   imagesCount: number;
   isPaused: boolean;
+  progress: number;
 }
 
-function SlideshowUI({ currentImage, currentIndex, imagesCount, isPaused }: SlideshowUIProps) {
+function SlideshowUI({
+  currentImage,
+  currentIndex,
+  imagesCount,
+  isPaused,
+  progress,
+}: SlideshowUIProps) {
   return (
     <div className="fixed inset-0 bg-black">
       <img
@@ -71,8 +78,8 @@ function SlideshowUI({ currentImage, currentIndex, imagesCount, isPaused }: Slid
       />
       <div className="absolute bottom-0 left-0 right-0 h-1 bg-white bg-opacity-20">
         <div
-          className="h-full bg-white transition-all"
-          style={{ width: `${((currentIndex + 1) / imagesCount) * 100}%` }}
+          className="h-full bg-blue-500 transition-all duration-100"
+          style={{ width: `${progress}%` }}
         />
       </div>
       {isPaused && (
@@ -172,12 +179,30 @@ function useKeyboardControls(
 export default function Player() {
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [isPaused, setIsPaused] = useState<boolean>(false);
+  const [progress, setProgress] = useState<number>(0);
 
   const { images, isLoading, error } = useImageLoader(setCurrentIndex);
 
   // Get current image's display duration, fallback to 5000ms if not set
   const currentDuration = images[currentIndex]?.display_duration ?? 5000;
 
+  // Progress bar animation - updates every 50ms to show smooth progress
+  useEffect(() => {
+    if (images.length === 0 || isPaused) return;
+
+    setProgress(0); // Reset progress when image changes or unpauses
+    const startTime = Date.now();
+
+    const progressTimer = setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      const newProgress = Math.min((elapsed / currentDuration) * 100, 100);
+      setProgress(newProgress);
+    }, 50);
+
+    return () => clearInterval(progressTimer);
+  }, [currentIndex, isPaused, currentDuration, images.length]);
+
+  // Main slideshow timer - advances to next image
   useEffect(() => {
     if (images.length === 0 || isPaused) return;
     const timer: NodeJS.Timeout = setInterval(
@@ -199,6 +224,7 @@ export default function Player() {
       currentIndex={currentIndex}
       imagesCount={images.length}
       isPaused={isPaused}
+      progress={progress}
     />
   );
 }
