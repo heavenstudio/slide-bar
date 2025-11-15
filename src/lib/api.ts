@@ -10,8 +10,10 @@ export {
   getImages,
   uploadImage,
   deleteImage,
+  updateImageDuration,
   type LoginResponse,
   type ImagesResponse,
   type DeletionResponse,
+  type UpdateResponse,
   type FileUpload,
 } from './supabaseApi';

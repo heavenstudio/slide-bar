@@ -70,6 +70,7 @@ interface ImagesSectionProps {
   error: string | null;
   onRefresh: () => void;
   onImageDeleted: (id: string) => void;
+  onImageUpdated: (id: string, newDuration: number) => void;
 }
 
 /**
@@ -81,6 +82,7 @@ function ImagesSection({
   error,
   onRefresh,
   onImageDeleted,
+  onImageUpdated,
 }: ImagesSectionProps) {
   return (
     <section>
@@ -105,7 +107,11 @@ function ImagesSection({
           <p className="mt-4 text-gray-600">Carregando imagens...</p>
         </div>
       ) : (
-        <ImageGrid images={images} onImageDeleted={onImageDeleted} />
+        <ImageGrid
+          images={images}
+          onImageDeleted={onImageDeleted}
+          onImageUpdated={onImageUpdated}
+        />
       )}
     </section>
   );
@@ -176,6 +182,10 @@ export default function Dashboard() {
   const handleUpload = (img: Image): void => setImages((prev) => [img, ...prev]);
   const handleDelete = (id: string): void =>
     setImages((prev) => prev.filter((img) => img.id !== id));
+  const handleDurationUpdate = (id: string, newDuration: number): void =>
+    setImages((prev) =>
+      prev.map((img) => (img.id === id ? { ...img, display_duration: newDuration } : img))
+    );
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -188,6 +198,7 @@ export default function Dashboard() {
           error={error}
           onRefresh={loadImages}
           onImageDeleted={handleDelete}
+          onImageUpdated={handleDurationUpdate}
         />
       </main>
     </div>

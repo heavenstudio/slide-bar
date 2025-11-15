@@ -212,3 +212,29 @@ export const deleteImage = async (imageId: string): Promise<DeletionResponse> =>
 
   return { success: true };
 };
+
+/**
+ * Update response type
+ */
+export interface UpdateResponse {
+  success: boolean;
+}
+
+/**
+ * Update an image's display duration
+ */
+export const updateImageDuration = async (
+  imageId: string,
+  durationMs: number
+): Promise<UpdateResponse> => {
+  const { error } = await supabase
+    .from('images')
+    .update({ display_duration: durationMs })
+    .eq('id', imageId);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return { success: true };
+};
