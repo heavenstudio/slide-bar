@@ -8,11 +8,23 @@ import { afterEach } from 'vitest';
 import { Database } from '../../src/types/supabase';
 
 // Supabase TEST configuration (port 55321 - isolated from dev on 54321)
-// Uses the same test instance as E2E tests
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'http://127.0.0.1:55321';
+// CRITICAL: Hard-coded to ALWAYS use test instance (port 55321), never use env vars
+// to prevent accidentally deleting dev/production data
+//
+// WHY THIS MATTERS:
+// - Dev instance: http://127.0.0.1:54321 (from VITE_SUPABASE_URL in .env)
+// - Test instance: http://127.0.0.1:55321 (hard-coded here)
+// - If we used import.meta.env.VITE_SUPABASE_URL, tests would delete dev data!
+const SUPABASE_URL = 'http://127.0.0.1:55321';
 const SUPABASE_SERVICE_KEY =
-  import.meta.env.SUPABASE_SERVICE_KEY ||
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU';
+
+// Verify we're connecting to test instance (safety check)
+if (!SUPABASE_URL.includes('55321')) {
+  throw new Error(
+    `CRITICAL: Tests must connect to test instance (port 55321), not ${SUPABASE_URL}`
+  );
+}
 
 /**
  * Create a Supabase client with service role (bypasses RLS)
