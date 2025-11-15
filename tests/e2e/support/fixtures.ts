@@ -17,7 +17,9 @@ import { v4 as uuidv4 } from 'uuid';
  */
 
 // Supabase configuration for E2E tests
-// These values match the test Supabase instance running in Docker
+// Read from environment variables to support both local Docker and CI testing
+// Local: Uses Docker network hostname (supabase_kong_slide-bar-test:8000) as default
+// CI: Environment variable VITE_SUPABASE_URL set to http://127.0.0.1:54321
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'http://supabase_kong_slide-bar-test:8000';
 const SUPABASE_SERVICE_KEY =
   process.env.SUPABASE_SERVICE_KEY ||
