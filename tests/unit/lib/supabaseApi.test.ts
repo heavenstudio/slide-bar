@@ -23,6 +23,8 @@ import {
   getImages,
   uploadImage,
   deleteImage,
+  getOrganizationSettings,
+  updateOrganizationSettings,
 } from '../../../src/lib/supabaseApi';
 import { setupSupabaseCleanup, cleanDatabase, createMockImageFile } from '../../helpers/supabase';
 import { createMockStorageData } from '../../helpers/fixtures';
@@ -420,6 +422,193 @@ describe('Supabase API - Image Deletion', () => {
       });
 
       await expect(deleteImage(uploadedImage.id)).rejects.toThrow('Database delete failed');
+    });
+  });
+
+  describe('Organization Settings', () => {
+    it('should get organization settings successfully', async () => {
+      await demoLogin();
+
+      // First, create settings
+      await updateOrganizationSettings(7500);
+
+      // Then retrieve them
+      const settings = await getOrganizationSettings();
+
+      expect(settings).toBeDefined();
+      expect(settings?.default_slide_duration).toBe(7500);
+      expect(settings?.organization_id).toBeDefined();
+    });
+
+    it('should return null when no organization settings exist', async () => {
+      await demoLogin();
+
+      const settings = await getOrganizationSettings();
+
+      // Should be null since we haven't created any settings yet
+      expect(settings).toBeNull();
+    });
+
+    it('should update organization settings successfully (insert)', async () => {
+      await demoLogin();
+
+      const result = await updateOrganizationSettings(6000);
+
+      expect(result.success).toBe(true);
+
+      // Verify settings were saved
+      const settings = await getOrganizationSettings();
+      expect(settings?.default_slide_duration).toBe(6000);
+    });
+
+    it('should update organization settings successfully (upsert)', async () => {
+      await demoLogin();
+
+      // Create initial settings
+      await updateOrganizationSettings(5000);
+
+      // Update them
+      const result = await updateOrganizationSettings(8000);
+
+      expect(result.success).toBe(true);
+
+      // Verify settings were updated
+      const settings = await getOrganizationSettings();
+      expect(settings?.default_slide_duration).toBe(8000);
+    });
+
+    it('should throw error when user is not authenticated (getOrganizationSettings)', async () => {
+      const { supabase } = await import('../../../src/lib/supabase');
+
+      // Mock auth.getUser to return no user
+      vi.spyOn(supabase.auth, 'getUser').mockResolvedValue({
+        data: { user: null },
+        error: null,
+      } as any);
+
+      await expect(getOrganizationSettings()).rejects.toThrow('User not authenticated');
+    });
+
+    it('should throw error when user is not authenticated (updateOrganizationSettings)', async () => {
+      const { supabase } = await import('../../../src/lib/supabase');
+
+      // Mock auth.getUser to return no user
+      vi.spyOn(supabase.auth, 'getUser').mockResolvedValue({
+        data: { user: null },
+        error: null,
+      } as any);
+
+      await expect(updateOrganizationSettings(5000)).rejects.toThrow('User not authenticated');
+    });
+
+    it('should throw error when user organization fetch fails (getOrganizationSettings)', async () => {
+      await demoLogin();
+
+      const { supabase } = await import('../../../src/lib/supabase');
+
+      // Mock user data fetch failure
+      vi.spyOn(supabase, 'from').mockImplementation(
+        () =>
+          ({
+            select: vi.fn(() => ({
+              eq: vi.fn(() => ({
+                maybeSingle: vi
+                  .fn()
+                  .mockResolvedValue({ data: null, error: { message: 'User fetch failed' } }),
+              })),
+            })),
+          }) as any
+      );
+
+      await expect(getOrganizationSettings()).rejects.toThrow('Failed to get user organization');
+    });
+
+    it('should throw error when user organization not found (getOrganizationSettings)', async () => {
+      await demoLogin();
+
+      const { supabase } = await import('../../../src/lib/supabase');
+
+      // Mock user data fetch returning null
+      vi.spyOn(supabase, 'from').mockImplementation(
+        () =>
+          ({
+            select: vi.fn(() => ({
+              eq: vi.fn(() => ({
+                maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+              })),
+            })),
+          }) as any
+      );
+
+      await expect(getOrganizationSettings()).rejects.toThrow('User organization not found');
+    });
+
+    it('should throw error when settings fetch fails', async () => {
+      await demoLogin();
+
+      const { supabase } = await import('../../../src/lib/supabase');
+
+      let callCount = 0;
+      vi.spyOn(supabase, 'from').mockImplementation((_table) => {
+        callCount++;
+        if (callCount === 1) {
+          // First call: users table - succeed
+          return {
+            select: vi.fn(() => ({
+              eq: vi.fn(() => ({
+                maybeSingle: vi.fn().mockResolvedValue({
+                  data: { organization_id: 'test-org-id' },
+                  error: null,
+                }),
+              })),
+            })),
+          } as any;
+        } else {
+          // Second call: organization_settings table - fail
+          return {
+            select: vi.fn(() => ({
+              eq: vi.fn(() => ({
+                maybeSingle: vi
+                  .fn()
+                  .mockResolvedValue({ data: null, error: { message: 'Settings fetch failed' } }),
+              })),
+            })),
+          } as any;
+        }
+      });
+
+      await expect(getOrganizationSettings()).rejects.toThrow('Settings fetch failed');
+    });
+
+    it('should throw error when settings upsert fails', async () => {
+      await demoLogin();
+
+      const { supabase } = await import('../../../src/lib/supabase');
+
+      let callCount = 0;
+      vi.spyOn(supabase, 'from').mockImplementation((_table) => {
+        callCount++;
+        if (callCount === 1) {
+          // First call: users table - succeed
+          return {
+            select: vi.fn(() => ({
+              eq: vi.fn(() => ({
+                maybeSingle: vi.fn().mockResolvedValue({
+                  data: { organization_id: 'test-org-id' },
+                  error: null,
+                }),
+              })),
+            })),
+          } as any;
+        } else {
+          // Second call: organization_settings upsert - fail
+          return {
+            upsert: vi.fn().mockResolvedValue({ error: { message: 'Upsert failed' } }),
+          } as any;
+        }
+      });
+
+      await expect(updateOrganizationSettings(5000)).rejects.toThrow('Upsert failed');
     });
   });
 });
