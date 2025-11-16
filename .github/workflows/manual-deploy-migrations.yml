@@ -107,7 +107,6 @@ jobs:
           echo "✅ Migration history repaired"
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          PGPASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
 
       - name: Dry run migrations
         if: ${{ inputs.dry_run }}
@@ -115,7 +114,7 @@ jobs:
           echo "🔍 DRY RUN MODE - No changes will be applied"
           echo ""
           echo "The following command would be executed:"
-          echo "  supabase db push --include-all"
+          echo "  supabase db push --linked --include-all"
           echo ""
           echo "To actually deploy, re-run this workflow with 'dry_run' unchecked"
         env:
@@ -131,15 +130,14 @@ jobs:
           echo "Note: Only NEW migrations will be applied (already applied migrations are skipped automatically)"
           echo ""
 
-          # Use --db-url flag with connection string from Supabase project settings
-          # If this times out, it likely means the database is not accessible or credentials are wrong
+          # The CLI uses SUPABASE_ACCESS_TOKEN for authentication
+          # No database password needed when using --linked with access token
           supabase db push --linked --include-all
 
           echo ""
           echo "✅ Migrations applied successfully"
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          PGPASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
 
       - name: Verify migration status (after)
         if: ${{ !inputs.dry_run }}
