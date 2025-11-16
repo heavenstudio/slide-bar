@@ -35,112 +35,50 @@ jobs:
         with:
           version: latest
 
-      - name: Verify Supabase credentials
+      - name: Verify database connection
         timeout-minutes: 1
         run: |
-          echo "Checking Supabase access token..."
+          echo "Checking database URL..."
 
-          # Verify we can authenticate with Supabase API
-          if [ -z "${{ secrets.SUPABASE_ACCESS_TOKEN }}" ]; then
-            echo "❌ ERROR: SUPABASE_ACCESS_TOKEN secret is not set"
+          if [ -z "${{ secrets.SUPABASE_DB_URL }}" ]; then
+            echo "❌ ERROR: SUPABASE_DB_URL secret is not set"
             exit 1
           fi
 
-          if [ -z "${{ secrets.SUPABASE_PROJECT_REF }}" ]; then
-            echo "❌ ERROR: SUPABASE_PROJECT_REF secret is not set"
-            exit 1
-          fi
+          echo "✅ Database URL is set"
 
-          echo "✅ Credentials are set"
-          echo "Project ref: ${{ secrets.SUPABASE_PROJECT_REF }}"
-        env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-
-      - name: Link to Supabase Project
-        timeout-minutes: 3
+      - name: Check migration files
         run: |
-          PROJECT_REF="${{ inputs.project_ref }}"
-          if [ -z "$PROJECT_REF" ]; then
-            PROJECT_REF="${{ secrets.SUPABASE_PROJECT_REF }}"
-            echo "Using production project: $PROJECT_REF"
-          else
-            echo "Using custom project: $PROJECT_REF"
-          fi
-
-          echo "Linking to project $PROJECT_REF..."
-          echo "This may take a moment to establish connection..."
-
-          # Link with debug output
-          supabase link --project-ref "$PROJECT_REF" --debug || {
-            echo "❌ Link failed!"
-            echo "Possible issues:"
-            echo "  1. SUPABASE_ACCESS_TOKEN is invalid or expired"
-            echo "  2. SUPABASE_PROJECT_REF is incorrect"
-            echo "  3. Network connectivity issue"
-            echo "  4. Project doesn't exist or access is denied"
-            exit 1
-          }
-
-          echo "✅ Successfully linked to project"
-        env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-
-      - name: Check migration status (before)
-        timeout-minutes: 2
-        run: |
-          echo "📋 Current migration status in Supabase:"
-          supabase migration list --linked
-          echo ""
           echo "📁 Local migrations in repository:"
           ls -la supabase/migrations/
           echo ""
-          echo "📊 Detailed migration info:"
+          echo "📊 Migration files:"
           for file in supabase/migrations/*.sql; do
             if [ -f "$file" ]; then
               echo "  - $(basename "$file")"
             fi
           done
-        env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
-      - name: Validate migration files
-        run: |
-          echo "🔍 Validating migration files..."
-
-          # Check for SQL syntax issues (basic validation)
-          echo "Checking for common SQL issues..."
-          for file in supabase/migrations/*.sql; do
-            if [ -f "$file" ]; then
-              echo "Validating: $(basename "$file")"
-              # Check for basic syntax issues
-              if grep -q ";" "$file"; then
-                echo "  ✅ Contains SQL statements"
-              else
-                echo "  ⚠️  Warning: No SQL statements found"
-              fi
-            fi
-          done
-
-          echo "✅ Validation complete"
-        env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-
-      - name: Repair migration history (if needed)
+      - name: Check current migration status
         timeout-minutes: 2
         run: |
-          echo "🔧 Checking for remote migrations not in local directory..."
+          echo "📋 Current migration status in database:"
+          supabase migration list --db-url "${{ secrets.SUPABASE_DB_URL }}" || echo "Could not list migrations"
 
-          # Mark known orphaned migrations as reverted
-          # These were manually applied to production and should be ignored
-          echo "Marking orphaned migrations as reverted:"
+      - name: Repair orphaned migrations
+        timeout-minutes: 2
+        run: |
+          echo "🔧 Fixing orphaned migrations..."
+          echo "Marking as reverted:"
           echo "  - 20251115000001"
           echo "  - 20251115000002"
 
-          supabase migration repair --linked --status reverted 20251115000001 20251115000002 || echo "No repair needed (migrations may not exist)"
+          supabase migration repair \
+            --db-url "${{ secrets.SUPABASE_DB_URL }}" \
+            --status reverted \
+            20251115000001 20251115000002 || echo "No repair needed"
 
           echo "✅ Migration history repaired"
-        env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
       - name: Dry run migrations
         if: ${{ inputs.dry_run }}
@@ -148,41 +86,35 @@ jobs:
           echo "🔍 DRY RUN MODE - No changes will be applied"
           echo ""
           echo "The following command would be executed:"
-          echo "  supabase db push --linked --include-all"
+          echo "  supabase db push --db-url \$SUPABASE_DB_URL --include-all"
           echo ""
           echo "To actually deploy, re-run this workflow with 'dry_run' unchecked"
-        env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
       - name: Run migrations (real)
         if: ${{ !inputs.dry_run }}
         id: migrate
-        continue-on-error: false # Explicitly fail on error
+        continue-on-error: false
         timeout-minutes: 5
         run: |
           echo "🚀 Running database migrations..."
-          echo "Note: Only NEW migrations will be applied (already applied migrations are skipped automatically)"
+          echo "Note: Only NEW migrations will be applied"
           echo ""
 
-          # The CLI uses SUPABASE_ACCESS_TOKEN for authentication
-          # No database password needed when using --linked with access token
-          supabase db push --linked --include-all
+          supabase db push \
+            --db-url "${{ secrets.SUPABASE_DB_URL }}" \
+            --include-all
 
           echo ""
           echo "✅ Migrations applied successfully"
-        env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
       - name: Verify migration status (after)
         if: ${{ !inputs.dry_run }}
         timeout-minutes: 2
         run: |
           echo "✅ Migration status after deployment:"
-          supabase migration list --linked
+          supabase migration list --db-url "${{ secrets.SUPABASE_DB_URL }}"
           echo ""
-          echo "✨ Deployment complete! All migrations are now in sync."
-        env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          echo "✨ Deployment complete!"
 
       - name: Report success
         if: ${{ success() && !inputs.dry_run }}
