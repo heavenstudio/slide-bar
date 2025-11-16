@@ -47,7 +47,7 @@ jobs:
 
           # Transform URL to use pooler
           POOLER_URL=$(echo "$DB_URL" | \
-            sed "s/postgres:/<postgres.$PROJECT_REF:/g" | \
+            sed "s/postgres:/postgres.$PROJECT_REF:/g" | \
             sed 's/db\.[^.]*\.supabase\.co:5432/aws-0-sa-east-1.pooler.supabase.com:6543/g')
 
           echo "Using pooler connection (IPv4)..."
