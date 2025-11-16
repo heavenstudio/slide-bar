@@ -36,6 +36,7 @@ jobs:
           version: latest
 
       - name: Link to Supabase Project
+        timeout-minutes: 2
         run: |
           PROJECT_REF="${{ inputs.project_ref }}"
           if [ -z "$PROJECT_REF" ]; then
@@ -44,14 +45,17 @@ jobs:
           else
             echo "Using custom project: $PROJECT_REF"
           fi
+
+          echo "Linking to project $PROJECT_REF..."
           supabase link --project-ref "$PROJECT_REF"
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
       - name: Check migration status (before)
+        timeout-minutes: 2
         run: |
           echo "📋 Current migration status in Supabase:"
-          supabase migration list
+          supabase migration list --linked
           echo ""
           echo "📁 Local migrations in repository:"
           ls -la supabase/migrations/
@@ -88,6 +92,7 @@ jobs:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
       - name: Repair migration history (if needed)
+        timeout-minutes: 2
         run: |
           echo "🔧 Checking for remote migrations not in local directory..."
 
@@ -97,11 +102,12 @@ jobs:
           echo "  - 20251115000001"
           echo "  - 20251115000002"
 
-          supabase migration repair --status reverted 20251115000001 20251115000002 || echo "No repair needed (migrations may not exist)"
+          supabase migration repair --linked --status reverted 20251115000001 20251115000002 || echo "No repair needed (migrations may not exist)"
 
           echo "✅ Migration history repaired"
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          PGPASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
 
       - name: Dry run migrations
         if: ${{ inputs.dry_run }}
@@ -119,21 +125,28 @@ jobs:
         if: ${{ !inputs.dry_run }}
         id: migrate
         continue-on-error: false # Explicitly fail on error
+        timeout-minutes: 5
         run: |
           echo "🚀 Running database migrations..."
           echo "Note: Only NEW migrations will be applied (already applied migrations are skipped automatically)"
           echo ""
-          supabase db push --include-all
+
+          # Use --db-url flag with connection string from Supabase project settings
+          # If this times out, it likely means the database is not accessible or credentials are wrong
+          supabase db push --linked --include-all
+
           echo ""
           echo "✅ Migrations applied successfully"
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          PGPASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
 
       - name: Verify migration status (after)
         if: ${{ !inputs.dry_run }}
+        timeout-minutes: 2
         run: |
           echo "✅ Migration status after deployment:"
-          supabase migration list
+          supabase migration list --linked
           echo ""
           echo "✨ Deployment complete! All migrations are now in sync."
         env:
