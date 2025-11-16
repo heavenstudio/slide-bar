@@ -63,7 +63,18 @@ jobs:
         timeout-minutes: 2
         run: |
           echo "📋 Current migration status in database:"
-          supabase migration list --db-url "${{ secrets.SUPABASE_DB_URL }}" || echo "Could not list migrations"
+
+          # Convert to pooler URL (IPv4-compatible)
+          DB_URL="${{ secrets.SUPABASE_DB_URL }}"
+          PROJECT_REF=$(echo "$DB_URL" | sed -n 's/.*db\.\([^.]*\)\.supabase\.co.*/\1/p')
+
+          POOLER_URL=$(echo "$DB_URL" | \
+            sed "s|postgres:|postgres.$PROJECT_REF:|g" | \
+            sed "s|db\.[^.]*\.supabase\.co:5432|aws-0-sa-east-1.pooler.supabase.com:6543|g")
+
+          echo "Using pooler connection (IPv4) for project: $PROJECT_REF"
+
+          supabase migration list --db-url "$POOLER_URL" || echo "Could not list migrations"
 
       - name: Repair orphaned migrations
         timeout-minutes: 2
@@ -73,8 +84,18 @@ jobs:
           echo "  - 20251115000001"
           echo "  - 20251115000002"
 
+          # Convert to pooler URL (IPv4-compatible)
+          DB_URL="${{ secrets.SUPABASE_DB_URL }}"
+          PROJECT_REF=$(echo "$DB_URL" | sed -n 's/.*db\.\([^.]*\)\.supabase\.co.*/\1/p')
+
+          POOLER_URL=$(echo "$DB_URL" | \
+            sed "s|postgres:|postgres.$PROJECT_REF:|g" | \
+            sed "s|db\.[^.]*\.supabase\.co:5432|aws-0-sa-east-1.pooler.supabase.com:6543|g")
+
+          echo "Using pooler connection (IPv4) for project: $PROJECT_REF"
+
           supabase migration repair \
-            --db-url "${{ secrets.SUPABASE_DB_URL }}" \
+            --db-url "$POOLER_URL" \
             --status reverted \
             20251115000001 20251115000002 || echo "No repair needed"
 
@@ -100,8 +121,18 @@ jobs:
           echo "Note: Only NEW migrations will be applied"
           echo ""
 
+          # Convert to pooler URL (IPv4-compatible)
+          DB_URL="${{ secrets.SUPABASE_DB_URL }}"
+          PROJECT_REF=$(echo "$DB_URL" | sed -n 's/.*db\.\([^.]*\)\.supabase\.co.*/\1/p')
+
+          POOLER_URL=$(echo "$DB_URL" | \
+            sed "s|postgres:|postgres.$PROJECT_REF:|g" | \
+            sed "s|db\.[^.]*\.supabase\.co:5432|aws-0-sa-east-1.pooler.supabase.com:6543|g")
+
+          echo "Using pooler connection (IPv4) for project: $PROJECT_REF"
+
           supabase db push \
-            --db-url "${{ secrets.SUPABASE_DB_URL }}" \
+            --db-url "$POOLER_URL" \
             --include-all
 
           echo ""
@@ -112,7 +143,16 @@ jobs:
         timeout-minutes: 2
         run: |
           echo "✅ Migration status after deployment:"
-          supabase migration list --db-url "${{ secrets.SUPABASE_DB_URL }}"
+
+          # Convert to pooler URL (IPv4-compatible)
+          DB_URL="${{ secrets.SUPABASE_DB_URL }}"
+          PROJECT_REF=$(echo "$DB_URL" | sed -n 's/.*db\.\([^.]*\)\.supabase\.co.*/\1/p')
+
+          POOLER_URL=$(echo "$DB_URL" | \
+            sed "s|postgres:|postgres.$PROJECT_REF:|g" | \
+            sed "s|db\.[^.]*\.supabase\.co:5432|aws-0-sa-east-1.pooler.supabase.com:6543|g")
+
+          supabase migration list --db-url "$POOLER_URL"
           echo ""
           echo "✨ Deployment complete!"
 
