@@ -276,6 +276,38 @@ const storageData = createMockStorageData('uploads/image.jpg');
 - Creates demo user (`demo@example.com` / `demo-password-123`) in test instance
 - No manual intervention needed - hooks pass cleanly without `--no-verify`
 
+### Manual Production Migration Deployment
+
+**When automated deployment fails, push migrations manually using `--linked`:**
+
+```bash
+# 1. Check current migration status
+supabase migration list --linked
+
+# 2. Repair orphaned migrations (if needed)
+supabase migration repair --linked --status reverted MIGRATION_ID_1 MIGRATION_ID_2
+
+# 3. Push new migrations to production
+supabase db push --linked --include-all
+
+# 4. Verify migrations applied successfully
+supabase migration list --linked
+```
+
+**How `--linked` works:**
+
+- Uses project configuration from `supabase/.temp/project-ref`
+- Authenticates via session-based login (`cli_login_postgres`), not direct database password
+- Automatically routes through Supabase pooler (IPv4-compatible)
+- Requires `supabase link --project-ref PROJECT_ID` to be run first (already configured for production: `cdpxkskbpntoiarhtyuj`)
+
+**Why use `--linked` instead of `--db-url`:**
+
+- ✅ Works from both IPv4 and IPv6 environments
+- ✅ Uses pooler connection automatically (no manual URL transformation needed)
+- ✅ Session-based auth is more secure than passing passwords in URLs
+- ❌ Direct `--db-url` fails with IPv6 connectivity issues even on latest CLI
+
 ## Test Organization
 
 ### Unit/Integration Tests (Vitest)
