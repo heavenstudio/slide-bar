@@ -35,8 +35,29 @@ jobs:
         with:
           version: latest
 
+      - name: Verify Supabase credentials
+        timeout-minutes: 1
+        run: |
+          echo "Checking Supabase access token..."
+
+          # Verify we can authenticate with Supabase API
+          if [ -z "${{ secrets.SUPABASE_ACCESS_TOKEN }}" ]; then
+            echo "❌ ERROR: SUPABASE_ACCESS_TOKEN secret is not set"
+            exit 1
+          fi
+
+          if [ -z "${{ secrets.SUPABASE_PROJECT_REF }}" ]; then
+            echo "❌ ERROR: SUPABASE_PROJECT_REF secret is not set"
+            exit 1
+          fi
+
+          echo "✅ Credentials are set"
+          echo "Project ref: ${{ secrets.SUPABASE_PROJECT_REF }}"
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
       - name: Link to Supabase Project
-        timeout-minutes: 2
+        timeout-minutes: 3
         run: |
           PROJECT_REF="${{ inputs.project_ref }}"
           if [ -z "$PROJECT_REF" ]; then
@@ -47,7 +68,20 @@ jobs:
           fi
 
           echo "Linking to project $PROJECT_REF..."
-          supabase link --project-ref "$PROJECT_REF"
+          echo "This may take a moment to establish connection..."
+
+          # Link with debug output
+          supabase link --project-ref "$PROJECT_REF" --debug || {
+            echo "❌ Link failed!"
+            echo "Possible issues:"
+            echo "  1. SUPABASE_ACCESS_TOKEN is invalid or expired"
+            echo "  2. SUPABASE_PROJECT_REF is incorrect"
+            echo "  3. Network connectivity issue"
+            echo "  4. Project doesn't exist or access is denied"
+            exit 1
+          }
+
+          echo "✅ Successfully linked to project"
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
