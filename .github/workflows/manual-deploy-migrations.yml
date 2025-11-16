@@ -27,6 +27,10 @@ jobs:
     name: Deploy to Supabase
     runs-on: ubuntu-latest
 
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+
     steps:
       - uses: actions/checkout@v4
 
@@ -47,12 +51,25 @@ jobs:
             fi
           done
 
+      - name: Link to Supabase project
+        timeout-minutes: 2
+        run: |
+          echo "🔗 Linking to Supabase project..."
+          PROJECT_REF="${{ inputs.project_ref }}"
+          if [ -z "$PROJECT_REF" ]; then
+            PROJECT_REF="cdpxkskbpntoiarhtyuj"
+            echo "Using production project: $PROJECT_REF"
+          else
+            echo "Using specified project: $PROJECT_REF"
+          fi
+          supabase link --project-ref "$PROJECT_REF"
+          echo "✅ Project linked successfully"
+
       - name: Check current migration status
         timeout-minutes: 2
         run: |
           echo "📋 Current migration status in database:"
-          supabase migration list \
-            --db-url "${{ secrets.SUPABASE_DB_URL }}" || echo "Could not list migrations"
+          supabase migration list --linked || echo "Could not list migrations"
 
       - name: Repair orphaned migrations
         timeout-minutes: 2
@@ -62,7 +79,7 @@ jobs:
           echo "  - 20251115000001"
           echo "  - 20251115000002"
           supabase migration repair \
-            --db-url "${{ secrets.SUPABASE_DB_URL }}" \
+            --linked \
             --status reverted \
             20251115000001 20251115000002 || echo "No repair needed"
           echo "✅ Migration history repaired"
@@ -73,7 +90,7 @@ jobs:
           echo "🔍 DRY RUN MODE - No changes will be applied"
           echo ""
           echo "The following command would be executed:"
-          echo "  supabase db push --db-url \$SUPABASE_DB_URL --include-all"
+          echo "  supabase db push --linked --include-all"
           echo ""
           echo "To actually deploy, re-run this workflow with 'dry_run' unchecked"
 
@@ -85,9 +102,7 @@ jobs:
         run: |
           echo "🚀 Running database migrations..."
           echo "Note: Only NEW migrations will be applied"
-          supabase db push \
-            --db-url "${{ secrets.SUPABASE_DB_URL }}" \
-            --include-all
+          supabase db push --linked --include-all
           echo "✅ Migrations applied successfully"
 
       - name: Verify migration status (after)
@@ -95,8 +110,7 @@ jobs:
         timeout-minutes: 2
         run: |
           echo "✅ Migration status after deployment:"
-          supabase migration list \
-            --db-url "${{ secrets.SUPABASE_DB_URL }}"
+          supabase migration list --linked
           echo "✨ Deployment complete!"
 
       - name: Report success
