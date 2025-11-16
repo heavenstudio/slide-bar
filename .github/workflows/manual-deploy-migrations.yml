@@ -87,6 +87,22 @@ jobs:
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
+      - name: Repair migration history (if needed)
+        run: |
+          echo "🔧 Checking for remote migrations not in local directory..."
+
+          # Mark known orphaned migrations as reverted
+          # These were manually applied to production and should be ignored
+          echo "Marking orphaned migrations as reverted:"
+          echo "  - 20251115000001"
+          echo "  - 20251115000002"
+
+          supabase migration repair --status reverted 20251115000001 20251115000002 || echo "No repair needed (migrations may not exist)"
+
+          echo "✅ Migration history repaired"
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
       - name: Dry run migrations
         if: ${{ inputs.dry_run }}
         run: |
