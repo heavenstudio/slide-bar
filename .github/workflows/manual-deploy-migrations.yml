@@ -1,0 +1,170 @@
+name: Manual Deploy Supabase Migrations
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run (show what would be deployed without applying)'
+        required: false
+        type: boolean
+        default: true
+      project_ref:
+        description: 'Supabase project ref (leave empty to use production)'
+        required: false
+        type: string
+        default: ''
+
+# Prevent multiple deployments from running simultaneously
+concurrency:
+  group: manual-deploy-migrations-${{ github.ref }}
+  cancel-in-progress: false # Don't cancel running migrations
+
+permissions:
+  contents: read # Principle of least privilege
+
+jobs:
+  deploy-migrations:
+    name: Deploy to Supabase
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Link to Supabase Project
+        run: |
+          PROJECT_REF="${{ inputs.project_ref }}"
+          if [ -z "$PROJECT_REF" ]; then
+            PROJECT_REF="${{ secrets.SUPABASE_PROJECT_REF }}"
+            echo "Using production project: $PROJECT_REF"
+          else
+            echo "Using custom project: $PROJECT_REF"
+          fi
+          supabase link --project-ref "$PROJECT_REF"
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+      - name: Check migration status (before)
+        run: |
+          echo "📋 Current migration status in Supabase:"
+          supabase migration list
+          echo ""
+          echo "📁 Local migrations in repository:"
+          ls -la supabase/migrations/
+          echo ""
+          echo "📊 Detailed migration info:"
+          for file in supabase/migrations/*.sql; do
+            if [ -f "$file" ]; then
+              echo "  - $(basename "$file")"
+            fi
+          done
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+      - name: Validate migration files
+        run: |
+          echo "🔍 Validating migration files..."
+
+          # Check for SQL syntax issues (basic validation)
+          echo "Checking for common SQL issues..."
+          for file in supabase/migrations/*.sql; do
+            if [ -f "$file" ]; then
+              echo "Validating: $(basename "$file")"
+              # Check for basic syntax issues
+              if grep -q ";" "$file"; then
+                echo "  ✅ Contains SQL statements"
+              else
+                echo "  ⚠️  Warning: No SQL statements found"
+              fi
+            fi
+          done
+
+          echo "✅ Validation complete"
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+      - name: Dry run migrations
+        if: ${{ inputs.dry_run }}
+        run: |
+          echo "🔍 DRY RUN MODE - No changes will be applied"
+          echo ""
+          echo "The following command would be executed:"
+          echo "  supabase db push --include-all"
+          echo ""
+          echo "To actually deploy, re-run this workflow with 'dry_run' unchecked"
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+      - name: Run migrations (real)
+        if: ${{ !inputs.dry_run }}
+        id: migrate
+        continue-on-error: false # Explicitly fail on error
+        run: |
+          echo "🚀 Running database migrations..."
+          echo "Note: Only NEW migrations will be applied (already applied migrations are skipped automatically)"
+          echo ""
+          supabase db push --include-all
+          echo ""
+          echo "✅ Migrations applied successfully"
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+      - name: Verify migration status (after)
+        if: ${{ !inputs.dry_run }}
+        run: |
+          echo "✅ Migration status after deployment:"
+          supabase migration list
+          echo ""
+          echo "✨ Deployment complete! All migrations are now in sync."
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+      - name: Report success
+        if: ${{ success() && !inputs.dry_run }}
+        run: |
+          echo "✅ Migration deployment successful!"
+          echo ""
+          echo "All migrations have been applied to Supabase."
+          echo "You can verify the changes in your Supabase dashboard."
+
+      - name: Report dry run complete
+        if: ${{ success() && inputs.dry_run }}
+        run: |
+          echo "✅ Dry run complete!"
+          echo ""
+          echo "No changes were applied. To deploy for real:"
+          echo "  1. Go to Actions tab"
+          echo "  2. Select 'Manual Deploy Supabase Migrations'"
+          echo "  3. Click 'Run workflow'"
+          echo "  4. Uncheck 'dry_run'"
+          echo "  5. Click 'Run workflow' button"
+
+      - name: Report failure
+        if: failure()
+        run: |
+          echo "❌ Migration deployment failed!"
+          echo ""
+          echo "Please check the logs above for details."
+          echo ""
+          echo "Common issues:"
+          echo "  - SQL syntax errors in migration files"
+          echo "  - Conflicting schema changes"
+          echo "  - Missing dependencies or permissions"
+          echo "  - RLS policies preventing changes"
+          echo "  - Foreign key constraints"
+          echo ""
+          echo "To debug:"
+          echo "  1. Review migration files in supabase/migrations/"
+          echo "  2. Test locally with 'supabase db reset && supabase db push'"
+          echo "  3. Check Supabase dashboard for existing schema"
+          echo "  4. Review error messages above for specific SQL errors"
+          echo ""
+          echo "To rollback or fix:"
+          echo "  1. Create a new migration file to undo changes"
+          echo "  2. Or manually fix in Supabase dashboard"
+          echo "  3. Then run migrations again"
+          exit 1

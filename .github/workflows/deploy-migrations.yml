@@ -47,7 +47,8 @@ jobs:
       - name: Validate migrations
         run: |
           echo "🔍 Validating migration files..."
-          supabase migration repair --status
+          echo "Checking that migrations can be listed:"
+          supabase migration list
           echo "✅ Migration validation complete"
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
