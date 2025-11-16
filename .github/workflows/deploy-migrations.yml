@@ -47,10 +47,11 @@ jobs:
 
           # Transform URL to use pooler (IPv4) with project ref in username
           POOLER_URL=$(echo "$DB_URL" | \
-            sed "s|postgres:|postgres.$PROJECT_REF:|g" | \
-            sed "s|db\.[^.]*\.supabase\.co:5432|aws-1-sa-east-1.pooler.supabase.com:6543|g")
+            sed "s|://postgres:|://postgres.$PROJECT_REF:|" | \
+            sed "s|db\.[^.]*\.supabase\.co:5432|aws-1-sa-east-1.pooler.supabase.com:6543|")
 
           echo "Using pooler connection (IPv4) for project: $PROJECT_REF"
+          echo "Transformed URL (password masked): $(echo "$POOLER_URL" | sed 's|://[^:]*:[^@]*@|://USER:****@|')"
 
           supabase migration repair \
             --db-url "$POOLER_URL" \
@@ -72,10 +73,11 @@ jobs:
           PROJECT_REF=$(echo "$DB_URL" | sed -n 's/.*db\.\([^.]*\)\.supabase\.co.*/\1/p')
 
           POOLER_URL=$(echo "$DB_URL" | \
-            sed "s|postgres:|postgres.$PROJECT_REF:|g" | \
-            sed "s|db\.[^.]*\.supabase\.co:5432|aws-1-sa-east-1.pooler.supabase.com:6543|g")
+            sed "s|://postgres:|://postgres.$PROJECT_REF:|" | \
+            sed "s|db\.[^.]*\.supabase\.co:5432|aws-1-sa-east-1.pooler.supabase.com:6543|")
 
           echo "Using pooler connection (IPv4) for project: $PROJECT_REF"
+          echo "Transformed URL (password masked): $(echo "$POOLER_URL" | sed 's|://[^:]*:[^@]*@|://USER:****@|')"
 
           supabase db push \
             --db-url "$POOLER_URL" \
@@ -93,8 +95,8 @@ jobs:
           PROJECT_REF=$(echo "$DB_URL" | sed -n 's/.*db\.\([^.]*\)\.supabase\.co.*/\1/p')
 
           POOLER_URL=$(echo "$DB_URL" | \
-            sed "s|postgres:|postgres.$PROJECT_REF:|g" | \
-            sed "s|db\.[^.]*\.supabase\.co:5432|aws-1-sa-east-1.pooler.supabase.com:6543|g")
+            sed "s|://postgres:|://postgres.$PROJECT_REF:|" | \
+            sed "s|db\.[^.]*\.supabase\.co:5432|aws-1-sa-east-1.pooler.supabase.com:6543|")
 
           supabase migration list \
             --db-url "$POOLER_URL"
