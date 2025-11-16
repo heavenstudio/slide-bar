@@ -430,6 +430,7 @@ describe('ImageUpload - Success Callbacks', () => {
       size: 1024,
       path: 'uploads/test.jpg',
       organization_id: 'org-1',
+      display_duration: 5000,
       created_at: '2025-11-09T00:00:00Z',
       updated_at: '2025-11-09T00:00:00Z',
     };

@@ -17,7 +17,9 @@ import { v4 as uuidv4 } from 'uuid';
  */
 
 // Supabase configuration for E2E tests
-// These values match the test Supabase instance running in Docker
+// Read from environment variables to support both local Docker and CI testing
+// Local: Uses Docker network hostname (supabase_kong_slide-bar-test:8000) as default
+// CI: Environment variable VITE_SUPABASE_URL set to http://127.0.0.1:54321
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'http://supabase_kong_slide-bar-test:8000';
 const SUPABASE_SERVICE_KEY =
   process.env.SUPABASE_SERVICE_KEY ||
@@ -46,6 +48,16 @@ async function cleanDatabase(): Promise<void> {
       console.error('Failed to delete images:', imagesError.message);
     }
 
+    // Delete all organization settings
+    const { error: settingsError } = await supabase
+      .from('organization_settings')
+      .delete()
+      .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all rows
+
+    if (settingsError) {
+      console.error('Failed to delete organization_settings:', settingsError.message);
+    }
+
     // Clean up storage bucket (in case trigger didn't work)
     const { data: objects, error: listError } = await supabase.storage.from('images').list();
 
@@ -69,7 +81,7 @@ async function cleanDatabase(): Promise<void> {
  */
 declare global {
   interface Window {
-    __coverage__?: Record<string, unknown>;
+    __VITEST_COVERAGE__?: Record<string, unknown>;
     collectIstanbulCoverage?: (coverageJSON: string) => void;
   }
 }
@@ -100,8 +112,8 @@ export const test = base.extend<TestFixtures>({
       // Inject script to expose coverage data
       await context.addInitScript(() => {
         window.addEventListener('beforeunload', () => {
-          if (window.__coverage__) {
-            window.collectIstanbulCoverage?.(JSON.stringify(window.__coverage__));
+          if (window.__VITEST_COVERAGE__) {
+            window.collectIstanbulCoverage?.(JSON.stringify(window.__VITEST_COVERAGE__));
           }
         });
       });
@@ -124,7 +136,7 @@ export const test = base.extend<TestFixtures>({
       for (const page of context.pages()) {
         try {
           await page.evaluate(() =>
-            window.collectIstanbulCoverage?.(JSON.stringify(window.__coverage__))
+            window.collectIstanbulCoverage?.(JSON.stringify(window.__VITEST_COVERAGE__))
           );
         } catch {
           // Ignore errors - page might be closed

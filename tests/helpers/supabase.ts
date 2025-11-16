@@ -7,12 +7,21 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { afterEach } from 'vitest';
 import { Database } from '../../src/types/supabase';
 
-// Supabase TEST configuration (port 55321 - isolated from dev on 54321)
-// Uses the same test instance as E2E tests
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'http://127.0.0.1:55321';
+// Supabase TEST configuration
+// Read from VITE_SUPABASE_URL environment variable to support both local and CI testing
+// Local: VITE_SUPABASE_URL=http://127.0.0.1:55321 (test instance, isolated from dev on 54321)
+// CI: VITE_SUPABASE_URL=http://127.0.0.1:54321 (CI test instance)
+const SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'http://127.0.0.1:55321';
 const SUPABASE_SERVICE_KEY =
-  import.meta.env.SUPABASE_SERVICE_KEY ||
+  process.env.SUPABASE_SERVICE_KEY ||
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU';
+
+// Verify we're connecting to a local test instance (safety check)
+if (!SUPABASE_URL.includes('127.0.0.1')) {
+  throw new Error(
+    `CRITICAL: Tests must connect to local instance (127.0.0.1), not ${SUPABASE_URL}`
+  );
+}
 
 /**
  * Create a Supabase client with service role (bypasses RLS)
@@ -35,25 +44,49 @@ export async function cleanDatabase(): Promise<void> {
   const supabase = createServiceClient();
 
   try {
-    // Delete all images first (will cascade delete storage objects via trigger)
+    // Delete ALL images (test environment should be clean between tests)
     const { error: imagesError } = await supabase
       .from('images')
       .delete()
-      .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all rows
+      .gt('created_at', '1970-01-01');
 
     if (imagesError) {
-      console.error('Failed to delete images:', imagesError.message);
+      console.error('Failed to delete test images:', imagesError.message);
     }
 
-    // Clean up storage bucket (in case trigger didn't work)
+    // Delete all organization_settings (if table exists)
+    const { error: settingsError } = await supabase
+      .from('organization_settings')
+      .delete()
+      .gt('created_at', '1970-01-01');
+
+    if (settingsError && settingsError.code !== '42P01') {
+      // Ignore "table does not exist" error (42P01)
+      console.error('Failed to delete test organization_settings:', settingsError.message);
+    }
+
+    // Delete test organizations but keep Demo Organization (so demo user isn't orphaned)
+    const { error: orgsError } = await supabase
+      .from('organizations')
+      .delete()
+      .neq('name', 'Demo Organization');
+
+    if (orgsError) {
+      console.error('Failed to delete test organizations:', orgsError.message);
+    }
+
+    // Clean up ALL storage files (test environment should be clean)
     const { data: objects, error: listError } = await supabase.storage.from('images').list();
 
     if (!listError && objects && objects.length > 0) {
-      const filePaths = objects.map((obj) => obj.name);
-      const { error: removeError } = await supabase.storage.from('images').remove(filePaths);
+      const filesToRemove = objects.map((obj) => obj.name);
 
-      if (removeError) {
-        console.error('Failed to remove storage objects:', removeError.message);
+      if (filesToRemove.length > 0) {
+        const { error: removeError } = await supabase.storage.from('images').remove(filesToRemove);
+
+        if (removeError) {
+          console.error('Failed to remove test storage objects:', removeError.message);
+        }
       }
     }
   } catch (error) {

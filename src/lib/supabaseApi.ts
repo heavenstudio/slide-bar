@@ -159,6 +159,15 @@ export const uploadImage = async (file: FileUpload): Promise<Image> => {
     throw new Error('User organization not found');
   }
 
+  // Get organization settings for default duration
+  const { data: orgSettings } = await supabase
+    .from('organization_settings')
+    .select('default_slide_duration')
+    .eq('organization_id', userData.organization_id)
+    .maybeSingle();
+
+  const displayDuration = orgSettings?.default_slide_duration || 5000;
+
   // Create database record
   const { data: imageData, error: dbError } = await supabase
     .from('images')
@@ -170,6 +179,7 @@ export const uploadImage = async (file: FileUpload): Promise<Image> => {
       path: storageData.path,
       url: publicUrl,
       organization_id: userData.organization_id,
+      display_duration: displayDuration,
     })
     .select()
     .single();
@@ -208,6 +218,131 @@ export const deleteImage = async (imageId: string): Promise<DeletionResponse> =>
 
   if (dbError) {
     throw new Error(dbError.message);
+  }
+
+  return { success: true };
+};
+
+/**
+ * Update response type
+ */
+export interface UpdateResponse {
+  success: boolean;
+}
+
+/**
+ * Update an image's display duration
+ */
+export const updateImageDuration = async (
+  imageId: string,
+  durationMs: number
+): Promise<UpdateResponse> => {
+  const { error } = await supabase
+    .from('images')
+    .update({ display_duration: durationMs })
+    .eq('id', imageId);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return { success: true };
+};
+
+/**
+ * Organization settings type
+ */
+export interface OrganizationSettings {
+  id: string;
+  organization_id: string;
+  default_slide_duration: number;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * Get organization settings for the current user's organization
+ */
+export const getOrganizationSettings = async (): Promise<OrganizationSettings | null> => {
+  // Get current user's organization_id
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error('User not authenticated');
+  }
+
+  const { data: userData, error: userError } = await supabase
+    .from('users')
+    .select('organization_id')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  if (userError) {
+    throw new Error(`Failed to get user organization: ${userError.message}`);
+  }
+
+  if (!userData) {
+    throw new Error('User organization not found');
+  }
+
+  // Get organization settings
+  const { data, error } = await supabase
+    .from('organization_settings')
+    .select('*')
+    .eq('organization_id', userData.organization_id)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data;
+};
+
+/**
+ * Update organization settings (creates if doesn't exist)
+ */
+export const updateOrganizationSettings = async (
+  defaultSlideDuration: number
+): Promise<UpdateResponse> => {
+  // Get current user's organization_id
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error('User not authenticated');
+  }
+
+  const { data: userData, error: userError } = await supabase
+    .from('users')
+    .select('organization_id')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  if (userError) {
+    throw new Error(`Failed to get user organization: ${userError.message}`);
+  }
+
+  if (!userData) {
+    throw new Error('User organization not found');
+  }
+
+  // Upsert organization settings
+  const { error } = await supabase.from('organization_settings').upsert(
+    {
+      organization_id: userData.organization_id,
+      default_slide_duration: defaultSlideDuration,
+    },
+    {
+      onConflict: 'organization_id',
+    }
+  );
+
+  if (error) {
+    throw new Error(error.message);
   }
 
   return { success: true };

@@ -1,0 +1,12 @@
+diff --git a/dist/index.mjs b/dist/index.mjs
+index c894906ce393b48b8e8389023ff94edf734d58a1..3259b500360edb06c9f066744c280d221a0077d2 100644
+--- a/dist/index.mjs
++++ b/dist/index.mjs
+@@ -91,6 +91,7 @@ function istanbulPlugin(opts = {}) {
+   const logger = createLogger("warn", { prefix: "vite-plugin-istanbul" });
+   let testExclude;
+   const instrumenter = createInstrumenter({
++    coverageVariable: "__VITEST_COVERAGE__",
+     coverageGlobalScopeFunc: false,
+     coverageGlobalScope: "globalThis",
+     preserveComments: true,

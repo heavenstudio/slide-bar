@@ -9,6 +9,8 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '../types/supabase';
 
 // Get Supabase configuration from environment variables
+// Tests explicitly set VITE_SUPABASE_URL to the test instance (port 55321)
+// to prevent tests from modifying dev/production data
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 

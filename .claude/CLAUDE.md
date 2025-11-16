@@ -244,6 +244,38 @@ const testImage = createMockImageWithSize(1048576); // 1 MB
 const storageData = createMockStorageData('uploads/image.jpg');
 ```
 
+## Supabase Database Management
+
+### CRITICAL: Database Safety Rules
+
+**NEVER run `supabase db reset` on any instance** - it deletes ALL data including RLS policies and auth users
+
+- ✅ **DO**: Use `supabase migration up` to apply schema changes
+- ✅ **DO**: Create new migration files for schema changes: `supabase migration new feature_name`
+- ❌ **NEVER**: Run `supabase db reset` (destroys data + policies + auth users)
+- ❌ **NEVER**: Use env vars in test helpers (prevents accidental dev database access)
+
+### Test Database Isolation
+
+**Two completely isolated Supabase instances:**
+
+- **Dev instance**: Port 54321 (manual testing, local development)
+- **Test instance**: Port 55321 (automated tests only, auto-cleaned after each test)
+
+**Critical isolation mechanisms:**
+
+1. **`src/lib/supabase.ts`**: Detects test mode via `import.meta.env.MODE === 'test'` and overrides to port 55321
+2. **`tests/helpers/supabase.ts`**: Hard-coded to port 55321 (NEVER uses env vars)
+3. **`scripts/setup-test-db.sh`**: Auto-creates demo user in test instance before running tests
+
+**Why this matters**: Tests previously deleted all dev database images by accidentally connecting to port 54321. Two-layer protection ensures this never happens again.
+
+### Automatic Test Setup
+
+- `pnpm test` and `pnpm test:coverage` automatically run `scripts/setup-test-db.sh`
+- Creates demo user (`demo@example.com` / `demo-password-123`) in test instance
+- No manual intervention needed - hooks pass cleanly without `--no-verify`
+
 ## Test Organization
 
 ### Unit/Integration Tests (Vitest)

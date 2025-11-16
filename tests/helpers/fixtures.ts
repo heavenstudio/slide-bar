@@ -32,6 +32,7 @@ export function createMockImage(overrides?: Partial<Image>): Image {
     size: 50000,
     path: '/uploads/test.jpg',
     organization_id: 'org-1',
+    display_duration: 5000, // Default 5 seconds
     created_at: '2025-11-09T00:00:00Z',
     updated_at: '2025-11-09T00:00:00Z',
   };

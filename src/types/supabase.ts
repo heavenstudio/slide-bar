@@ -31,6 +31,7 @@ export type Database = {
       images: {
         Row: {
           created_at: string;
+          display_duration: number;
           filename: string;
           id: string;
           mime_type: string;
@@ -43,6 +44,7 @@ export type Database = {
         };
         Insert: {
           created_at?: string;
+          display_duration?: number;
           filename: string;
           id?: string;
           mime_type: string;
@@ -55,6 +57,7 @@ export type Database = {
         };
         Update: {
           created_at?: string;
+          display_duration?: number;
           filename?: string;
           id?: string;
           mime_type?: string;
@@ -70,6 +73,38 @@ export type Database = {
             foreignKeyName: 'images_organization_id_fkey';
             columns: ['organization_id'];
             isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      organization_settings: {
+        Row: {
+          created_at: string;
+          default_slide_duration: number;
+          id: string;
+          organization_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          default_slide_duration?: number;
+          id?: string;
+          organization_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          default_slide_duration?: number;
+          id?: string;
+          organization_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'organization_settings_organization_id_fkey';
+            columns: ['organization_id'];
+            isOneToOne: true;
             referencedRelation: 'organizations';
             referencedColumns: ['id'];
           },

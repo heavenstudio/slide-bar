@@ -1,8 +1,9 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, waitFor, fireEvent, cleanup } from '@testing-library/react';
 import Dashboard from '../../../src/pages/Dashboard';
 import { setupSupabaseCleanup, cleanDatabase, createMockImageFile } from '../../helpers/supabase';
 import { demoLogin, uploadImage, deleteImage } from '../../../src/lib/supabaseApi';
+import * as api from '../../../src/lib/api';
 
 // Setup automatic database cleanup after each test
 setupSupabaseCleanup();
@@ -341,6 +342,146 @@ describe('Dashboard - UI States', () => {
         },
         { timeout: 3000 }
       );
+    });
+
+    it('should render settings link in header', async () => {
+      render(<Dashboard />);
+      await waitFor(() => {
+        const settingsLink = screen.getByRole('link', { name: /Configurações/i });
+        expect(settingsLink).toBeInTheDocument();
+        expect(settingsLink).toHaveAttribute('href', '/settings');
+      });
+    });
+  });
+});
+
+describe('Dashboard - Error Handling', () => {
+  beforeEach(async () => {
+    cleanup();
+    await cleanDatabase();
+    vi.restoreAllMocks();
+  });
+
+  describe('Error states', () => {
+    it('should display error message when image loading fails', async () => {
+      // Mock demoLogin to succeed first
+      vi.spyOn(api, 'demoLogin').mockResolvedValueOnce({
+        token: 'mock-token',
+        user: { id: 'mock-user-id', email: 'test@example.com' },
+      });
+
+      // Then mock getImages to throw error
+      const getImagesSpy = vi
+        .spyOn(api, 'getImages')
+        .mockRejectedValueOnce(new Error('Network error'));
+
+      render(<Dashboard />);
+
+      // Wait for error to appear
+      await waitFor(
+        () => {
+          expect(screen.getByText(/Network error/i)).toBeInTheDocument();
+        },
+        { timeout: 3000 }
+      );
+
+      // Error should be displayed in red box
+      const errorBox = screen.getByText(/Network error/i).closest('div');
+      expect(errorBox).toHaveClass('bg-red-50');
+
+      getImagesSpy.mockRestore();
+    });
+
+    it('should display authentication error message', async () => {
+      // Mock demoLogin to succeed first
+      vi.spyOn(api, 'demoLogin').mockResolvedValueOnce({
+        token: 'mock-token',
+        user: { id: 'mock-user-id', email: 'test@example.com' },
+      });
+
+      // Then mock getImages to throw auth error
+      const getImagesSpy = vi
+        .spyOn(api, 'getImages')
+        .mockRejectedValueOnce(new Error('Authentication token expired'));
+
+      render(<Dashboard />);
+
+      // Wait for auth error to appear
+      await waitFor(
+        () => {
+          expect(
+            screen.getByText(/Erro de autenticação. Por favor, faça login novamente./i)
+          ).toBeInTheDocument();
+        },
+        { timeout: 3000 }
+      );
+
+      getImagesSpy.mockRestore();
+    });
+
+    it('should display initialization error message', async () => {
+      // Mock demoLogin to throw error
+      const demoLoginSpy = vi
+        .spyOn(api, 'demoLogin')
+        .mockRejectedValueOnce(new Error('Login service unavailable'));
+
+      render(<Dashboard />);
+
+      // Wait for init error to appear
+      await waitFor(
+        () => {
+          expect(
+            screen.getByText(/Erro ao inicializar: Login service unavailable/i)
+          ).toBeInTheDocument();
+        },
+        { timeout: 3000 }
+      );
+
+      demoLoginSpy.mockRestore();
+    });
+  });
+
+  describe('Duration update callback', () => {
+    it('should update image duration when handleDurationUpdate is called', async () => {
+      // Pre-populate with an image
+      await demoLogin();
+      const mockFile = createMockImageFile('duration-test.jpg', 'content');
+      await uploadImage(mockFile);
+
+      render(<Dashboard />);
+
+      // Wait for image to appear
+      await waitFor(
+        () => {
+          expect(screen.getByText('duration-test.jpg')).toBeInTheDocument();
+        },
+        { timeout: 3000 }
+      );
+
+      // Find and click the duration button to enter edit mode
+      const durationButton = screen.getByTitle(/Clique para editar duração/i);
+      fireEvent.click(durationButton);
+
+      // Find the duration input (now in edit mode)
+      const durationInput = await screen.findByRole('spinbutton');
+      expect(durationInput).toBeInTheDocument();
+
+      // Initial value should be 5 seconds (5000ms / 1000)
+      expect(durationInput).toHaveValue(5);
+
+      // Change to 8 seconds
+      fireEvent.change(durationInput, { target: { value: '8' } });
+      expect(durationInput).toHaveValue(8);
+
+      // Click save button
+      const saveButton = screen.getByTitle('Salvar');
+      fireEvent.click(saveButton);
+
+      // Wait for edit mode to close and verify duration updated
+      await waitFor(() => {
+        // Duration button should show new value (8s = 8000ms)
+        expect(screen.getByText(/8\.0s/i)).toBeInTheDocument();
+      });
     });
   });
 });

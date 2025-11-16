@@ -48,11 +48,18 @@ docker exec supabase_kong_slide-bar-test curl -s -X POST \
 echo "🧪 Running E2E tests with unified Docker Compose..."
 cd "$PROJECT_ROOT"
 
+# Clean up old Playwright coverage files to start fresh
+if [ "$E2E_COVERAGE" = "true" ]; then
+  echo "🧹 Cleaning old E2E coverage files..."
+  rm -f .nyc_output/playwright_coverage_*.json 2>/dev/null || true
+fi
+
 # Stop any existing test containers
 docker compose -f config/docker-compose.test.yml down 2>/dev/null || true
 
-# Set PLAYWRIGHT_ARGS environment variable if provided
+# Set environment variables for Docker Compose
 export PLAYWRIGHT_ARGS="${1:-}"
+export E2E_COVERAGE="${E2E_COVERAGE:-false}"
 
 # Run tests - start containers and capture Playwright logs
 docker compose -f config/docker-compose.test.yml up --build -d
@@ -91,8 +98,30 @@ if [ -n "$PLAYWRIGHT_CONTAINER" ]; then
   # Copy coverage data if E2E_COVERAGE is enabled
   if [ "$E2E_COVERAGE" = "true" ]; then
     echo "📊 Copying coverage data from container..."
+
     if docker cp "$PLAYWRIGHT_CONTAINER:/workspace/slide-bar/.nyc_output" "$PROJECT_ROOT/" 2>/dev/null; then
       echo "✅ Coverage data copied successfully"
+
+      # Count coverage files
+      COVERAGE_FILE_COUNT=$(ls .nyc_output/playwright_coverage_*.json 2>/dev/null | wc -l | tr -d ' ')
+      echo "📊 Collected $COVERAGE_FILE_COUNT E2E coverage files"
+
+      # Generate E2E coverage report using NYC
+      if [ "$COVERAGE_FILE_COUNT" -gt 0 ]; then
+        echo "📊 Normalizing E2E coverage paths..."
+        pnpm tsx scripts/normalize-e2e-coverage.ts
+
+        echo "📊 Generating E2E coverage report..."
+        pnpm nyc report \
+          --temp-dir=.nyc_output \
+          --report-dir=.test-output/e2e-coverage \
+          --reporter=json-summary \
+          --reporter=html \
+          --exclude='tests/**' \
+          --exclude='scripts/**' \
+          --exclude='**/*.config.{ts,js,mjs}' || echo "⚠️  Failed to generate E2E coverage report"
+        echo "✅ E2E coverage report: .test-output/e2e-coverage/index.html"
+      fi
     else
       echo "⚠️  Warning: No coverage data found (may not have been collected)"
     fi

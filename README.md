@@ -328,11 +328,13 @@ pnpm install
 **Player/Slideshow:**
 
 - ✅ Visualização fullscreen em /player (público, sem auth)
-- ✅ Rotação automática a cada 5 segundos
+- ✅ Duração por imagem personalizável (padrão: 5 segundos)
+- ✅ Rotação automática com timing dinâmico
 - ✅ Indicador de progresso
 - ✅ Controles de teclado (espaço para pausar, setas para navegar)
 - ✅ Auto-refresh a cada 5 minutos
 - ✅ Estado vazio quando não há imagens
+- ✅ Display de duração no dashboard
 
 **Infraestrutura:**
 
